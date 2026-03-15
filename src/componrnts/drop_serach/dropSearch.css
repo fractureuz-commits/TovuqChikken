@@ -1,0 +1,164 @@
+/* ===== LABEL ===== */
+.input-group.create .user-label {
+    position: absolute;
+    top: -10px;
+    left: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #224594;
+    /* teal rang */
+    pointer-events: none;
+    white-space: nowrap;
+    font-weight: bold;
+    background-color: #ffff;
+    padding: 0 5px;
+}
+
+.input-group.create {
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    background: #ffffff;
+    border: 1.5px solid #224594;
+    border-radius: 10px;
+    padding: 0 10px;
+    height: 35px;
+    gap: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    transition: border-color 0.2s;
+    position: relative;
+}
+
+.input-group.create:focus-within {
+    border-color: #224594;
+    box-shadow: 0 0 0 3px rgba(43, 191, 164, 0.12);
+}
+
+/* ===== INPUT ===== */
+.input-group.create .input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    color: #1a1a2e;
+    font-family: inherit;
+    height: 100%;
+    padding: 0 ;
+}
+
+
+/* ===== ICON BUTTONS (... va boshqalar) ===== */
+.input-group.create .add {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #8898b0;
+    padding: 6px;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.input-group.create .add:last-child {
+    background: transparent;
+    color: #123A9B;
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    margin-left: 2px;
+    transition: background 0.2s, transform 0.15s;
+}
+
+/* ── Dropdown container ── */
+.kaf-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 200px;
+    background: #e8ecf4;
+    border: 1.5px solid #123A9B;
+    border-top: none;
+    overflow: hidden;
+    z-index: 1;
+    max-width: 100%;
+    overflow-y: auto;
+    border-radius: 12px;
+    border-top-left-radius: 0px;
+    border-top-right-radius: 0px;
+     /* ✅ Silliq animatsiya */
+    transform-origin: top;
+    animation: smoothDown 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes smoothDown {
+    from {
+        opacity: 0;
+        transform: scaleY(0.85) translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: scaleY(1) translateY(0);
+    }
+}
+/* ── Item ── */
+.kaf-dropdown-item {
+    padding: 13px 16px;
+    font-size: 15px;
+    color: #4a5568;
+    cursor: pointer;
+    border-bottom: 1px solid #123A9B;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.kaf-dropdown-item:active {
+    background: #c8d8f0;  /* ✅ telefonda bosib qo'yish effekti */
+    color: #224594;
+}
+
+.kaf-dropdown-item:hover {
+    background: #d8e2f0;
+}
+.kaf-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.kaf-dropdown-item:hover {
+    background: #d8e2f0;
+}
+.input-group.create {
+    transition: border-color 0.2s ease,
+                border-radius 0.2s ease,    /* ✅ radius ham silliq */
+                box-shadow 0.2s ease;
+}
+
+.input-group.create.dropdown-open {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-color: #224594;
+}
+/* ::before dot yo'q */
+.kaf-dropdown-item::before {
+    display: none;
+}
+
+/* ── Bo'sh holat ── */
+.kaf-dropdown-empty {
+    height: 46px;
+    display: flex;
+    align-items: center;
+    padding-left: 16px;
+    color: #9aa5b4;
+    font-size: 14px;
+    background: #e8ecf4;
+}
+/* ── Input border pastki radiusini yo'qotish (ochiq holatda) ── */
+.input-group.create:has(+ * .kaf-dropdown),
+.input-group.create.dropdown-open {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-color: transparent;
+}

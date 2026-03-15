@@ -1,0 +1,15 @@
+.header{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background-color: #ffff;
+  margin-top: 10px;
+  border-radius: 20px;
+  height: 6vh;
+}
+.header .setting{
+  border: none;
+  background-color: transparent;
+}

@@ -1,0 +1,72 @@
+.search {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-radius: 8px;
+    border: 1px solid #006CAC;
+    padding: 0 10px;
+    background-color: #F1F1F1;
+    width: 100%;
+}
+
+.search input {
+    height: 100%;
+    border: none;
+    background-color: transparent;
+    width: 90%;
+}
+
+.search input:focus {
+    outline: none;
+    border: none;
+
+}
+
+.search svg {
+    width: 10%;
+}
+
+.selects {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+    max-height: 80%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #bbb transparent;
+}
+
+/* Scroll kengligi */
+.selects::-webkit-scrollbar {
+    width: 4px;
+}
+
+/* Scroll fon qismi */
+.selects::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* Scroll harakatlanuvchi qismi */
+.selects::-webkit-scrollbar-thumb {
+    background: #bbb;
+    border-radius: 10px;
+}
+/* hover bo‘lganda */
+.selects::-webkit-scrollbar-thumb:hover {
+    background: #888;
+}
+
+.selects .select {
+    width: 100%;
+    border: 2px solid #006CAC;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    border-radius: 10px;
+    color: #006CAC;
+}

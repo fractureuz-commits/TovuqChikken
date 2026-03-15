@@ -1,0 +1,142 @@
+.home-header {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column;
+    width: 100%;
+    padding: 10px 20px;
+    height: 30vh;
+    margin-bottom: 2vh;
+}
+
+.home-header .dollar-and-setting {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.home-header .logo {
+    margin: 40px 0;
+}
+
+.home-header .logo img {
+    width: 200px;
+}
+
+.home-header .button {
+    width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+
+.home-header .button button {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff94;
+    border: none;
+    font-size: 25px;
+    font-weight: bolder;
+}
+
+.home-header .action-counters {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.home-header .action-counters .ation-right {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.home-header .action-counters .button p {
+    width: 100%;
+    font-size: 10px;
+    text-align: center;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+.home-body {
+    height: 67vh;
+    background-color: #fff;
+    border-top-left-radius: 50px;
+    border-top-right-radius: 50px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 30px 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.home-body .home-pages {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    width: 100%;
+    gap: 24px 0;
+}
+
+.home-body .home-pages .button {
+    width: 48%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.home-body .home-pages .button button {
+    width: 110px;
+    height: 110px;
+    border-radius: 50%;
+    background-color: #20CAEC;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1a1a2e;
+    position: relative;
+    box-shadow: 0 4px 12px rgba(77, 216, 240, 0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.home-body .home-pages .button button:active {
+    transform: scale(0.95);
+    box-shadow: 0 2px 6px rgba(77, 216, 240, 0.3);
+}
+
+/* Badge */
+.home-body .home-pages .button button.has-badge::after {
+    content: attr(data-badge);
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background-color: #f5c518;
+    color: #000;
+    font-size: 11px;
+    font-weight: bold;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.home-body .home-pages .button p {
+    font-size: 16px;
+    font-weight: 500;
+    color: #1a1a2e;
+    margin: 0;
+    text-align: center;
+}

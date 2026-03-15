@@ -1,0 +1,368 @@
+.pin-page {
+    min-height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 25vh 20px 60px;
+    box-sizing: border-box;
+    font-family: 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+    position: absolute;
+    height: 100vh;
+    min-width: 100%;
+    min-height: 100vh;
+    background: linear-gradient(rgba(20, 75, 205, 0.2), rgba(0, 0, 0, 0.3));
+    backdrop-filter: blur(48px);
+}
+
+/* ---- Top section ---- */
+.pin-top {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.pin-title {
+  color: #fff;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.2px;
+}
+
+.pin-dots {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+
+.pin-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.7);
+  background: transparent;
+  transition: background 0.2s;
+}
+
+.pin-dot.filled {
+  background: #fff;
+}
+
+/* ---- Keypad ---- */
+.pin-keypad {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.pin-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.pin-key {
+  flex: 1;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background 0.15s;
+}
+
+.pin-key:active {
+  background: rgba(255, 255, 255, 0.38);
+}
+
+.pin-num {
+  color: #fff;
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.pin-sub {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  line-height: 1;
+}
+
+.pin-key-empty {
+  flex: 1;
+  aspect-ratio: 1;
+}
+
+.pin-delete {
+  flex: 1;
+  aspect-ratio: 1;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 400;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pin-delete:active {
+  opacity: 0.6;
+}
+
+/* ==============================
+   RESPONSIVE MEDIA QUERIES
+   ============================== */
+
+/* iPhone SE, small phones (320px) */
+@media screen and (max-width: 375px) {
+  .pin-page {
+    padding: 50px 16px 40px;
+  }
+  .pin-title {
+    font-size: 18px;
+  }
+  .pin-dot {
+    width: 12px;
+    height: 12px;
+  }
+  .pin-dots {
+    gap: 14px;
+  }
+  .pin-num {
+    font-size: 26px;
+  }
+  .pin-sub {
+    font-size: 8px;
+    letter-spacing: 1px;
+  }
+  .pin-keypad {
+    gap: 10px;
+    max-width: 280px;
+  }
+  .pin-row {
+    gap: 10px;
+  }
+  .pin-delete {
+    font-size: 13px;
+  }
+}
+
+/* iPhone 12, 13, 14 (390px - 430px) */
+@media screen and (min-width: 376px) and (max-width: 430px) {
+  .pin-page {
+    padding: 70px 20px 50px;
+  }
+  .pin-title {
+    font-size: 21px;
+  }
+  .pin-num {
+    font-size: 30px;
+  }
+  .pin-keypad {
+    max-width: 310px;
+    gap: 14px;
+  }
+  .pin-row {
+    gap: 14px;
+  }
+}
+
+/* iPhone Plus, Pro Max (430px - 480px) */
+@media screen and (min-width: 431px) and (max-width: 480px) {
+  .pin-page {
+    padding: 80px 24px 55px;
+  }
+  .pin-num {
+    font-size: 34px;
+  }
+  .pin-keypad {
+    max-width: 340px;
+    gap: 18px;
+  }
+}
+
+/* Small tablets, large phones landscape (481px - 767px) */
+@media screen and (min-width: 481px) and (max-width: 767px) {
+  .pin-page {
+    padding: 80px 0 60px;
+  }
+  .pin-keypad {
+    max-width: 380px;
+    gap: 20px;
+  }
+  .pin-row {
+    gap: 20px;
+  }
+  .pin-num {
+    font-size: 36px;
+  }
+  .pin-sub {
+    font-size: 11px;
+  }
+  .pin-title {
+    font-size: 24px;
+  }
+  .pin-dot {
+    width: 15px;
+    height: 15px;
+  }
+}
+
+/* iPad Mini, iPad (768px - 1024px) */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+  .pin-page {
+    padding: 120px 0 80px;
+  }
+  .pin-keypad {
+    max-width: 440px;
+    gap: 24px;
+  }
+  .pin-row {
+    gap: 24px;
+  }
+  .pin-num {
+    font-size: 42px;
+  }
+  .pin-sub {
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+  .pin-title {
+    font-size: 28px;
+  }
+  .pin-dot {
+    width: 17px;
+    height: 17px;
+  }
+  .pin-dots {
+    gap: 22px;
+  }
+  .pin-delete {
+    font-size: 18px;
+  }
+}
+
+/* iPad Pro 12.9 (1024px - 1366px) */
+@media screen and (min-width: 1025px) and (max-width: 1366px) {
+  .pin-page {
+    padding: 140px 0 100px;
+  }
+  .pin-keypad {
+    max-width: 500px;
+    gap: 28px;
+  }
+  .pin-row {
+    gap: 28px;
+  }
+  .pin-num {
+    font-size: 48px;
+  }
+  .pin-sub {
+    font-size: 13px;
+    letter-spacing: 2px;
+  }
+  .pin-title {
+    font-size: 32px;
+  }
+  .pin-dot {
+    width: 18px;
+    height: 18px;
+  }
+  .pin-dots {
+    gap: 24px;
+  }
+  .pin-delete {
+    font-size: 20px;
+  }
+}
+
+/* Large desktop (1367px+) */
+@media screen and (min-width: 1367px) {
+  .pin-page {
+    padding: 160px 0 120px;
+  }
+  .pin-keypad {
+    max-width: 420px;
+    gap: 24px;
+  }
+  .pin-row {
+    gap: 24px;
+  }
+  .pin-num {
+    font-size: 40px;
+  }
+  .pin-sub {
+    font-size: 12px;
+  }
+  .pin-title {
+    font-size: 28px;
+  }
+}
+
+/* Landscape mode - phones */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  .pin-page {
+    padding: 20px 0 20px;
+    justify-content: center;
+    gap: 20px;
+  }
+  .pin-keypad {
+    max-width: 280px;
+    gap: 8px;
+  }
+  .pin-row {
+    gap: 8px;
+  }
+  .pin-num {
+    font-size: 22px;
+  }
+  .pin-sub {
+    font-size: 7px;
+  }
+  .pin-title {
+    font-size: 16px;
+  }
+  .pin-dot {
+    width: 10px;
+    height: 10px;
+  }
+  .pin-dots {
+    gap: 12px;
+  }
+  .pin-top {
+    gap: 10px;
+  }
+}
+
+/* Landscape mode - tablets */
+@media screen and (min-height: 501px) and (max-height: 768px) and (orientation: landscape) {
+  .pin-page {
+    padding: 40px 0 40px;
+  }
+  .pin-keypad {
+    max-width: 340px;
+    gap: 12px;
+  }
+  .pin-row {
+    gap: 12px;
+  }
+  .pin-num {
+    font-size: 28px;
+  }
+}

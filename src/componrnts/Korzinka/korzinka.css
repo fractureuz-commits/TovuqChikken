@@ -1,0 +1,60 @@
+.modal-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    background-color: #006CAC;
+    width: 100%;
+    padding: 10px 0;
+    max-width: 500px;
+}
+.modal-header .header-button{
+    border: none;
+    background-color: transparent;
+    color: #fff;
+    padding-bottom: 8px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+.modal-header .header-button p{
+    margin-top: 5px;
+
+}
+.modal-header .header-button.active::after{
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    width: 70%;
+    height: 2px;
+    background: #fff;
+}
+.modal .products{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+.modal .products .product{
+    width: 32%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    margin-top: 20px;
+}
+.modal .products .product .product-image{
+    width: 90%;
+    height: 100px;
+    background-color: #006CAC;
+    border-radius: 16px;
+}
+.modal .products .product p{
+    color: #4E4E4E;
+    font-weight: bold;
+    margin-top: 5px;
+    height: 20px;
+}

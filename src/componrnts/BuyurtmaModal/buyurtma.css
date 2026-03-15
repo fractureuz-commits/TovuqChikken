@@ -1,0 +1,269 @@
+/* ===== OVERLAY ===== */
+.overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.253);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    backdrop-filter: blur(5px);
+
+}
+
+/* ===== MODAL ===== */
+.modal {
+    background: #ffffff;
+    border-radius: 16px;
+    padding: 10px;
+    width: 95%;
+    max-width: 500px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.13);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ===== MODAL TITLE ===== */
+.modal-title {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: #1a5fa8;
+    font-weight: 700;
+    font-size: 22px;
+    margin-bottom: 20px;
+    margin-top: 0;
+    gap: 10px;
+}
+
+/* ===== FORM ===== */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* ===== INPUT GROUP ===== */
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.input-group label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #222;
+}
+.input-group textarea{
+    min-width: 100%;
+    max-width: 100%;
+}
+/* ===== INPUT ROW (input + icon/button) ===== */
+.input-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+/* ===== BASE INPUT ===== */
+.input {
+    flex: 1;
+    background: #e8eef5;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: #333;
+    outline: none;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.input::placeholder {
+    color: #aab4c0;
+}
+
+.input:focus {
+    background: #dce5f0;
+}
+
+/* ===== ADD BUTTON (+) ===== */
+.input-group.add .input-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.btn-add {
+    background: #2176c7;
+    border: none;
+    border-radius: 8px;
+    width: 40px;
+    min-width: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.btn-add:hover {
+    background: #1a5fa8;
+}
+
+/* ===== REFRESH BUTTON ===== */
+.btn-refresh {
+    background: #2176c7;
+    border: none;
+    border-radius: 8px;
+    width: 40px;
+    min-width: 40px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.btn-refresh:hover {
+    background: #1a5fa8;
+}
+
+/* ===== DEBT BOX (Qarzdorlik) ===== */
+.debt-box {
+    flex: 1;
+    background: #e8eef5;
+    border-radius: 8px;
+    padding: 5px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.debt-value-black {
+    font-size: 20px;
+    color: #222;
+    font-weight: 500;
+}
+
+.debt-value-green {
+    font-size: 20px;
+    color: #22b14c;
+    font-weight: 500;
+}
+
+/* ===== DIVIDER ===== */
+.divider {
+    height: 1px;
+    background: #e0e6ef;
+    margin: 4px 0;
+}
+
+/* ===== CHECKBOX ROW (So'm / Dollar) ===== */
+.checkbox-row {
+    display: flex;
+    justify-content: end;
+    gap: 24px;
+    padding-left: 4px;
+}
+
+/* ===== NARX GRID (2x2) ===== */
+.narx-grid {
+    gap: 8px 32px;
+    padding: 6px 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* ===== CHECKBOX LABEL ===== */
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    font-size: 14px;
+    color: #333;
+}
+
+/* ===== CUSTOM CHECKBOX ===== */
+.checkbox-label input[type="checkbox"] {
+    display: none;
+}
+
+.checkbox-custom {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #bbb;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    flex-shrink: 0;
+    transition: all 0.15s;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+    background: #2176c7;
+    border-color: #2176c7;
+}
+
+.checkbox-custom svg {
+    display: none;
+}
+
+.checkbox-label input[type="checkbox"]:checked + .checkbox-custom svg {
+    display: block;
+}
+
+/* ===== BUTTON ROW ===== */
+.btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 4px;
+}
+
+/* ===== CANCEL BUTTON ===== */
+.btn-cancel {
+    flex: 1;
+    padding: 12px 0;
+    border: 2px solid #e53935;
+    border-radius: 8px;
+    background: #fff;
+    color: #e53935;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-cancel:hover {
+    background: #ffeaea;
+}
+
+/* ===== SUBMIT BUTTON ===== */
+.btn-submit {
+    flex: 1;
+    padding: 12px 0;
+    border: none;
+    border-radius: 8px;
+    background: #1a3a6b;
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    transition: background 0.2s;
+}
+
+.btn-submit:hover {
+    background: #142d55;
+}

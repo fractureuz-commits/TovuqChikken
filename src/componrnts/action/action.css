@@ -1,0 +1,129 @@
+.action{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.action .buttons {
+    display: flex;
+    align-items: center;
+    height: 50px;
+    width: 100%;
+    gap: 5px;
+    padding: 0 10px;
+}
+
+.action .buttons .button svg {
+    height: 100% !important;
+    width: 20px;
+}
+
+.action .buttons .page-ssilka {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.action .buttons .page-ssilka .button{
+    padding: 0;
+    background-color: transparent;
+    fill: #4447e2;
+    color: #4447e2;
+}
+.action .buttons .page-ssilka .button svg{
+    width: 80%;
+}
+
+.action .buttons .button{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    fill: #fff;
+}
+.action .buttons .page-ssilka p {
+    font-weight: bolder;
+    display: flex;
+    align-items: center;
+    font-size: 13px;
+    color: rgb(41, 40, 40);
+}
+
+.action .buttons .page-ssilka p:last-child {
+    color: #5154ff;
+}
+
+
+.action .buttons .button {
+    position: relative;
+    border: none;
+    background: #4447e2;
+    cursor: pointer;
+    color: #fff;
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+}
+
+.button span {
+    position: absolute;
+    top: calc(100%);
+    left: 120%;
+    transform: translateX(-50%);
+    background: #00000098;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    font-size: 13px;
+    z-index: 3;
+}
+.button svg:hover {
+    fill: #5154ff;
+    border-radius: 50%;
+}
+.action .search {
+    width: 30%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #5154ff;
+    padding: 0;
+    margin: 0;
+    border-radius: 5px;
+    background-color: #E4E4E4;
+}
+
+.action .search input {
+    width: 85%;
+    height: 100%;
+    border: none;
+    padding-left: 14px;
+    font-size: 15px;
+    border-radius: 5px;
+    background-color: transparent;
+}
+.action .search input::placeholder {
+    color: #5154ff;
+}
+.action .search input:focus {
+    border: none;
+    outline: none;
+    /* Outline ni ham o‘chiradi */
+}
+.action .search button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 15%;
+    height: 100%;
+    border: none;
+    background-color: transparent;
+    color: #5154ff;
+}   
+@media screen and (max-width: 768px) {
+    .action .search {
+        width: 50%;
+    }
+}

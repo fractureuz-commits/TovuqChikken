@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Diller</string>
+    <string name="title_activity_main">Diller</string>
+    <string name="package_name">com.Boller.app</string>
+    <string name="custom_url_scheme">com.Boller.app</string>
+</resources>

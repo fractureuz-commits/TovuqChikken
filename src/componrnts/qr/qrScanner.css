@@ -1,0 +1,186 @@
+/* ── Wrapper ── */
+.qr-wrap {
+    position: relative;
+    width: 100%;
+}
+
+/* ── QR ikonka box ── */
+.kaf-qr-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #eef2fb;
+    border-radius: 14px;
+    padding: 24px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    gap: 10px;
+}
+.kaf-qr-box:active { transform: scale(0.97); background: #e0e8f8; }
+.kaf-qr-icon { width: 72px; height: 72px; }
+.kaf-qr-hint { font-size: 12px; color: #8898b0; margin: 0; }
+
+/* ── Camera wrap ── */
+.kaf-qr-scanner-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    animation: fadeIn 0.25s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(0.97); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Camera kuticha ── */
+.qr-camera-box {
+    position: relative;
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #000;
+}
+
+.kaf-qr-live {
+    width: 100% !important;
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+/* html5-qrcode override */
+#qr-reader { border: none !important; width: 100% !important; }
+#qr-reader video { width: 100% !important; object-fit: cover; }
+#qr-reader__scan_region { border: none !important; }
+#qr-reader__dashboard { display: none !important; }
+
+/* ── Burchak chiziqlari ── */
+.qr-corner {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    z-index: 10;
+}
+.qr-corner-tl { top: 12px; left: 12px; border-top: 3px solid #fff; border-left: 3px solid #fff; border-radius: 4px 0 0 0; }
+.qr-corner-tr { top: 12px; right: 12px; border-top: 3px solid #fff; border-right: 3px solid #fff; border-radius: 0 4px 0 0; }
+.qr-corner-bl { bottom: 12px; left: 12px; border-bottom: 3px solid #fff; border-left: 3px solid #fff; border-radius: 0 0 0 4px; }
+.qr-corner-br { bottom: 12px; right: 12px; border-bottom: 3px solid #fff; border-right: 3px solid #fff; border-radius: 0 0 4px 0; }
+
+/* ── Skanerlash chizig'i ── */
+.qr-scan-line {
+    position: absolute;
+    left: 10%;
+    width: 80%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #224594, transparent);
+    z-index: 10;
+    animation: scanMove 2s ease-in-out infinite;
+}
+
+@keyframes scanMove {
+    0%   { top: 15%; }
+    50%  { top: 80%; }
+    100% { top: 15%; }
+}
+
+.qr-camera-hint {
+    font-size: 12px;
+    color: #8898b0;
+    margin: 0;
+}
+
+/* ── Stop tugmasi ── */
+.kaf-qr-stop {
+    background: #e63946;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 28px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+.kaf-qr-stop:active { transform: scale(0.96); }
+
+/* ═══════════════════════════════
+   SUCCESS ANIMATSIYA
+═══════════════════════════════ */
+.qr-success-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(4px);
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.qr-success-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 36px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    animation: popIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+    min-width: 240px;
+}
+
+@keyframes popIn {
+    from { opacity: 0; transform: scale(0.7); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+/* ── Check animatsiya ── */
+.qr-checkmark {
+    width: 72px;
+    height: 72px;
+}
+.qr-checkmark svg { width: 100%; height: 100%; }
+
+.qr-check-circle {
+    stroke: #22c55e;
+    stroke-width: 2;
+    stroke-dasharray: 166;
+    stroke-dashoffset: 166;
+    animation: drawCircle 0.5s ease forwards;
+}
+
+.qr-check-tick {
+    stroke: #22c55e;
+    stroke-width: 3;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 48;
+    stroke-dashoffset: 48;
+    animation: drawTick 0.35s ease 0.45s forwards;
+}
+
+@keyframes drawCircle {
+    to { stroke-dashoffset: 0; }
+}
+@keyframes drawTick {
+    to { stroke-dashoffset: 0; }
+}
+
+.qr-success-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a2b4a;
+    margin: 0;
+}
+
+.qr-success-data {
+    font-size: 13px;
+    color: #8898b0;
+    margin: 0;
+    text-align: center;
+    word-break: break-all;
+    max-width: 200px;
+}

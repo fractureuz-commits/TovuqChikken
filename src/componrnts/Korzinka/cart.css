@@ -1,0 +1,110 @@
+/* ═══ CART TOTAL ═══ */
+.cart-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    margin: 6px 0;
+}
+
+.cart-total-label {
+    font-size: 13px;
+    color: #555;
+}
+
+.cart-total-value {
+    font-size: 15px;
+    font-weight: 700;
+    color: #006CAC;
+}
+
+/* ═══ CART LIST ═══ */
+.cart-list {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cart-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: stretch;
+    background: #006CAC;
+    border-radius: 12px;
+    overflow: hidden;
+    min-height: 64px;
+}
+
+.cart-item-left {
+    flex: 1;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.cart-item-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+}
+
+.cart-item-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+}
+
+.cart-item-narx {
+    font-size: 13px;
+    color: rgba(255,255,255,0.9);
+}
+
+.cart-item-right {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center ;
+    padding: 8px 10px;
+    gap: 6px;
+    min-width: 80px;
+}
+
+.cart-item-date {
+    font-size: 11px;
+    color: rgba(255,255,255,0.85);
+    text-align: center;
+}
+
+.cart-item-delete {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+/* ═══ YOPISH TUGMASI ═══ */
+.cart-yopish-btn {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 64px;
+    background: #006CAC;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+
+.cart-yopish-btn:disabled {
+    opacity: 0.5;
+}

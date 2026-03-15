@@ -1,0 +1,107 @@
+/* ═══ TOVAR CARD ═══ */
+.tovar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #006CAC;
+    border-radius: 14px;
+    padding: 10px 14px 10px 10px;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+    width: 100%;
+}
+
+.tovar:active {
+    opacity: 0.85;
+    transform: scale(0.99);
+}
+
+/* ═══ SCROLL LIST ═══ */
+.tovarlar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 0;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: #bbb transparent;
+}
+
+.tovarlar::-webkit-scrollbar { width: 4px; }
+.tovarlar::-webkit-scrollbar-track { background: transparent; }
+.tovarlar::-webkit-scrollbar-thumb { background: #bbb; border-radius: 10px; }
+.tovarlar::-webkit-scrollbar-thumb:hover { background: #888; }
+
+/* ═══ IMAGE ═══ */
+.tovar-img {
+    width: 72px;
+    height: 72px;
+    border-radius: 10px;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tovar-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.tovar-img-placeholder {
+    width: 100%;
+    height: 100%;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+}
+
+/* ═══ TITLES ═══ */
+.tovarTitles {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.tovarTitles .title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tovarTitles .volume {
+    font-size: 12px;
+    color: rgba(255,255,255,0.75);
+}
+
+/* ═══ NARXLAR ═══ */
+.tovar-narxlar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.price {
+    font-size: 13px;
+    font-weight: 600;
+    color: #fff;
+    text-align: right;
+}
+
+.price-val {
+    font-size: 13px;
+    font-weight: 600;
+    color: #ffd700;
+    text-align: right;
+}

@@ -1,0 +1,8 @@
+.exel th:nth-child(2) {
+    width: 100px;
+    text-align: center;
+}
+
+.exel td:nth-child(2) {
+    text-align: center;
+}

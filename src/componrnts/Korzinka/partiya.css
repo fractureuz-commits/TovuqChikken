@@ -1,0 +1,79 @@
+.partya-card {
+    display: flex;
+    background: #006CAC;
+    color: white;
+    border-radius: 14px;
+    overflow: hidden;
+    width: 100%;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.partya-card:active {
+    opacity: 0.85;
+    transform: scale(0.98);
+}
+
+/* ═══ LEFT — Raqam ═══ */
+.partya-no {
+    width: 52px;
+    min-width: 52px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.15);
+    padding: 12px 6px;
+    gap: 2px;
+}
+
+.no-label {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.65);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.no-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1;
+}
+
+/* ═══ RIGHT — Ma'lumotlar ═══ */
+.partya-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.partya-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px;
+}
+
+.partya-row.border-bottom {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.partya-label {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.65);
+    white-space: nowrap;
+}
+
+.partya-value {
+    font-size: 13px;
+    font-weight: 500;
+    color: #fff;
+    text-align: right;
+}
+
+.partya-value.highlight {
+    color: #FFD700;
+    font-weight: 700;
+}

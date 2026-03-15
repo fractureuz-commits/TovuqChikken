@@ -1,0 +1,36 @@
+.paginator {
+    display: flex;
+    justify-content: end;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding: 0 10px;
+    width: 100%;
+}
+
+.paginator-btn {
+    width: 35px;
+    height: 35px;
+    border: 1px solid #ccc;
+    background-color: white;
+    color: #333;
+    font-size: 14px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.paginator-btn:hover {
+    background-color: #f0f0f0;
+}
+
+.paginator-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.paginator-btn.active {
+    background-color: #007bff;
+    color: white;
+    border-color: #007bff;
+}

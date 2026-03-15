@@ -1,0 +1,252 @@
+/* ===== FORM ===== */
+.mf-form {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-bottom: 8px;
+}
+
+/* ===== FIELD ===== */
+.mf-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    position: relative;
+}
+
+/* ===== LABEL ===== */
+.mf-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: #224594;
+    letter-spacing: 0.2px;
+}
+
+/* ===== INPUT ===== */
+.mf-input {
+    width: 100%;
+    height: 35px;
+    border: 1.5px solid #b8c8e8;
+    border-radius: 8px;
+    padding: 0 14px;
+    font-size: 15px;
+    color: #224594;
+    background: #fff;
+    outline: none;
+    box-sizing: border-box;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+}
+
+.mf-input:focus {
+    border-color: #224594;
+    box-shadow: 0 0 0 3px rgba(34, 69, 148, 0.1);
+}
+.select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* ===== SELECT (custom) ===== */
+.mf-select {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+    user-select: none;
+    color: #224594;
+}
+
+.mf-select span {
+    font-size: 15px;
+    color: #224594;
+}
+
+.mf-select.active {
+    border-color: #224594;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-color: transparent;
+}
+
+.mf-select-wrap {
+    position: relative;
+}
+
+/* ===== DROPDOWN ===== */
+.mf-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: #fff;
+    border: 1.5px solid #224594;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    z-index: 999;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(34, 69, 148, 0.1);
+}
+
+.mf-dropdown-item {
+    padding: 13px 14px;
+    font-size: 15px;
+    color: #4a5568;
+    cursor: pointer;
+    border-bottom: 1px solid #eef2f9;
+    transition: background 0.12s;
+}
+
+.mf-dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.mf-dropdown-item:hover,
+.mf-dropdown-item.selected {
+    background: #f0f5ff;
+    color: #224594;
+    font-weight: 600;
+}
+
+/* ===== CHEVRON LEFT (shahar) ===== */
+.mf-chevron-left {
+    justify-content: space-between;
+}
+
+/* ===== DATE ===== */
+.mf-date-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px 0 14px;
+    cursor: pointer;
+}
+
+.mf-date {
+    border: none;
+    outline: none;
+    font-size: 15px;
+    color: #224594;
+    background: transparent;
+    font-family: inherit;
+    flex: 1;
+    cursor: pointer;
+    -webkit-appearance: none;
+}
+
+/* iOS date icon yashirish */
+.mf-date::-webkit-calendar-picker-indicator {
+    opacity: 0;
+    width: 0;
+    padding: 0;
+}
+
+/* ===== 2 COLUMN ROW ===== */
+.mf-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    align-items: start;
+}
+
+/* ===== BUTTONS ===== */
+.mf-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    margin-top: 30px;
+    width: 100%;
+}
+.mf-buttons button{
+    width: 40% !important;
+}
+.mf-btn-cancel {
+    height: 46px;
+    background: transparent;
+    color: #FF0000;
+    border: 2px solid #FF0000;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.mf-btn-cancel:hover {
+    background: #FF0000;
+    color: #fff;
+}
+
+.mf-btn-save {
+    height: 46px;
+    background: #224594;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+}
+
+.mf-btn-save:hover {
+    background: #224594;
+    transform: translateY(-1px);
+}
+/* ===== FIELD ===== */
+.mf-field {
+    position: relative;
+    margin-top: 20px;
+}
+
+/* ===== LABEL — input ichida ===== */
+.mf-label {
+    position: absolute;
+    top: 50%;
+    left: 14px;
+    transform: translateY(-50%);
+    font-size: 15px;
+    font-weight: 500;
+    color: #8898b0;
+    pointer-events: none;
+    transition: all 0.2s ease;
+    background: transparent;
+    padding: 0 4px;
+    z-index: 1;
+}
+
+/* ===== FOCUS yoki VALUE bor — tepaga chiqadi ===== */
+.mf-field:focus-within .mf-label,
+.mf-field.has-value .mf-label {
+    top: 0;
+    font-size: 11px;
+    font-weight: 700;
+    color: #224594;
+    background: #fff;        /* input border ustiga chiqadi */
+    transform: translateY(-50%);
+}
+
+/* ===== INPUT ===== */
+
+.mf-input:focus {
+    border-color: #224594;
+    box-shadow: 0 0 0 3px rgba(34, 69, 148, 0.08);
+}
+.mf-field .spes-lebel{
+    position: absolute;
+    top: -10px;
+    left: 10px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #224594;
+    pointer-events: none;
+    white-space: nowrap;
+    font-weight: bold;
+    background-color: #ffff;
+    padding: 0 5px;
+}
