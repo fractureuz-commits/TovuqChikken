@@ -5,7 +5,6 @@ import Clock from "../componrnts/clock/clock";
 import { getUser } from "../leyout/login/auth";
 import avaimage from '../../images/avatar.png';
 import Logo from '../../images/logo.svg';
-import { logoutUser } from "../leyout/login/auth";
 
 import { useState, useRef, useEffect } from "react";
 function MobilHeader() {

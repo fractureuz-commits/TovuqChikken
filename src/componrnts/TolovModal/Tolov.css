@@ -1,0 +1,133 @@
+.tolov-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+}
+/* ═══ TABS ═══ */
+.tolov-tabs {
+    display: flex;
+    width: 100%;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #006CAC;
+    margin-top: 10px;
+}
+
+.tolov-tab {
+    flex: 1;
+    padding: 10px;
+    font-size: 15px;
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    background: #fff;
+    color: #006CAC;
+}
+
+.tolov-tab.active {
+    background: #006CAC;
+    color: #fff;
+}
+
+/* ═══ SECTION ═══ */
+.tolov-section {
+    width: 100%;
+    background: #D9D9D9;
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tolov-convert-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.tolov-eq {
+    font-size: 20px;
+    color: #006CAC;
+    font-weight: 700;
+    padding: 0 4px;
+}
+
+.tolov-suffix-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+.tolov-suffix {
+    font-size: 13px;
+    color: #006CAC;
+    font-weight: 600;
+    white-space: nowrap;
+    min-width: 30px;
+}
+
+.tolov-jami {
+    color: #006CAC;
+    font-weight: 700;
+    font-size: 15px;
+    text-align: right;
+}
+
+.tolov-textarea {
+    resize: none;
+    width: 100%;
+    font-size: 14px;
+    min-height: 70px;
+}
+
+.math-section {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    gap: 4px;
+}
+
+.math-section .left {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.math-section .right {
+    width: 38%;
+    display: flex;
+    align-items: center;
+}
+
+.math-section svg {
+    flex-shrink: 0;
+    margin-top: 20px;
+}
+
+
+.tolov-section .currency{
+    display: flex;
+    justify-content: space-between;
+    align-items: center; 
+    color: #006CAC;
+}
+.tolov-section .currency span{
+    padding-left: 5px;
+    font-weight: bold;
+}
+.tolov-section .currency .input{
+    font-weight: bold;
+    text-align: center;
+}
+.tolov-row .input{
+    font-weight: bold;
+}

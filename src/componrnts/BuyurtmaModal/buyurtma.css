@@ -41,7 +41,9 @@
 /* ===== FORM ===== */
 form {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
     gap: 14px;
 }
 
@@ -79,6 +81,7 @@ form {
     color: #333;
     outline: none;
     width: 100%;
+    border: 1px solid #2176c7;
     box-sizing: border-box;
 }
 
@@ -225,6 +228,7 @@ form {
 
 /* ===== BUTTON ROW ===== */
 .btn-row {
+    width: 100%;
     display: flex;
     gap: 12px;
     margin-top: 4px;

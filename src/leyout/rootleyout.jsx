@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Header from '../header/header';
 import { Outlet } from 'react-router';
-import Footer from '../header/footer';
-import { logoutUser } from '../leyout/login/auth';
 import Swal from "sweetalert2";
 import MobilHeader from '../header/MobilHeader';
 import { App as CapApp } from '@capacitor/app';
@@ -54,7 +51,6 @@ function Rootleyout() {
 
       // 401 va invalid token
       if (response.status === 401 || (data && data.detail === "Invalid token.")) {
-        logoutUser();
 
         Swal.fire({
           icon: 'warning',

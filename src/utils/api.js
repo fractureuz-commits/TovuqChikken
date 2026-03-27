@@ -2,30 +2,38 @@ const BASE_URL = import.meta.env.PROD
     ? "http://192.168.1.103"
     : "";
 
-// ✅ POST uchun BaseUrl
-export const BaseUrl = import.meta.env.PROD
-    ? "http://192.168.1.103/"
-    : "";
+const API_PREFIX = import.meta.env.PROD ? "" : "/tovuq-api";
 
 const USERNAME = "Mobil";
 const PASSWORD = "12345";
-
 const toBase64 = (str) => btoa(unescape(encodeURIComponent(str)));
 
 export const AUTH_HEADER = {
     "Authorization": `Basic ${toBase64(`${USERNAME}:${PASSWORD}`)}`,
 };
 
-export const API = {
-    products: `${BASE_URL}/tovuq-api/tovuq/hs/group_tovar/get_group_tovar`,
-    kontragent: `${BASE_URL}/tovuq-api/tovuq/hs/kontragent/get_kontragent`,
-    Tovar: `${BASE_URL}/tovuq-api/tovuq/hs/tovar/get_tovar`,
-    kurs: `${BASE_URL}/tovuq/hs/konsta/get_kurs`,  // ← qo'shildi
-
+// ✅ URL yasash — ikki qo'shaloq slash bo'lmasin
+const buildUrl = (path) => {
+    const base = `${BASE_URL}${API_PREFIX}`;
+    const cleanPath = path.startsWith("/") ? path : `/${path}`;
+    return `${base}${cleanPath}`;
 };
 
+export const API = {
+    products:   buildUrl("/tovuq/hs/group_tovar/get_group_tovar"),
+    kontragent: buildUrl("/tovuq/hs/kontragent/get_kontragent"),
+    Tovar:      buildUrl("/tovuq/hs/tovar/get_tovar"),
+    kurs:       buildUrl("/tovuq/hs/konsta/get_kurs"),
+    Xodim:      buildUrl("/tovuq/hs/xodim/get_xodim"),
+    Region:     buildUrl("/tovuq/hs/region/get_region"),
+};
+
+// ✅ GET
 export const apiFetch = (endpoint) => {
-    return fetch(API[endpoint], {
+    const url = API[endpoint];
+    if (!url) throw new Error(`Noma'lum endpoint: ${endpoint}`);
+
+    return fetch(url, {
         method: "GET",
         headers: {
             "Content-Type": "application/json",
@@ -36,8 +44,12 @@ export const apiFetch = (endpoint) => {
         return res.json();
     });
 };
+
+// ✅ POST — path dan / boshlanishi shart emas
 export const apiPost = (path, body) => {
-    return fetch(`${BaseUrl}${path}`, {
+    const url = buildUrl(path);
+
+    return fetch(url, {
         method: "POST",
         headers: {
             "Content-Type": "application/json",

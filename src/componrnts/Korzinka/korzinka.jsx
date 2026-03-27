@@ -25,7 +25,7 @@ function ProductCard({ item, search, highlightText, onClick, KorzinkaModal }) {
         </div>
     );
 }
-export default function KorzinkaModal({ onClose, handleModal, KorzinkaModal, FormData ,allClose}) {
+export default function KorzinkaModal({ onClose, handleModal, KorzinkaModal, allClose }) {
     const [search, setSearch] = useState('');
     const [ProductGroup, setProductGroup] = useState([]);
     const [ShtrixModal, setShtrixModal] = useState(false);
@@ -35,6 +35,10 @@ export default function KorzinkaModal({ onClose, handleModal, KorzinkaModal, For
     const [Productadd, setProductadd] = useState(false);
     const [ProductGroupLoading, setProductGroupLoading] = useState(true);
     const [ProductGroupError, setProductGroupError] = useState(null);
+    const CART_KEY = "buyurtma_cart";
+    const FormData_KEY = "formData";
+    const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
+    const Buyurtma_cart = JSON.parse(localStorage.getItem("buyurtma_cart") || "{}");
 
     useEffect(() => {
         loadProducts()
@@ -78,14 +82,7 @@ export default function KorzinkaModal({ onClose, handleModal, KorzinkaModal, For
                     onKoriznka={() => KorzinkaModal?.()}
                     onSkaner={() => setShtrixModal(prev => !prev)}
                 />
-                <div className="modal" style={{
-                    height: '95vh',
-                    width: '100%',
-                    borderRadius: "0px",
-                    display: 'flex',
-                    flexDirection: 'column'
-
-                }}>
+                <div className="modal" style={{ height: '100vh', width: '100%', borderRadius: "0px", paddingTop: '25px' }}>
                     <div className="modal-title" style={{
                         justifyContent: 'space-between',
                         margin: '0px 0',
@@ -93,7 +90,31 @@ export default function KorzinkaModal({ onClose, handleModal, KorzinkaModal, For
                         alignItems: 'center'
                     }}>
                         <button
-                            onClick={handleModal}
+                            onClick={async () => {
+                                const cartData = localStorage.getItem(CART_KEY);
+                                const formData = localStorage.getItem(FormData_KEY);
+
+                                if (cartData || formData) {
+                                    const result = await Swal.fire({
+                                        title: "Chiqishni xohlaysizmi?",
+                                        text: "Chiqsangiz, saqlangan buyurtma ma’lumotlari o‘chiriladi.",
+                                        icon: "warning",
+                                        showCancelButton: true,
+                                        confirmButtonText: "Ha, chiqish",
+                                        cancelButtonText: "Bekor qilish",
+                                        confirmButtonColor: "#d33",
+                                        cancelButtonColor: "#3085d6",
+                                    });
+
+                                    if (result.isConfirmed) {
+                                        localStorage.removeItem(CART_KEY);
+                                        localStorage.removeItem(FormData_KEY);
+                                        handleModal();
+                                    }
+                                } else {
+                                    handleModal();
+                                }
+                            }}
                             style={{
                                 background: 'none',
                                 border: 'none',
@@ -172,6 +193,8 @@ export default function KorzinkaModal({ onClose, handleModal, KorzinkaModal, For
                     onKoriznka={handleModal}
                     FormData={FormData}
                     allClose={allClose}
+                    onSkaner={() => setShtrixModal(prev => !prev)}
+                    KorzinkaModal={KorzinkaModal}
                 />
             }
 

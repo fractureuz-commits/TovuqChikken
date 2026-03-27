@@ -19,34 +19,38 @@ export function Tovar({ item, search, highlightText, onClick }) {
 
     const name = item?.name || item?.n || "";
     return (
-        <div className="tovar" onClick={() => onClick?.(item)}>
-            <div className="tovar-img">
-                {imgSrc
-                    ? <img src={imgSrc} alt={name} />
-                    : <div className="tovar-img-placeholder" />
-                }
-            </div>
-            <div className="tovarTitles">
-                <div className="title">
-                    {highlightText ? highlightText(name, search) : name}
+        <>
+
+            <div className="tovar" onClick={() => onClick?.(item)}>
+
+                <div className="tovar-img">
+                    {imgSrc
+                        ? <img src={imgSrc} alt={name} />
+                        : <div className="tovar-img-placeholder" />
+                    }
                 </div>
-                {item?.hajm && (
-                    <div className="volume">{item.hajm} {item?.ul_bir}</div>
-                )}
-                <div className="tovar-narxlar">
-                    {currentNarx > 0 && (
-                        <span className={isVal ? "price-val" : "price"}>
-                            {currentNarx.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} {isVal ? "$" : "so'm"}
-                        </span>
+                <div className="tovarTitles">
+                    <div className="title">
+                        {highlightText ? highlightText(name, search) : name}
+                    </div>
+                    {item?.hajm && (
+                        <div className="volume">{item.hajm} {item?.ul_bir}</div>
                     )}
+                    <div className="tovar-narxlar">
+                        {currentNarx > 0 && (
+                            <span className={isVal ? "price-val" : "price"}>
+                                {currentNarx.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} {isVal ? "$" : "so'm"}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
 }
 
 // ═══ TOVAR MODAL ═══
-export default function TovarModal({ onClose, groupCode }) {
+export default function TovarModal({ onClose, groupCode ,KorzinkaModal}) {
     const [search, setSearch] = useState('');
     const [ProductGroup, setProductGroup] = useState([]);
     const [ShtrixModal, setShtrixModal] = useState(false);
@@ -106,9 +110,9 @@ export default function TovarModal({ onClose, groupCode }) {
             const body = {
                 code_product: selectedItem.code,
             };
-            const result = await apiPost("tovuq-api/tovuq/hs/tovar/get_partya", body);
+            const result = await apiPost("tovuq/hs/tovar/get_partya", body);
             setProductData(result);
-            setPartiyaSelectModal(true);
+            setPartiyaSelectModal(true);z
 
         } catch (err) {
             console.error("❌ Xato:", err.message);
@@ -116,14 +120,15 @@ export default function TovarModal({ onClose, groupCode }) {
     };
     return (
         <>
+            
             <div className="overlay" style={{ flexDirection: 'column' }}>
-                <div className="modal" style={{
-                    height: '100vh',
-                    width: '100%',
-                    borderRadius: "0px",
-                    display: 'flex',
-                    flexDirection: 'column'
-                }}>
+                <ModalHeader
+                activeTab="sotib"
+                onSotib={() => { }}
+                onKoriznka={() => KorzinkaModal?.()}
+                onSkaner={() => setShtrixModal(prev => !prev)}
+            />
+                <div className="modal" style={{ height: '100vh', width: '100%', borderRadius: "0px", paddingTop: '25px' }}>
                     {/* ✅ Orqaga + title */}
                     <div className="modal-title" style={{
                         justifyContent: 'space-between',

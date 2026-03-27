@@ -1,30 +1,29 @@
-import "./MijozSelect.css";
 import { useState, useEffect, useMemo } from "react";
 import { apiFetch } from "../../utils/api";
-import { loadKontragent } from "../../utils/storage";
+import { loadRegion } from "../../utils/storage";
 import { apiPost } from "../../utils/api";
     
-export default function MijozSelect({TD, onClose,FormData, setFormData, setKontragent, kontragent }) {
+export default function RegionSelect({ onClose,FormData, setFormData, setRegion, Region  }) {
     const [search, setSearch] = useState('');
-    const [kontragentLoading, setKontragentLoading] = useState(true);
-    const [kontragentError, setKontragentError] = useState(null);
+    const [RegionLoading, setRegionLoading] = useState(true);
+    const [RegionError, setRegionError] = useState(null);
 
     useEffect(() => {
-        loadKontragent()
+        loadRegion()
             .then(data => {
                 if (!data || data.length === 0) {
-                    setKontragent([]);
+                    setRegion([]);
                     return;
                 }
-                setKontragent(data);
+                setRegion(data);
             })
-            .catch(err => setKontragentError(err.message))
-            .finally(() => setKontragentLoading(false));
+            .catch(err => setRegionError(err.message))
+            .finally(() => setRegionLoading(false));
     }, []);
     const filtered = useMemo(() => {
-        if (!search.trim()) return kontragent; // ✅ search yo'q → paginated visible
+        if (!search.trim()) return Region; // ✅ search yo'q → paginated visible
         const tokens = search.toLowerCase().trim().split(/\s+/);
-        return kontragent.filter((doc) => {
+        return Region.filter((doc) => {
             const haystack = [
                 doc.name,
                 doc.tel_1,
@@ -38,7 +37,7 @@ export default function MijozSelect({TD, onClose,FormData, setFormData, setKontr
                 .toLowerCase();
             return tokens.every((token) => haystack.includes(token));
         });
-    }, [search, kontragent]);
+    }, [search, Region]);
     const highlightText = (text, search) => {
         if (!search?.trim() || typeof text !== "string") return text;
 
@@ -63,22 +62,6 @@ export default function MijozSelect({TD, onClose,FormData, setFormData, setKontr
             )
         );
     };
-    const handleSubmit = async (id) => {
-
-        try {
-            const result = await apiPost("tovuq/hs/kontragent/ost_kontragent", {
-                code: id,
-            });
-            setFormData(prev => ({
-                ...prev,
-                dt_kt_sum: result.SUM,
-                dt_kt_val: result.VAL,
-            }));
-
-        } catch (err) {
-            console.error("❌ Xato:", err.message);
-        }
-    };    
     return (
         <div className="overlay">
             <div className="modal" style={{ height: '95vh' }}>
@@ -95,7 +78,7 @@ export default function MijozSelect({TD, onClose,FormData, setFormData, setKontr
                             </clipPath>
                         </defs>
                     </svg>
-                    <p>Mijozlar royxati</p>
+                    <p>Regionlar royxati</p>
                 </div>
                 <div className="search">
                     <input
@@ -121,17 +104,11 @@ export default function MijozSelect({TD, onClose,FormData, setFormData, setKontr
                     {filtered.map((item, index) => (
                         <div className="select" key={item.code}
                             onClick={() => {
-                                if(TD !== false) handleSubmit(item.code)
                                 setFormData(prev => ({
                                     ...prev,
-                                    kontragent: item.name,
-                                    kontragent_id: item.code,
-                                    hudud: item.hudud_name,
-                                    hudud_id: item.hudud_id || '',
-                                    tel_1: item.tel_1,
-                                    Hudud_code: item.hudud_code,
-                                    Hudud_name: item.hudud_name,
-                                    Mijoz_code: item.code,
+                                    Hudud_code: item.code,
+                                    Hudud_name: item.name,
+
                                 }));
                                 onClose()
                             }}

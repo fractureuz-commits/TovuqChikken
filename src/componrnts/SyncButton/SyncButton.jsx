@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import {
     syncAndSave, cancelSync,
@@ -6,6 +6,8 @@ import {
     saveKontragent, saveTovar,
     syncAndSaveTovar,
     syncKurs,
+    saveXodim,
+    saveRegion,
 } from '../../utils/storage';
 import { apiFetch } from "../../utils/api";
 
@@ -68,22 +70,25 @@ const SyncButton = ({ onSyncComplete }) => {
                 });
 
                 // ✅ 5 — Kontragent va Tovar parallel yuklaymiz
-                const [kontragentData, TovarData, _kurs] = await Promise.all([
+                const [kontragentData, TovarData, _kurs, Xodim ,Region] = await Promise.all([
                     apiFetch("kontragent"),
                     apiFetch("Tovar"),
-                    syncKurs(),              // ← qo'shildi
-
+                    syncKurs(),          // ← 3-chi = _kurs ✅
+                    apiFetch("Xodim"),   // ← 4-chi = Xodim ✅
+                    apiFetch("Region"),   // ← 4-chi = Xodim ✅
                 ]);
 
                 await saveKontragent(kontragentData);
                 await syncAndSaveTovar(TovarData);
+                await saveXodim(Xodim);
+                await saveRegion(Region);
                 // ✅ 6 — Muvaffaqiyat
                 Swal.fire({
                     icon: "success",
                     title: "Yangilandi!",
                     text: `${products.length} ta mahsulot saqlandi.`,
                     confirmButtonColor: "#1a2b4a",
-                    timer: 2000,
+                    timer: 1000,
                     timerProgressBar: true,
                     showConfirmButton: false,
                 });
@@ -122,6 +127,22 @@ const SyncButton = ({ onSyncComplete }) => {
                 setProgress({ current: 0, total: 0 });
             });
     };
+    const [dots, setDots] = useState("");
+    useEffect(() => {
+        if (!syncing) {
+            setDots("");
+            return;
+        }
+
+        const interval = setInterval(() => {
+            setDots(prev => {
+                if (prev === "...") return "";
+                return prev + ".";
+            });
+        }, 500);
+
+        return () => clearInterval(interval);
+    }, [syncing]);
 
     // ✅ To'xtatish
     const handleCancel = async () => {
@@ -155,27 +176,29 @@ const SyncButton = ({ onSyncComplete }) => {
     return (
         <>
             <button className="button" onClick={!syncing ? handleSync : undefined} disabled={syncing}>
-                <svg
-                    width="84" height="84"
-                    viewBox="0 0 84 84"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    style={{ animation: syncing ? "spin 1s linear infinite" : "none" }}
-                >
+
+                <svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g clipPath="url(#clip0_2001_92)">
-                        <path d="M70 38.5004C69.144 32.3412 66.2867 26.6342 61.8682 22.2587C57.4497 17.8831 51.7151 15.0817 45.5478 14.2859C39.3805 13.4901 33.1227 14.7441 27.7382 17.8548C22.3537 20.9655 18.1414 25.7602 15.75 31.5004M14 17.5004V31.5004H28" stroke="white" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M14 45.5C14.856 51.6592 17.7133 57.3662 22.1318 61.7418C26.5503 66.1173 32.2849 68.9188 38.4522 69.7146C44.6195 70.5103 50.8773 69.2563 56.2618 66.1456C61.6463 63.035 65.8586 58.2402 68.25 52.5M70 66.5V52.5H56" stroke="white" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+                        <g clipPath="url(#clip1_2001_92)">
+                            <path d="M24.5 63.0007C20.1329 63.0007 15.9448 61.3413 12.8568 58.3876C9.76884 55.4339 8.03404 51.4278 8.03404 47.2507C8.03404 43.0735 9.76884 39.0675 12.8568 36.1138C15.9448 33.1601 20.1329 31.5007 24.5 31.5007C25.5313 26.9058 28.5486 22.8679 32.888 20.2752C35.0367 18.9914 37.4452 18.1011 39.9762 17.6551C42.5071 17.2091 45.1109 17.2161 47.6388 17.6757C50.1668 18.1353 52.5694 19.0386 54.7095 20.3339C56.8496 21.6292 58.6852 23.2912 60.1116 25.2249C61.538 27.1587 62.5273 29.3264 63.0228 31.6043C63.5184 33.8821 63.5106 36.2255 63 38.5007H66.5C69.7489 38.5007 72.8647 39.7913 75.162 42.0886C77.4593 44.3859 78.75 47.5018 78.75 50.7507C78.75 53.9996 77.4593 57.1154 75.162 59.4127C72.8647 61.7101 69.7489 63.0007 66.5 63.0007H63" stroke="white" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M54 64.9995L43.5 75.4995L33 64.9995" stroke="white" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M43.4047 75.5V44" stroke="white" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+                        </g>
                     </g>
                     <defs>
                         <clipPath id="clip0_2001_92">
                             <rect width="84" height="84" fill="white" />
                         </clipPath>
+                        <clipPath id="clip1_2001_92">
+                            <rect width="84" height="84" fill="white" />
+                        </clipPath>
                     </defs>
                 </svg>
-                {syncing && progress.total > 0 && (
+
+                {/* {syncing && progress.total > 0 && (
                     <small>{progress.current}/{progress.total}</small>
-                )}
-                <p>{syncing ? "Yuklanmoqda..." : "Yangilash"}</p>
+                )} */}
+                <p>{syncing ? `Yuklanmoqda${dots}` : "Yuklash"}</p>
 
                 {/* {syncing && (
                     <div

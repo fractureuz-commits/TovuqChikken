@@ -50,10 +50,8 @@ function QrModal({setProductadd, onScan, onClose, setshtrixData, shtrixData, han
                     handleClose();
                     setProductadd(true)
                 } catch (err) {
-
                     console.error("❌ Xato:", err);
-                    alert("1C xato qaytardi");
-
+                    alert("1C xato qaytardi" , err);
                     scannedSet.current.delete(decodedText);
 
                 } finally {
@@ -88,34 +86,6 @@ function QrModal({setProductadd, onScan, onClose, setshtrixData, shtrixData, han
         html5QrRef.current = null;
         safeStop(s);
         handleModal?.();
-    };
-
-    // ✅ Saqlab yuborish — skanlar ro'yxatini yuboradi
-    const handleSubmit = async () => {
-        if (shtrixData.length === 0) {
-            setError("Hech narsa skanerlanmagan");
-            return;
-        }
-
-        try {
-            const body = {
-                items: shtrixData.map((item) => ({
-                    code: item.text,
-                    ...item.tovar   // ← 1C dan kelgan ma'lumotlar
-                }))
-            };
-
-            console.log("📤 Yuborilmoqda:", body);
-
-            const result = await apiPost("tovuq/hs/buyurtma/add_buyurtma", body);
-            console.log("✅ Saqlandi:", result);
-
-            handleClose();
-
-        } catch (err) {
-            console.error("❌ Xato:", err.message);
-            setError("Xato: " + err.message);
-        }
     };
     return (
         <div className="qr-modal-overlay">

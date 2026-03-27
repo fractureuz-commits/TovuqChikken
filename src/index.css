@@ -21,12 +21,23 @@ html {
   touch-action: manipulation;
 }
 
+.app-safe {
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: env(safe-area-inset-top);
+  padding-right: env(safe-area-inset-right);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+
+  background: #006CAC;
+}
+
 body {
   min-height: 100vh;
   height: 100vh;
-  max-height: 100vh;
+  max-height: 98vh;
   overflow: hidden;
-  background: #fff;
+  background: #006CAC;
   backdrop-filter: blur(48px);
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -36,13 +47,16 @@ main {
   overflow-y: auto;
   height: 100vh;
 }
-.mobil-container{
+
+.mobil-container {
   width: 95%;
+  max-width: 700px;
   margin: 0 auto;
 }
+
 .container main {
   width: 100%;
-} 
+}
 
 .flex-colum {
   flex-direction: column;
@@ -298,3 +312,4 @@ mark {
   padding: 2px;
   border-radius: 5px;
 }
+

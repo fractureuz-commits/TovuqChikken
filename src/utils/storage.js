@@ -8,6 +8,8 @@ const FILES = {
     products: "products.json",
     kontragent: "kontragent.json",
     Tovar: "tovar.json",
+    Xodim: "xodim.json",  // ← qo'shildi
+    Region: "region.json",  // ← qo'shildi
     // yangi qo'shish uchun:
     // orders:   "orders.json",
     // warehouse: "warehouse.json",
@@ -72,7 +74,7 @@ const saveImage = async (code, base64) => {
             path: CACHE_DIR,
             directory: Directory.Data,
             recursive: true,
-        }).catch(() => {});
+        }).catch(() => { });
 
         // base64 → blob
         const byteCharacters = atob(clean);
@@ -209,7 +211,10 @@ export const loadKontragent = () => loadData("kontragent");
 export const saveKontragent = (data) => saveData("kontragent", data);
 export const loadTovar = () => loadData("Tovar");
 export const saveTovar = (data) => saveData("Tovar", data);
-
+export const loadXodim = () => loadData("Xodim");
+export const saveXodim = (data) => saveData("Xodim", data);
+export const loadRegion = () => loadData("Region");
+export const saveRegion = (data) => saveData("Region", data);
 // Rasm o'qish (RAM cache bilan)
 export const loadImage = async (imagePath) => {
     if (!imagePath) return null;
@@ -299,25 +304,25 @@ export const syncAndSaveTovar = async (apiData, onProgress) => {
                 }
 
                 return {
-                    code:             item.code,
-                    name:             item.name || "Nomsiz",
-                    i:                imagePath,           // ← rasm path
+                    code: item.code,
+                    name: item.name || "Nomsiz",
+                    i: imagePath,           // ← rasm path
                     group_tovar_code: item.group_tovar_code || "",
                     group_tovar_name: item.group_tovar_name || "",
-                    narh_sum1:        item.narh_sum1 || "0",
-                    narh_sum2:        item.narh_sum2 || "0",
-                    narh_sum3:        item.narh_sum3 || "0",
-                    narh_sum4:        item.narh_sum4 || "0",
-                    narh_val1:        item.narh_val1 || "0",
-                    narh_val2:        item.narh_val2 || "0",
-                    narh_val3:        item.narh_val3 || "0",
-                    narh_val4:        item.narh_val4 || "0",
-                    valyuta_turi:     item.valyuta_turi || "1",
-                    hajm:             item.hajm || "",
-                    ul_bir:           item.ul_bir || "",
-                    qoldiq:           item.qoldiq || "0",
-                    date_invoys:      item.date_invoys || "",
-                    number_invoys:    item.number_invoys || "",
+                    narh_sum1: item.narh_sum1 || "0",
+                    narh_sum2: item.narh_sum2 || "0",
+                    narh_sum3: item.narh_sum3 || "0",
+                    narh_sum4: item.narh_sum4 || "0",
+                    narh_val1: item.narh_val1 || "0",
+                    narh_val2: item.narh_val2 || "0",
+                    narh_val3: item.narh_val3 || "0",
+                    narh_val4: item.narh_val4 || "0",
+                    valyuta_turi: item.valyuta_turi || "1",
+                    hajm: item.hajm || "",
+                    ul_bir: item.ul_bir || "",
+                    qoldiq: item.qoldiq || "0",
+                    date_invoys: item.date_invoys || "",
+                    number_invoys: item.number_invoys || "",
                 };
             })
         );
@@ -341,6 +346,7 @@ export const syncAndSaveTovar = async (apiData, onProgress) => {
 
     return tovars;
 };
+
 export const syncKurs = async () => {
     try {
         const BASE_URL = import.meta.env.PROD

@@ -20,7 +20,7 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const result = await apiPost("tovuq-api/tovuq/hs/kontragent/get_kontragent", FormDataMijoz);
+            const result = await apiPost("tovuq/hs/kontragent/get_kontragent", FormDataMijoz);
             console.log("✅ Javob:", result);
 
             if (result.success) {
@@ -72,7 +72,7 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
                     <div className="modal-title">Yangi mijoz qo’shish</div>
                     <form onSubmit={handleSubmit}>
                         {/* Mijoz nomi */}
-                        <div className="input-group add">
+                        <div className="input-group add" style={{width:'100%'}}>
                             <label>Mijoz nomi</label>
                             <div className="input-row">
                                 <input
@@ -86,7 +86,7 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
                         </div>
 
                         {/* Telefon raqami */}
-                        <div className="input-group">
+                        <div className="input-group" style={{width:'100%'}}>
                             <label>Telefon raqami </label>
                             <input
                                 type="tel"
@@ -96,7 +96,7 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
                                 placeholder=""
                             />
                         </div>
-                        <div className="input-group">
+                        <div className="input-group" style={{width:'100%'}}>
                             <label>Telefon raqami 2</label>
                             <input
                                 type="tel"
@@ -107,7 +107,7 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
                             />
                         </div>
                         {/* Hudud nomi */}
-                        <div className="input-group">
+                        <div className="input-group" style={{width:'100%'}}>
                             <label>Manzil</label>
                             <input
                                 type="text"
@@ -119,7 +119,7 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
                         </div>
 
                         {/* Location */}
-                        <div className="input-group add">
+                        <div className="input-group add" style={{width:'100%'}}>
                             <label>Location</label>
                             <div className="input-row">
                                 <input

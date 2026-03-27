@@ -4,14 +4,17 @@ import Swal from "sweetalert2";
 import { loadImage, loadTovar } from "../../utils/storage";
 import { getNarx, formatNarx } from "../../utils/narx";
 import { format, parse } from "date-fns";
+import { getUser } from "../../leyout/login/auth";
 
 export default function ProductQoshish({ onClose, item, handlePartiya }) {
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
-    const [quantity, setQuantity] = useState(0);
+    const [quantity, setQuantity] = useState(1);
     const [imgSrc, setImgSrc] = useState(null);
     const [loading, setLoading] = useState(false);
     const { narx: currentNarx, isVal } = getNarx(item, FormData);
     const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
+    const user = getUser();
+    
     const jami = formatNarx(currentNarx * quantity); // ← formatNarx import dan
     useEffect(() => {
         const getImage = async () => {
@@ -32,7 +35,7 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
     }, [item?.i, item?.code]);
 
     const remainingQoldiq = useMemo(() => {
-        const itemId = `${item?.date_invoys}_${item?.code}`;
+        const itemId = `${item?.date_invoys}_${item?.code}_${item.term}`;
 
         let cart;
         try {
@@ -53,17 +56,24 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
     }, [item?.date_invoys, item?.code]);
 
     const handleQuantity = (type) => {
-        setQuantity(prev => {
+        setQuantity((prev) => {
+            const current = parseFloat(prev || 0);
+
+            let newValue = current;
+
             if (type === "plus") {
-                const next = parseFloat((prev + 1).toFixed(2));
-                return next > remainingQoldiq ? prev : next;
+                newValue = current + 1;
+            } else if (type === "minus") {
+                newValue = current - 1;
             }
-            if (type === "minus") return prev > 0 ? parseFloat((prev - 1).toFixed(2)) : 0;
-            return prev;
+
+            newValue = Math.max(0, newValue);
+            newValue = Math.min(newValue, remainingQoldiq);
+
+            return newValue.toString();
         });
     };
-
-    const handleBuyurtma = async () => {        
+    const handleBuyurtma = async () => {
         if (quantity <= 0) return;
 
         if (quantity > remainingQoldiq) {
@@ -92,6 +102,7 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                     ost_val: FormData.dt_kt_val,
                     vid_val: FormData?.valyuta_turi,
                     narh_turi: FormData?.narh_turi,
+                    user_code: user?.code,
                     tovarlar: [],
                 };
             }
@@ -145,6 +156,7 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                     narh_val4: item.narh_val4,
                     ul_bir: item.ul_bir,
                     valyuta_turi: item.valyuta_turi,
+                    term: item.term,
                 });
             }
             localStorage.setItem("buyurtma_cart", JSON.stringify(existing));
@@ -153,13 +165,12 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                 title: "Qo'shildi!",
                 text: `${item?.name} — ${quantity} ${item?.ul_bir}`,
                 confirmButtonColor: "#006CAC",
-                timer: 1500,
+                timer: 500,
                 timerProgressBar: true,
                 showConfirmButton: false,
             });
-
-            handlePartiya();
-
+            if (handlePartiya) handlePartiya();
+            onClose()
         } finally {
             setLoading(false);
         }
@@ -185,30 +196,31 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                         <h2 className="kd-name">{item?.name}</h2>
 
                         <div className="kd-section">
-                            <label className="kd-label">Mahsulot narxi</label>
+                            <label className="kd-label">Mahsulot narxi:</label>
                             <div className="kd-narx-input">
                                 <input
                                     type="text"
                                     readOnly
-                                    value={formatNarx(currentNarx)}
+                                    style={{ textAlign: 'center', fontWeight: "bold" }}
+                                    value={`${formatNarx(currentNarx)}  ${isVal ? "$" : "so'm"}`}
                                     className="kd-input"
                                 />
-                                <span className="kd-currency">
-                                    {isVal ? "$" : "so'm"}
-                                </span>
                             </div>
                         </div>
-
                         <div className="kd-qoldiq-row">
                             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                <p className="kd-qoldiq-title">Mahsulot qoldig'i</p>
+                                <p style={{ fontSize: '18px' }} className="kd-qoldiq-title">Mahsulot qoldig'i</p>
                                 <span className="kd-qoldiq-value" style={{ fontSize: '20px' }}>
                                     {remainingQoldiq} {item?.ul_bir}
                                 </span>
                             </div>
+                            <span className="kd-qoldiq-date" style={{ fontSize: '14px' }}>
+                                Yaroqlilik Muddati: {item?.term}
+                            </span>
                             <span className="kd-qoldiq-date">
                                 Partiya: {item?.date_invoys} || {item?.number_invoys}
                             </span>
+
                         </div>
 
                         <div className="kd-counter">
@@ -219,15 +231,25 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                                 </svg>
                             </button>
                             <input
-                                type="text"
+                                type="tel"
                                 value={quantity}
                                 onChange={(e) => {
                                     const value = e.target.value;
-                                    if (!/^\d*$/.test(value)) return;
-                                    const val = Math.max(0, Number(value));
-                                    setQuantity(val > remainingQoldiq ? remainingQoldiq : val);
+
+                                    // faqat son va nuqtadan keyin max 3 ta raqam
+                                    if (!/^\d*\.?\d{0,3}$/.test(value)) return;
+
+                                    if (value === "") {
+                                        setQuantity("");
+                                        return;
+                                    }
+
+                                    const val = Math.max(0, parseFloat(value));
+
+                                    setQuantity(val > remainingQoldiq ? String(remainingQoldiq) : value);
                                 }}
                                 className="kd-counter-input"
+                                inputMode="decimal"
                             />
                             <button className="kd-counter-btn" onClick={() => handleQuantity("plus")}>
                                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none">

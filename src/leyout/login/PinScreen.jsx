@@ -1,180 +1,323 @@
+// ✅ To'g'ri — barcha import yuqorida
 import { useState, useEffect } from "react";
 import { checkPin } from "../login/auth";
-import { useBiometric } from "./useBiometric";
+import { apiFetch } from "../../utils/api";        // ← yuqoriga
+import Swal from "sweetalert2";
 import './PinScreen.css';
-
-const MAX_ATTEMPTS = 5;
+import {
+    syncAndSave, cancelSync,
+    checkInternet, clearAllData,
+    saveKontragent, saveTovar,
+    syncAndSaveTovar,
+    syncKurs,
+    saveXodim,
+    saveRegion,
+} from '../../utils/storage';
+const MAX_ATTEMPTS = 5;        // ← importlardan keyin
 const LOCK_DURATION = 30 * 1000;
 
 const KEYS = [
-  { num: "1" },           { num: "2", sub: "ABC" }, { num: "3", sub: "DEF" },
-  { num: "4", sub: "GHI" }, { num: "5", sub: "JKL" }, { num: "6", sub: "MNO" },
-  { num: "7", sub: "PQRS" }, { num: "8", sub: "TUV" }, { num: "9", sub: "WXYZ" },
+    { num: "1" }, { num: "2", sub: "ABC" }, { num: "3", sub: "DEF" },
+    { num: "4", sub: "GHI" }, { num: "5", sub: "JKL" }, { num: "6", sub: "MNO" },
+    { num: "7", sub: "PQRS" }, { num: "8", sub: "TUV" }, { num: "9", sub: "WXYZ" },
 ];
 
-// Lock holati xotirada saqlanadi (ilovani yopmaguncha)
 let lockState = {
-  attempts: 0,
-  lockedUntil: null,
+    attempts: 0,
+    lockedUntil: null,
 };
 
 export default function PinScreen({ onSuccess }) {
-  const [pin, setPin] = useState("");
-  const [error, setError] = useState(false);
-  const [shake, setShake] = useState(false);
-  const [locked, setLocked] = useState(false);
-  const [countdown, setCountdown] = useState(0);
-  const { available: biometricAvailable, authenticate } = useBiometric();
+    const [pin, setPin] = useState("");
+    const [error, setError] = useState(false);
+    const [shake, setShake] = useState(false);
+    const [locked, setLocked] = useState(false);
+    const [countdown, setCountdown] = useState(0);
+    const [loading, setLoading] = useState(false);
+    const [syncing, setSyncing] = useState(false);
+    const [progress, setProgress] = useState({ current: 0, total: 0 });
+    const [products, setProducts] = useState([]);
+    useEffect(() => {
+        if (lockState.lockedUntil && Date.now() < lockState.lockedUntil) {
+            setLocked(true);
+            setCountdown(Math.ceil((lockState.lockedUntil - Date.now()) / 1000));
+        }
+    }, []);
 
-  // ✅ Komponent ochilganda lock tekshirish
-  useEffect(() => {
-    if (lockState.lockedUntil && Date.now() < lockState.lockedUntil) {
-      setLocked(true);
-      setCountdown(Math.ceil((lockState.lockedUntil - Date.now()) / 1000));
-    }
-  }, []);
+    useEffect(() => {
+        if (!locked) return;
+        const interval = setInterval(() => {
+            const remaining = Math.ceil((lockState.lockedUntil - Date.now()) / 1000);
+            if (remaining <= 0) {
+                lockState = { attempts: 0, lockedUntil: null };
+                setLocked(false);
+                setCountdown(0);
+            } else {
+                setCountdown(remaining);
+            }
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [locked]);
 
-  // ✅ Countdown timer
-  useEffect(() => {
-    if (!locked) return;
-    const interval = setInterval(() => {
-      const remaining = Math.ceil((lockState.lockedUntil - Date.now()) / 1000);
-      if (remaining <= 0) {
-        lockState = { attempts: 0, lockedUntil: null };
-        setLocked(false);
-        setCountdown(0);
-      } else {
-        setCountdown(remaining);
-      }
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [locked]);
+    const triggerError = () => {
+        setError(true);
+        setShake(true);
+        setTimeout(() => {
+            setError(false);
+            setShake(false);
+            setPin("");
+        }, 1000);
+    };
 
-  const triggerError = () => {
-    setError(true);
-    setShake(true);
-    setTimeout(() => {
-      setError(false);
-      setShake(false);
-      setPin("");
-    }, 1000);
-  };
+    const handlePress = async (num) => {
+        if (locked || loading) return;
 
-  const handlePress = async (num) => {
-    if (locked || pin.length >= 4) return;
+        const newPin = pin + num;
+        setPin(newPin);
 
-    const newPin = pin + num;
-    setPin(newPin);
+        // ✅ 4 ta bo'lsa darhol submit
+        if (newPin.length === 4) {
+            setLoading(true);
+            const ok = await checkPin(newPin);
+            setLoading(false);
 
-    if (newPin.length === 4) {
-      const ok = await checkPin(newPin);
+            if (ok) {
+                lockState = { attempts: 0, lockedUntil: null };
+                onSuccess();
+            } else {
+                const attempts = lockState.attempts + 1;
+                if (attempts >= MAX_ATTEMPTS) {
+                    lockState = { attempts: 0, lockedUntil: Date.now() + LOCK_DURATION };
+                    setLocked(true);
+                    setCountdown(LOCK_DURATION / 1000);
+                } else {
+                    lockState = { ...lockState, attempts };
+                }
+                triggerError();
+            }
+        }
+    };
 
-      if (ok) {
-        // ✅ To'g'ri PIN
-        lockState = { attempts: 0, lockedUntil: null };
-        onSuccess();
-      } else {
-        // ❌ Noto'g'ri PIN
-        const attempts = lockState.attempts + 1;
+    const handleDelete = () => {
+        if (!locked && !loading) setPin(p => p.slice(0, -1));
+    };
 
-        if (attempts >= MAX_ATTEMPTS) {
-          lockState = { attempts: 0, lockedUntil: Date.now() + LOCK_DURATION };
-          setLocked(true);
-          setCountdown(LOCK_DURATION / 1000);
+    const handleConfirm = async () => {
+        if (locked || loading || pin.length === 0) return;
+
+        setLoading(true);
+        const ok = await checkPin(pin);
+        setLoading(false);
+
+        if (ok) {
+            lockState = { attempts: 0, lockedUntil: null };
+            onSuccess();
         } else {
-          lockState = { ...lockState, attempts };
+            const attempts = lockState.attempts + 1;
+            if (attempts >= MAX_ATTEMPTS) {
+                lockState = { attempts: 0, lockedUntil: Date.now() + LOCK_DURATION };
+                setLocked(true);
+                setCountdown(LOCK_DURATION / 1000);
+            } else {
+                lockState = { ...lockState, attempts };
+            }
+            triggerError();
+        }
+    };
+    const onSyncComplete = (newProducts) => {
+        setProducts([...newProducts]); // ← yangi array reference
+    };
+    const handleSync = async () => {
+        const confirm = await Swal.fire({
+            icon: "question",
+            title: "Yangilash",
+            text: "Ma'lumotlarni 1C dan yangilashni xohlaysizmi?",
+            showCancelButton: true,
+            confirmButtonText: "Ha, yangilash",
+            cancelButtonText: "Yo'q",
+            confirmButtonColor: "#1a2b4a",
+            cancelButtonColor: "#d33",
+        });
+
+        if (!confirm.isConfirmed) return;
+
+        // ✅ 2 — Internet tekshirish
+        const online = await checkInternet();
+        if (!online) {
+            Swal.fire({
+                icon: "error",
+                title: "Ulanish xatosi!",
+                text: "Server ga ulanib bo'lmadi! WiFi ni tekshiring.",
+                confirmButtonColor: "#1a2b4a",
+            });
+            return;
         }
 
-        triggerError();
-      }
-    }
-  };
+        setSyncing(true);
+        setProgress({ current: 0, total: 0 });
 
-  const handleDelete = () => {
-    if (!locked) setPin((p) => p.slice(0, -1));
-  };
+        apiFetch("products")
+            .then(async (data) => {
 
-  const handleBiometric = async () => {
-    const ok = await authenticate();
-    if (ok) {
-      lockState = { attempts: 0, lockedUntil: null };
-      onSuccess();
-    }
-  };
+                // ✅ 3 — Bo'sh JSON
+                if (!data || data.length === 0) {
+                    await clearAllData();
+                    Swal.fire({
+                        icon: "warning",
+                        title: "Ma'lumot yo'q!",
+                        text: "1C dan bo'sh ma'lumot keldi. Barcha ma'lumotlar o'chirildi.",
+                        confirmButtonColor: "#1a2b4a",
+                    });
+                    if (onSyncComplete) onSyncComplete([]);
+                    return;
+                }
 
-  return (
-    <div className="pin-page">
-      <div className="pin-top">
-        <p className="pin-title">
-          {locked
-            ? `🔒 ${countdown} soniyadan so'ng urinib ko'ring`
-            : error
-            ? `❌ Noto'g'ri PIN (${lockState.attempts}/${MAX_ATTEMPTS})`
-            : "Parolni kiriting"}
-        </p>
+                // ✅ 4 — Mahsulotlarni saqlash
+                setProgress({ current: 0, total: data.length });
 
-        <div className={`pin-dots ${shake ? "shake" : ""}`}>
-          {[0, 1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className={`pin-dot ${i < pin.length ? "filled" : ""} ${error ? "error" : ""}`}
-            />
-          ))}
+                const products = await syncAndSave(data, (current, total) => {
+                    setProgress({ current, total });
+                });
+
+                // ✅ 5 — Kontragent va Tovar parallel yuklaymiz
+                const [kontragentData, TovarData, _kurs, Xodim, Region] = await Promise.all([
+                    apiFetch("kontragent"),
+                    apiFetch("Tovar"),
+                    syncKurs(),          // ← 3-chi = _kurs ✅
+                    apiFetch("Xodim"),   // ← 4-chi = Xodim ✅
+                    apiFetch("Region"),   // ← 4-chi = Xodim ✅
+                ]);
+
+                await saveKontragent(kontragentData);
+                await syncAndSaveTovar(TovarData);
+                await saveXodim(Xodim);
+                await saveRegion(Region);
+                // ✅ 6 — Muvaffaqiyat
+                Swal.fire({
+                    icon: "success",
+                    title: "Yangilandi!",
+                    text: `${products.length} ta mahsulot saqlandi.`,
+                    confirmButtonColor: "#1a2b4a",
+                    timer: 1000,
+                    timerProgressBar: true,
+                    showConfirmButton: false,
+                });
+
+                if (onSyncComplete) onSyncComplete(products);
+            })
+            .catch(async (err) => {
+
+                // ✅ 7 — JSON xatosi
+                if (
+                    err.message.includes("Unexpected") ||
+                    err.message.includes("JSON") ||
+                    err.message.includes("json")
+                ) {
+                    await clearAllData();
+                    Swal.fire({
+                        icon: "error",
+                        title: "Ma'lumot buzilgan!",
+                        text: "Barcha ma'lumotlar o'chirildi. Qayta yangilang.",
+                        confirmButtonColor: "#1a2b4a",
+                    });
+                    if (onSyncComplete) onSyncComplete([]);
+                    return;
+                }
+
+                // ✅ 8 — Boshqa xatolar
+                Swal.fire({
+                    icon: "error",
+                    title: "Xato!",
+                    text: err.message,
+                    confirmButtonColor: "#1a2b4a",
+                });
+            })
+            .finally(() => {
+                setSyncing(false);
+                setProgress({ current: 0, total: 0 });
+            });
+    };
+
+    return (
+        <div className="pin-page">
+            <div className="pin-top">
+                <p className="pin-title">
+                    {locked
+                        ? `🔒 ${countdown} soniyadan so'ng urinib ko'ring`
+                        : error
+                            ? `❌ Noto'g'ri parol (${lockState.attempts}/${MAX_ATTEMPTS})`
+                            : "Parolni kiriting"}
+                </p>
+                <div className={`pin-dots ${shake ? "shake" : ""}`}>
+                    {pin.length === 0
+                        ? [0, 1, 2, 3].map(i => (
+                            <div key={i} className="pin-dot" />
+                        ))
+                        : Array.from(pin).map((_, i) => (
+                            <div key={i} className={`pin-dot filled ${error ? "error" : ""}`} />
+                        ))
+                    }
+                </div>
+            </div>
+
+            <div className="pin-keypad">
+                {[0, 1, 2].map((row) => (
+                    <div key={row} className="pin-row">
+                        {KEYS.slice(row * 3, row * 3 + 3).map((k) => (
+                            <button
+                                key={k.num}
+                                className="pin-key"
+                                onClick={() => handlePress(k.num)}
+                                disabled={locked || loading}
+                            >
+                                <span className="pin-num">{k.num}</span>
+                                {k.sub && <span className="pin-sub">{k.sub}</span>}
+                            </button>
+                        ))}
+                    </div>
+                ))}
+
+                <div className="pin-row">
+                    <button
+                        className="pin-key"
+                        onClick={() => handleSync()}
+                        disabled={locked || loading}
+                    >
+                        <svg
+                            width="40"
+                            height="40"
+                            viewBox="0 0 84 84"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                            style={{ animation: syncing ? "spin 1s linear infinite" : "none" }}
+                        >
+                            <g clipPath="url(#clip0_2001_92)">
+                                <path d="M70 38.5004C69.144 32.3412 66.2867 26.6342 61.8682 22.2587C57.4497 17.8831 51.7151 15.0817 45.5478 14.2859C39.3805 13.4901 33.1227 14.7441 27.7382 17.8548C22.3537 20.9655 18.1414 25.7602 15.75 31.5004M14 17.5004V31.5004H28" stroke="white" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+                                <path d="M14 45.5C14.856 51.6592 17.7133 57.3662 22.1318 61.7418C26.5503 66.1173 32.2849 68.9188 38.4522 69.7146C44.6195 70.5103 50.8773 69.2563 56.2618 66.1456C61.6463 63.035 65.8586 58.2402 68.25 52.5M70 66.5V52.5H56" stroke="white" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" />
+                            </g>
+                            <defs>
+                                <clipPath id="clip0_2001_92">
+                                    <rect width="84" height="84" fill="white" />
+                                </clipPath>
+                            </defs>
+                        </svg>
+                    </button>
+                    <button
+                        className="pin-key"
+                        onClick={() => handlePress("0")}
+                        disabled={locked || loading}
+                    >
+                        <span className="pin-num">0</span>
+                    </button>
+                    <button
+                        className="pin-key"
+                        onClick={handleDelete}
+                        disabled={locked || loading}
+                    >
+                        <svg color="#fff" xmlns="http://www.w3.org/2000/svg" width="35" height="35" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-backspace"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M20 6a1 1 0 0 1 1 1v10a1 1 0 0 1 -1 1h-11l-5 -5a1.5 1.5 0 0 1 0 -2l5 -5l11 0" /><path d="M12 10l4 4m0 -4l-4 4" /></svg>
+                    </button>
+                </div>
+            </div>
         </div>
-      </div>
-
-      <div className="pin-keypad">
-        {[0, 1, 2].map((row) => (
-          <div key={row} className="pin-row">
-            {KEYS.slice(row * 3, row * 3 + 3).map((k) => (
-              <button
-                key={k.num}
-                className="pin-key"
-                onClick={() => handlePress(k.num)}
-                disabled={locked}
-              >
-                <span className="pin-num">{k.num}</span>
-                {k.sub && <span className="pin-sub">{k.sub}</span>}
-              </button>
-            ))}
-          </div>
-        ))}
-
-        <div className="pin-row">
-          {biometricAvailable ? (
-            <button
-              className="pin-key pin-biometric"
-              onClick={handleBiometric}
-              disabled={locked}
-            >
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M12 6c-3.31 0-6 2.69-6 6 0 1.66.67 3.16 1.76 4.24" />
-                <path d="M12 6c3.31 0 6 2.69 6 6 0 1.1-.28 2.12-.76 3.01" />
-                <path d="M12 10c-1.1 0-2 .9-2 2 0 2.76 2 7 2 7" />
-                <path d="M12 10c1.1 0 2 .9 2 2 0 1.09-.27 2.12-.71 3" />
-              </svg>
-            </button>
-          ) : (
-            <div className="pin-key-empty" />
-          )}
-
-          <button
-            className="pin-key"
-            onClick={() => handlePress("0")}
-            disabled={locked}
-          >
-            <span className="pin-num">0</span>
-          </button>
-
-          <button
-            className="pin-delete"
-            onClick={handleDelete}
-            disabled={locked}
-          >
-            ⌫
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+    );
 }

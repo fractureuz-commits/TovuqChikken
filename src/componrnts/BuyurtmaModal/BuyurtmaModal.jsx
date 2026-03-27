@@ -54,7 +54,7 @@ export default function BuyurtmaModal({ onClose, }) {
                     <div className="modal-title" style={{ justifyContent: 'center' }}>Buyurtma berish</div>
                     <form>
                         {/* Mijoz nomi */}
-                        <div className="input-group add" >
+                        <div className="input-group add" style={{width:'100%'}}>
                             <label>Mijoz nomi</label>
                             <div className="input-row">
                                 <input readOnly type="text" onClick={() => setOpenSelectMijoz(true)} value={FormData.kontragent} className="input" placeholder="" />
@@ -67,19 +67,19 @@ export default function BuyurtmaModal({ onClose, }) {
                         </div>
 
                         {/* Telefon raqami */}
-                        <div className="input-group">
+                        <div className="input-group" style={{width:'100%'}}>
                             <label>Telefon raqami</label>
                             <input type="tel" value={FormData.tel_1} className="input" placeholder="" />
                         </div>
 
                         {/* Hudud nomi */}
-                        <div className="input-group">
+                        <div className="input-group" style={{width:'100%'}}>
                             <label>Hudud nomi</label>
-                            <input type="text" value={FormData.hudud} className="input" placeholder="" />
+                            <input readOnly type="text" value={FormData.hudud} className="input" placeholder="" />
                         </div>
 
                         {/* Qarzdorlik */}
-                        <div className="input-group">
+                        <div className="input-group" style={{width:'100%'}}>
                             <label >Qarzdorlik</label>
                             <div className="input-row">
                                 <div className="debt-box">
@@ -94,7 +94,7 @@ export default function BuyurtmaModal({ onClose, }) {
                             </div>
                         </div>
                         {/* So'm / valyuta */}
-                        <div className="checkbox-row">
+                        <div className="checkbox-row" style={{width:'100%'}}>
                             {["som", "valyuta"].map((c) => (
                                 <label key={c} className="checkbox-label">
                                     <input
@@ -116,7 +116,7 @@ export default function BuyurtmaModal({ onClose, }) {
                             ))}
                         </div>
                         <div className="divider" />
-                        <div className="narx-grid">
+                        <div className="narx-grid" style={{width:'100%'}}>
                             {[1, 2, 3, 4].map((n) => (
                                 <label className="checkbox-label" key={n}>
                                     <input
@@ -137,7 +137,7 @@ export default function BuyurtmaModal({ onClose, }) {
                         <div className="divider" />
 
                         {/* Buttons */}
-                        <div className="btn-row">
+                        <div className="btn-row" style={{width:'100%'}}>
                             <button type="button" className="btn-cancel" onClick={onClose}>
                                 BEKOR QILISH
                             </button>

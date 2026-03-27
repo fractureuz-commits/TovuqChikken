@@ -1,44 +1,39 @@
-import "./MijozSelect.css";
 import { useState, useEffect, useMemo } from "react";
 import { apiFetch } from "../../utils/api";
-import { loadKontragent } from "../../utils/storage";
+import { loadProducts } from "../../utils/storage";
 import { apiPost } from "../../utils/api";
-    
-export default function MijozSelect({TD, onClose,FormData, setFormData, setKontragent, kontragent }) {
+
+export default function MahsulotGroupSelect({ onClose, FormData, setFormData, setMahsulotGroup, MahsulotGroup }) {
     const [search, setSearch] = useState('');
-    const [kontragentLoading, setKontragentLoading] = useState(true);
-    const [kontragentError, setKontragentError] = useState(null);
+    const [MahsulotGroupLoading, setMahsulotGroupLoading] = useState(true);
+    const [MahsulotGroupError, setMahsulotGroupError] = useState(null);
 
     useEffect(() => {
-        loadKontragent()
+        loadProducts()
             .then(data => {
                 if (!data || data.length === 0) {
-                    setKontragent([]);
+                    setMahsulotGroup([]);
                     return;
                 }
-                setKontragent(data);
+                setMahsulotGroup(data);
             })
-            .catch(err => setKontragentError(err.message))
-            .finally(() => setKontragentLoading(false));
+            .catch(err => setMahsulotGroupError(err.message))
+            .finally(() => setMahsulotGroupLoading(false));
     }, []);
     const filtered = useMemo(() => {
-        if (!search.trim()) return kontragent; // ✅ search yo'q → paginated visible
+        if (!search.trim()) return MahsulotGroup; // ✅ search yo'q → paginated visible
         const tokens = search.toLowerCase().trim().split(/\s+/);
-        return kontragent.filter((doc) => {
+        return MahsulotGroup.filter((doc) => {
             const haystack = [
-                doc.name,
-                doc.tel_1,
-                doc.tel_2,
-                doc.hudud_name,
-                doc.dostav_name,
-                doc.code
+                doc.c,
+                doc.n,
             ]
                 .filter(Boolean)
                 .join(" ")
                 .toLowerCase();
             return tokens.every((token) => haystack.includes(token));
         });
-    }, [search, kontragent]);
+    }, [search, MahsulotGroup]);
     const highlightText = (text, search) => {
         if (!search?.trim() || typeof text !== "string") return text;
 
@@ -63,22 +58,6 @@ export default function MijozSelect({TD, onClose,FormData, setFormData, setKontr
             )
         );
     };
-    const handleSubmit = async (id) => {
-
-        try {
-            const result = await apiPost("tovuq/hs/kontragent/ost_kontragent", {
-                code: id,
-            });
-            setFormData(prev => ({
-                ...prev,
-                dt_kt_sum: result.SUM,
-                dt_kt_val: result.VAL,
-            }));
-
-        } catch (err) {
-            console.error("❌ Xato:", err.message);
-        }
-    };    
     return (
         <div className="overlay">
             <div className="modal" style={{ height: '95vh' }}>
@@ -95,7 +74,7 @@ export default function MijozSelect({TD, onClose,FormData, setFormData, setKontr
                             </clipPath>
                         </defs>
                     </svg>
-                    <p>Mijozlar royxati</p>
+                    <p>MahsulotGrouplar royxati</p>
                 </div>
                 <div className="search">
                     <input
@@ -121,17 +100,12 @@ export default function MijozSelect({TD, onClose,FormData, setFormData, setKontr
                     {filtered.map((item, index) => (
                         <div className="select" key={item.code}
                             onClick={() => {
-                                if(TD !== false) handleSubmit(item.code)
                                 setFormData(prev => ({
                                     ...prev,
-                                    kontragent: item.name,
-                                    kontragent_id: item.code,
-                                    hudud: item.hudud_name,
-                                    hudud_id: item.hudud_id || '',
-                                    tel_1: item.tel_1,
-                                    Hudud_code: item.hudud_code,
-                                    Hudud_name: item.hudud_name,
-                                    Mijoz_code: item.code,
+                                    GroupTovar_code: item.c,
+                                    GroupTovar_name: item.n,
+                                    Tovar_name: "",
+                                    Tovar_code: "",
                                 }));
                                 onClose()
                             }}
@@ -142,7 +116,7 @@ export default function MijozSelect({TD, onClose,FormData, setFormData, setKontr
                                 gap: '5px'
                             }}>
                                 <p>{index + 1})</p>
-                                <p>{highlightText(item.name, search)}</p>
+                                <p>{highlightText(item.n, search)}</p>
                             </div>
                             <div>
                                 <p>{highlightText(item.hudud_name, search)}</p>
