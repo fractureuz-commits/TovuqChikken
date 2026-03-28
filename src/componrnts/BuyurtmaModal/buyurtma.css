@@ -21,8 +21,21 @@
     padding: 10px;
     width: 95%;
     max-width: 500px;
+    max-height: 90vh;
+    overflow-y: auto;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.13);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+    /* scrollbar yashirish */
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE and Edge */
+}
+
+.modal::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari */
 }
 
 /* ===== MODAL TITLE ===== */
@@ -52,6 +65,8 @@ form {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    width: 100%;
+
 }
 
 .input-group label {
@@ -59,10 +74,13 @@ form {
     font-weight: 600;
     color: #222;
 }
-.input-group textarea{
-    min-width: 100%;
+
+.input-group textarea {
     max-width: 100%;
+    min-width: 100%;
+    width: 100%;
 }
+
 /* ===== INPUT ROW (input + icon/button) ===== */
 .input-row {
     display: flex;
@@ -213,7 +231,7 @@ form {
     transition: all 0.15s;
 }
 
-.checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
+.checkbox-label input[type="checkbox"]:checked+.checkbox-custom {
     background: #2176c7;
     border-color: #2176c7;
 }
@@ -222,7 +240,7 @@ form {
     display: none;
 }
 
-.checkbox-label input[type="checkbox"]:checked + .checkbox-custom svg {
+.checkbox-label input[type="checkbox"]:checked+.checkbox-custom svg {
     display: block;
 }
 

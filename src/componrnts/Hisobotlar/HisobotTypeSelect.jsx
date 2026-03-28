@@ -1,6 +1,9 @@
 import { useState } from "react";
-import SavdoRoyhatiModal from "./savdoRoyhati";
+import SavdoRoyhatiModal from "./royhatlar/savdoRoyhati";
 import "./savdoRoyhati.css";
+import MijozSolishtirmaRoyhatiModal from "./royhatlar/MijozSolishtirmaRoyhati";
+import MijozQarzdorligiRoyhatiModal from "./royhatlar/MijozQarzdorligiRoyhati";
+import MahsulotQoldigiRoyhatiModal from "./royhatlar/MahsulotQoqldigi";
 
 const OPTIONS = [
     { id: 1, label: "Savdo ro'yhati", sub: null },
@@ -22,7 +25,7 @@ export default function HisobotModal({ onClose }) {
                     <div className="modal-title" style={{ justifyContent: 'center' }}>
                         Hisobotlar
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '10px 4px 20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '0 20px' }}>
                         {OPTIONS.map(opt => (
                             <div
                                 key={opt.id}
@@ -65,7 +68,7 @@ export default function HisobotModal({ onClose }) {
                                     alignItems: 'center',
                                     gap: 6,
                                     color: '#006cac',
-                                    fontWeight:'bold'
+                                    fontWeight: 'bold'
                                 }}>
                                     {opt.label}
                                     {opt.sub && (
@@ -79,7 +82,7 @@ export default function HisobotModal({ onClose }) {
                             </div>
                         ))}
                     </div>
-                    <div className="btn-row">
+                    <div className="btn-row" style={{ padding: '10px 20px' }}>
                         <button type="button" className="btn-cancel" onClick={onClose}>
                             BEKOR QILISH
                         </button>
@@ -92,6 +95,19 @@ export default function HisobotModal({ onClose }) {
 
             {SavdoRoyhati === 1 &&
                 <SavdoRoyhatiModal
+                    onClose={() => setSavdoRoyhati(false)}
+                />}
+            {SavdoRoyhati === 2 &&
+                <MijozSolishtirmaRoyhatiModal
+                    onClose={() => setSavdoRoyhati(false)}
+                />}
+
+                {SavdoRoyhati === 3 &&
+                <MijozQarzdorligiRoyhatiModal
+                    onClose={() => setSavdoRoyhati(false)}
+                />}
+                {SavdoRoyhati === 4 &&
+                <MahsulotQoldigiRoyhatiModal
                     onClose={() => setSavdoRoyhati(false)}
                 />}
         </>

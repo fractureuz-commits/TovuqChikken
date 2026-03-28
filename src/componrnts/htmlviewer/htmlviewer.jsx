@@ -1,14 +1,12 @@
 import React from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 
-export default function HtmlViewer({ HTMLdata, setHTMLdataModal }) {
+export default function HtmlViewer({ HTMLdata, setHTMLdataModal , title}) {
     return (
         <div
-            onClick={() => setHTMLdataModal(false)}
             style={{
                 width: "100%",
                 height: "100vh",
-                maxWidth: "1000px",
                 overflow: "hidden",
                 position: "fixed",
                 top: 0,
@@ -30,11 +28,16 @@ export default function HtmlViewer({ HTMLdata, setHTMLdataModal }) {
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "center",
-                    marginTop:'30px'
+                    marginTop:'30px',
                 }}
             >
-                <h3 style={{ margin: 0 }}>Hisobot</h3>
-                <button onClick={() => setHTMLdataModal(false)}>✖ Yopish</button>
+                <h3 style={{ margin: 0 }}>{title}</h3>
+                <button style={{
+                    backgroundColor:'#006CAC',
+                    color:'#fff',
+                    border:"none",
+                    padding:'10px'
+                }} onClick={() => setHTMLdataModal(false)}>✖ Yopish</button>
             </div>
 
             {/* Pinch zoom area */}
