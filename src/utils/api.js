@@ -20,14 +20,14 @@ const buildUrl = (path) => {
 };
 
 export const API = {
-    products:   buildUrl("/tovuq/hs/group_tovar/get_group_tovar"),
+    products: buildUrl("/tovuq/hs/group_tovar/get_group_tovar"),
     kontragent: buildUrl("/tovuq/hs/kontragent/get_kontragent"),
-    Tovar:      buildUrl("/tovuq/hs/tovar/get_tovar"),
-    kurs:       buildUrl("/tovuq/hs/konsta/get_kurs"),
-    Xodim:      buildUrl("/tovuq/hs/xodim/get_xodim"),
-    Region:     buildUrl("/tovuq/hs/region/get_region"),
+    Tovar: buildUrl("/tovuq/hs/tovar/get_tovar"),
+    kurs: buildUrl("/tovuq/hs/konsta/get_kurs"),
+    Xodim: buildUrl("/tovuq/hs/xodim/get_xodim"),
+    Region: buildUrl("/tovuq/hs/region/get_region"),
+    Harajat: buildUrl("/tovuq/hs/harajat/get_harajat"),
 };
-
 // ✅ GET
 export const apiFetch = (endpoint) => {
     const url = API[endpoint];

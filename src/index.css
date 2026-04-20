@@ -10,6 +10,14 @@
   font-family: "Montserrat", sans-serif;
   font-optical-sizing: auto;
   -ms-touch-action: manipulation;
+  -webkit-user-select: none;
+  /* Chrome, Safari */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* IE */
+  user-select: none;
+  /* Standard */
 }
 
 html,
@@ -19,17 +27,54 @@ body {
 
 html {
   touch-action: manipulation;
+  height: -webkit-fill-available;
+
+}
+
+html,
+body,
+#root {
+  height: 100%;
 }
 
 .app-safe {
-  min-height: 100vh;
   min-height: 100dvh;
-  padding-top: env(safe-area-inset-top);
-  padding-right: env(safe-area-inset-right);
-  padding-bottom: env(safe-area-inset-bottom);
-  padding-left: env(safe-area-inset-left);
+  width: 100%;
 
+  padding-top: env(safe-area-inset-top);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+
+  /* 🔥 ANDROID FIX */
+  padding-bottom: calc(env(safe-area-inset-bottom) + 24px);
+
+  box-sizing: border-box;
   background: #006CAC;
+}
+
+/* Bottom action bar uchun */
+.bottom-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  /* Android navigation bar ostiga tushmasligi uchun */
+  padding-bottom: env(safe-area-inset-bottom);
+
+  background: #1a1a2e;
+  /* yoki qanday rang bo'lsa */
+  z-index: 100;
+}
+
+.bottom-action-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+
+  /* Fallback + safe area */
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
 }
 
 body {
@@ -40,6 +85,7 @@ body {
   background: #006CAC;
   backdrop-filter: blur(48px);
   padding-bottom: env(safe-area-inset-bottom);
+  overscroll-behavior: none;
 }
 
 main {
@@ -312,4 +358,17 @@ mark {
   padding: 2px;
   border-radius: 5px;
 }
+button {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
+  border: none;
+  background: none;
+}
 
+button:focus {
+  outline: none;
+}
+
+button:active {
+  transform: none;
+}

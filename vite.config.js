@@ -32,7 +32,7 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/tovuq-api/, "")
       },
-      "/konsta-api": {                          // ← qo'shildi
+      "/konsta-api": {
         target: "http://192.168.1.103",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/konsta-api/, "")

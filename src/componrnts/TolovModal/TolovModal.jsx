@@ -7,10 +7,9 @@ import { format } from "date-fns";
 import { loadKurs } from "../../utils/storage";
 import { getUser } from "../../leyout/login/auth";
 
-export default function TolovModal({ onClose }) {
+export default function TolovModal({ editData, onClose, removeSyncedTolovlar, setTolovlar }) {
     const user = getUser();
     const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
-
     const [kurs, setKurs] = useState(() => {
         const kursData = loadKurs();
         return parseFloat(kursData?.kurs || 1);
@@ -18,7 +17,6 @@ export default function TolovModal({ onClose }) {
     const [activeTab, setActiveTab] = useState("som");
     const [openSelectMijoz, setOpenSelectMijoz] = useState(false);
     const [kontragent, setKontragent] = useState([]);
-
     const [FormData, setFormData] = useState({
         kontragent: '',
         kontragent_id: '',
@@ -38,8 +36,32 @@ export default function TolovModal({ onClose }) {
         plastik_val: 0,
         NaqdValSum: 0,
         ClickValSum: 0,
-
     });
+    useEffect(() => {
+        if (editData) {
+            setFormData({
+                kontragent: editData.mijoz_name || '',
+                kontragent_id: editData.mijoz_code || '',
+                dt_kt_sum: editData.dt_kt_sum,
+                dt_kt_val: editData.dt_kt_val,
+                date: editData.date || format(new Date(), "dd.MM.yyyy HH:mm:ss"),
+                izox: editData.izoh || '',
+                // SO'M
+                naqt_sum: editData.NaqdSum || 0,
+                plastik_sum: editData.PlastikSum || 0,
+                click_sum: editData.ClickSum || 0,
+                naqt_som_to_val: editData.NaqdSumVal || 0,
+                naqt_som_to_val_result: editData.HisobSum || 0,
+                // VALYUTA
+                naqt_val: editData.NaqdVal || 0,
+                click_val: editData.ClickVal || 0,
+                plastik_val: editData.PlastikVal || 0,
+                NaqdValSum: editData.NaqdValSum || 0,
+                ClickValSum: editData.ClickValSum || 0,
+                PlastikValSum: editData.PlastikValSum || 0,
+            });
+        }
+    }, [editData]);
     useEffect(() => {
         const naqt = clean(FormData.NaqdValSum) / kurs;
         const click = clean(FormData.ClickValSum) / kurs;
@@ -86,6 +108,72 @@ export default function TolovModal({ onClose }) {
         clean(FormData.naqt_val) +
         clean(FormData.click_val) +
         clean(FormData.plastik_val); // 🔥 endi ishlaydi
+    // const handleSubmit = async () => {
+    //     if (!FormData.kontragent_id) {
+    //         Swal.fire({
+    //             icon: "warning",
+    //             title: "Mijoz tanlanmagan!",
+    //             confirmButtonColor: "#006CAC"
+    //         });
+    //         return;
+    //     }
+
+    //     try {
+    //         const payload = {
+    //             date: FormData.date,
+    //             kurs: kurs,
+    //             user_code: user.code,
+    //             mijoz_code: FormData.kontragent_id,
+
+    //             NaqdSum: clean(FormData.naqt_sum),
+    //             PlastikSum: clean(FormData.plastik_sum),
+    //             ClickSum: clean(FormData.click_sum),
+    //             NaqdSumVal: clean(FormData.naqt_som_to_val),
+    //             HisobSum: FormData.naqt_som_to_val_result,
+
+
+    //             // somlik end
+
+    //             PlastikValSum: clean(FormData.PlastikValSum),
+    //             ClickValSum: clean(FormData.ClickValSum),
+    //             NaqdValSum: clean(FormData.NaqdValSum),
+
+    //             NaqdVal: clean(FormData.naqt_val),
+    //             PlastikVal: clean(FormData.plastik_val),
+    //             ClickVal: clean(FormData.click_val),
+    //             HisobVal:
+    //                 clean(FormData.naqt_val) +
+    //                 clean(FormData.click_val) +
+    //                 clean(FormData.plastik_val),
+
+    //             izoh: FormData.izox,
+    //         };
+
+    //         await apiPost("tovuq/hs/tulov/get_tulov", payload);
+
+    //         Swal.fire({
+    //             icon: "success",
+    //             title: "Yuborildi!",
+    //             timer: 1500,
+    //             showConfirmButton: false
+    //         });
+
+    //         onClose();
+
+    //     } catch (err) {
+    //         Swal.fire({
+    //             icon: "error",
+    //             title: "Xato!",
+    //             text: err.message,
+    //             confirmButtonColor: "#006CAC"
+    //         });
+    //     }
+    // };
+
+    const saveTolovlar = (data) => {
+        localStorage.setItem("tolovlar", JSON.stringify(data));
+        setTolovlar(data);
+    };
     const handleSubmit = async () => {
         if (!FormData.kontragent_id) {
             Swal.fire({
@@ -98,19 +186,21 @@ export default function TolovModal({ onClose }) {
 
         try {
             const payload = {
-                date: FormData.date,
+                id: editData ? editData.id : Date.now(),
+                date: editData ? editData.date : FormData.date,
+                created_at: editData ? editData.created_at : new Date().toISOString(),
                 kurs: kurs,
                 user_code: user.code,
                 mijoz_code: FormData.kontragent_id,
+                mijoz_name: FormData.kontragent || "",
+                dt_kt_sum: FormData.dt_kt_sum,
+                dt_kt_val: FormData.dt_kt_val,
 
                 NaqdSum: clean(FormData.naqt_sum),
                 PlastikSum: clean(FormData.plastik_sum),
                 ClickSum: clean(FormData.click_sum),
                 NaqdSumVal: clean(FormData.naqt_som_to_val),
-                HisobSum: FormData.naqt_som_to_val_result,
-
-
-                // somlik end
+                HisobSum: clean(FormData.naqt_som_to_val_result),
 
                 PlastikValSum: clean(FormData.PlastikValSum),
                 ClickValSum: clean(FormData.ClickValSum),
@@ -127,14 +217,20 @@ export default function TolovModal({ onClose }) {
                 izoh: FormData.izox,
             };
 
-            await apiPost("tovuq/hs/tulov/get_tulov", payload);
+            const oldData = JSON.parse(localStorage.getItem("tolovlar") || "[]");
 
-            Swal.fire({
-                icon: "success",
-                title: "Yuborildi!",
-                timer: 1500,
-                showConfirmButton: false
-            });
+            const newData = editData
+                ? oldData.map((p) => (p.id === editData.id ? payload : p))
+                : [...oldData, payload];
+
+            saveTolovlar(newData);
+
+            // Swal.fire({
+            //     icon: "success",
+            //     title: editData ? "Tahrirlandi!" : "Muvofaqiyatli!",
+            //     timer: 500,
+            //     showConfirmButton: false
+            // });
 
             onClose();
 
@@ -147,7 +243,6 @@ export default function TolovModal({ onClose }) {
             });
         }
     };
-
     const formatNumber = (value) => {
         if (!value) return '0';
         return Number(value)
@@ -157,7 +252,7 @@ export default function TolovModal({ onClose }) {
     return (
         <>
             <div className="overlay">
-                <div className="modal" style={{ width: '100%', borderRadius: '0px', display: "flex", flexDirection: "column" }} >
+                <div className="modal" style={{ width: '100%', height: '100vh', maxHeight: '95vh', borderRadius: '0px', display: "flex", flexDirection: "column" }} >
                     <div className="modal-title" style={{ justifyContent: 'center' }}>To'lov</div>
                     {/* Sana + Kurs */}
                     <div className="tolov-row">
@@ -195,6 +290,7 @@ export default function TolovModal({ onClose }) {
                             readOnly
                             type="text"
                             className="input"
+
                             value={FormData.kontragent}
                             onClick={() => setOpenSelectMijoz(true)}
                             placeholder=""
@@ -248,7 +344,7 @@ export default function TolovModal({ onClose }) {
                                             set("naqt_sum", raw);
                                         }}
                                     />
-                                    <span >so'm</span>
+                                    <span>so'm</span>
                                 </div>
                             </div>
 

@@ -10,11 +10,16 @@
     width: 100%;
     border-top-left-radius: 10px;
     border-top-right-radius: 10px;
-    overflow: hidden;
     border: 2px solid #006CAC;
+    background-color: #006CAC;
     margin-top: 10px;
 }
-
+.tolov-tab:nth-child(1){
+    border-top-left-radius: 10px;
+}
+.tolov-tab:nth-child(2){
+    border-top-right-radius: 10px;
+}
 .tolov-tab {
     flex: 1;
     padding: 10px;
@@ -24,6 +29,8 @@
     cursor: pointer;
     background: #fff;
     color: #006CAC;
+
+    
 }
 
 .tolov-tab.active {
@@ -123,10 +130,16 @@
 .tolov-section .currency span{
     padding-left: 5px;
     font-weight: bold;
+    width: 50px;
+    text-align: center;
 }
 .tolov-section .currency .input{
     font-weight: bold;
     text-align: center;
+}
+.input{
+    font-weight: bold;
+
 }
 .tolov-row .input{
     font-weight: bold;

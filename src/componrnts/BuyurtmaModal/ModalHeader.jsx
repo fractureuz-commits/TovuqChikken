@@ -1,4 +1,4 @@
-export default function ModalHeader({ activeTab, onSotib, onKoriznka, onSkaner ,allClose}) {
+export default function ModalHeader({qaytarish, activeTab, onSotib, onKoriznka, onSkaner ,allClose}) {
     return (
         <div className="modal-header" style={{ paddingTop: '4   0px' }}>
             {/* SOTIB OLISH */}
@@ -15,7 +15,7 @@ export default function ModalHeader({ activeTab, onSotib, onKoriznka, onSkaner ,
                     </g>
                     <defs><clipPath id="clip0_2001_453"><rect width="50" height="60" fill="white"/></clipPath></defs>
                 </svg>
-                <p>SAVDO</p>
+                <p>{qaytarish ? 'Qaytarish' : 'SAVDO'}</p>
             </button>
 
             {/* KORIZNKA */}
@@ -33,6 +33,7 @@ export default function ModalHeader({ activeTab, onSotib, onKoriznka, onSkaner ,
             </button>
 
             {/* SKANER */}
+            {!qaytarish &&
             <button
                 className={`header-button ${activeTab === "skaner" ? "active" : ""}`}
                 onClick={onSkaner}
@@ -50,6 +51,8 @@ export default function ModalHeader({ activeTab, onSotib, onKoriznka, onSkaner ,
                 <p>Skaner</p>
             </button>
 
+            }
+            
         </div>
     );
 }

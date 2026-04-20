@@ -10,6 +10,7 @@ const FILES = {
     Tovar: "tovar.json",
     Xodim: "xodim.json",  // ← qo'shildi
     Region: "region.json",  // ← qo'shildi
+    Harajat: "harajat.json",  // ← qo'shildi
     // yangi qo'shish uchun:
     // orders:   "orders.json",
     // warehouse: "warehouse.json",
@@ -215,6 +216,8 @@ export const loadXodim = () => loadData("Xodim");
 export const saveXodim = (data) => saveData("Xodim", data);
 export const loadRegion = () => loadData("Region");
 export const saveRegion = (data) => saveData("Region", data);
+export const loadHarajat = () => loadData("Harajat");
+export const saveHarajat = (data) => saveData("Harajat", data);
 // Rasm o'qish (RAM cache bilan)
 export const loadImage = async (imagePath) => {
     if (!imagePath) return null;

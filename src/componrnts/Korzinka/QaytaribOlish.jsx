@@ -6,12 +6,13 @@ import { getNarx, formatNarx } from "../../utils/narx";
 import { format, parse } from "date-fns";
 import { getUser } from "../../leyout/login/auth";
 
-export default function ProductQoshish({ onClose, item, handlePartiya }) {
+export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) {
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
     const [quantity, setQuantity] = useState(1);
     const [imgSrc, setImgSrc] = useState(null);
     const [loading, setLoading] = useState(false);
-    const { narx: currentNarx, isVal } = getNarx(item, FormData);
+    const currentNarx = parseFloat(String(item?.narh || 0).replace(/\s/g, ""));
+    const isVal = item?.narh_turi;
     const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
     const user = getUser();
 
@@ -33,27 +34,9 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
         };
         getImage();
     }, [item?.i, item?.code]);
-
     const remainingQoldiq = useMemo(() => {
-        const itemId = `${item?.date_invoys}_${item?.code}_${item.term}`;
-
-        let cart;
-        try {
-            cart = JSON.parse(localStorage.getItem("buyurtma_cart"));
-        } catch {
-            cart = null;
-        }
-
-        const tovarlar = cart?.tovarlar || [];
-
-        const inCart = tovarlar.find(i => i.itemId === itemId);
-
-        const qoldiq = parseFloat(item?.qoldiq || 0);
-        const already = inCart ? inCart.soni : 0;
-
-        return qoldiq - already;
-
-    }, [item?.date_invoys, item?.code]);
+        return parseFloat(item?.soni || 0);
+    }, [item?.soni]);
 
     const handleQuantity = (type) => {
         setQuantity((prev) => {
@@ -73,6 +56,8 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
             return newValue.toString();
         });
     };
+    const onlyDate = (value) => value?.split(" ")[0] || "";
+
     const handleBuyurtma = async () => {
         if (quantity <= 0) return;
 
@@ -86,13 +71,24 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
             return;
         }
 
+        const toNumber = (value) => {
+            if (value === null || value === undefined) return 0;
+            return Number(
+                String(value)
+                    .replace(/\s/g, "")
+                    .replace(",", ".")
+            ) || 0;
+        };
+
+        const onlyDate = (value) => value?.split(" ")[0] || "";
+
         setLoading(true);
 
         try {
             const itemId = `${item?.date_invoys}_${item?.code}`;
             const maxQoldiq = parseFloat(item?.qoldiq || 0);
 
-            let existing = JSON.parse(localStorage.getItem("buyurtma_cart"));
+            let existing = JSON.parse(localStorage.getItem("qaytarish"));
 
             if (!existing || typeof existing !== "object" || !existing.tovarlar) {
                 existing = {
@@ -112,8 +108,8 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
             );
 
             if (alreadyIndex !== -1) {
-                const currentQty = existing.tovarlar[alreadyIndex].soni;
-                const newQty = currentQty + quantity;
+                const currentQty = toNumber(existing.tovarlar[alreadyIndex].soni);
+                const newQty = currentQty + toNumber(quantity);
 
                 if (newQty > maxQoldiq) {
                     Swal.fire({
@@ -126,40 +122,56 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                 }
 
                 existing.tovarlar[alreadyIndex].soni = newQty;
-                existing.tovarlar[alreadyIndex].Summa = currentNarx * newQty;
+                existing.tovarlar[alreadyIndex].narh = toNumber(currentNarx);
+                existing.tovarlar[alreadyIndex].Summa = toNumber(currentNarx) * newQty;
+
+                existing.tovarlar[alreadyIndex].kirim_narh_sum = toNumber(item?.kirim_narh_sum);
+                existing.tovarlar[alreadyIndex].kirim_narh_val = toNumber(item?.kirim_narh_val);
+                existing.tovarlar[alreadyIndex].kirim_summa_sum =
+                    toNumber(item?.kirim_narh_sum) * newQty;
+                existing.tovarlar[alreadyIndex].kirim_summa_val =
+                    toNumber(item?.kirim_narh_val) * newQty;
+
+                existing.tovarlar[alreadyIndex].term = onlyDate(item?.term);
+                existing.tovarlar[alreadyIndex].date_invoys = onlyDate(item?.date_invoys);
 
             } else {
+                console.log(toNumber(item?.kirim_narh_sum) * toNumber(quantity));
+
                 existing.tovarlar.push({
                     itemId,
                     tovar_code: item?.code,
                     number_invoys: item?.number_invoys,
-                    date_invoys: format(
-                        parse(item?.date_invoys, "dd.MM.yyyy", new Date()),
-                        "yyyyMMdd"
-                    ),
+                    date_invoys: item?.date_invoys,
                     qoldiq: item?.qoldiq,
-                    soni: quantity,
-                    narh: currentNarx,
-                    Summa: currentNarx * quantity,
-                    bayyer: item.bayyer,
-                    group_tovar_code: item.group_tovar_code,
-                    group_tovar_name: item.group_tovar_name,
-                    hajm: item.hajm,
-                    name: item.name,
-                    narh_sum1: item.narh_sum1,
-                    narh_sum2: item.narh_sum2,
-                    narh_sum3: item.narh_sum3,
-                    narh_sum4: item.narh_sum4,
-                    narh_val1: item.narh_val1,
-                    narh_val2: item.narh_val2,
-                    narh_val3: item.narh_val3,
-                    narh_val4: item.narh_val4,
-                    ul_bir: item.ul_bir,
-                    valyuta_turi: item.valyuta_turi,
-                    term: item.term,
+                    soni: toNumber(quantity),
+                    narh: toNumber(currentNarx),
+                    Summa: toNumber(currentNarx) * toNumber(quantity),
+                    bayyer: item?.bayyer,
+                    group_tovar_code: item?.group_tovar_code,
+                    group_tovar_name: item?.group_tovar_name,
+                    hajm: item?.hajm,
+                    name: item?.name,
+                    narh_sum1: item?.narh_sum1,
+                    narh_sum2: item?.narh_sum2,
+                    narh_sum3: item?.narh_sum3,
+                    narh_sum4: item?.narh_sum4,
+                    narh_val1: item?.narh_val1,
+                    narh_val2: item?.narh_val2,
+                    narh_val3: item?.narh_val3,
+                    narh_val4: item?.narh_val4,
+                    ul_bir: item?.ul_bir,
+                    valyuta_turi: item?.valyuta_turi,
+                    term: onlyDate(item?.term),
+                    kirim_narh_sum: toNumber(item?.kirim_narh_sum),
+                    kirim_narh_val: toNumber(item?.kirim_narh_val),
+                    kirim_summa_sum: toNumber(item?.kirim_narh_sum) * toNumber(quantity),
+                    kirim_summa_val: toNumber(item?.kirim_narh_val) * toNumber(quantity),
                 });
             }
-            localStorage.setItem("buyurtma_cart", JSON.stringify(existing));
+
+            localStorage.setItem("qaytarish", JSON.stringify(existing));
+
             Swal.fire({
                 icon: "success",
                 title: "Qo'shildi!",
@@ -169,8 +181,10 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                 timerProgressBar: true,
                 showConfirmButton: false,
             });
+
             if (handlePartiya) handlePartiya();
-            onClose()
+            onExit();
+
         } finally {
             setLoading(false);
         }
@@ -194,34 +208,29 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                         </div>
 
                         <div className="kd-content">
-                            <h2 className="kd-name">{item?.name}</h2>
+                            <h2 style={{ color: "red" }} className="kd-name">{item?.name}</h2>
 
-                            {(user?.rol === "1" || user?.narx_korish) && (
-                                <>
-                                    <div className="kd-section">
-                                        <label className="kd-label">Mahsulot narxi:</label>
-                                        <div className="kd-narx-input">
-                                            <input
-                                                type="text"
-                                                readOnly
-                                                style={{ textAlign: 'center', fontWeight: "bold" }}
-                                                value={`${formatNarx(currentNarx)}  ${isVal ? "$" : "so'm"}`}
-                                                className="kd-input"
-                                            />
-                                        </div>
-                                    </div>
-                                </>
-                            )}
-
+                            <div className="kd-section">
+                                <label className="kd-label">Mahsulot narxi:</label>
+                                <div className="kd-narx-input">
+                                    <input
+                                        type="text"
+                                        readOnly
+                                        style={{ textAlign: 'center', fontWeight: "bold" }}
+                                        value={`${formatNarx(currentNarx)}  ${isVal ? "so'm" : "$"}`}
+                                        className="kd-input"
+                                    />
+                                </div>
+                            </div>
                             <div className="kd-qoldiq-row">
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                    <p style={{ fontSize: '18px' }} className="kd-qoldiq-title">Mahsulot qoldig'i:</p>
+                                    <p style={{ fontSize: '18px' }} className="kd-qoldiq-title">Sotilgan mahsulot soni:</p>
                                     <span className="kd-qoldiq-value" style={{ fontSize: '20px' }}>
                                         {remainingQoldiq} {item?.ul_bir}
                                     </span>
                                 </div>
                                 <span className="kd-qoldiq-date" style={{ fontSize: '14px' }}>
-                                    Yaroqlilik Muddati: {item?.term}
+                                    Yaroqlilik Muddati: {onlyDate(item?.term)}
                                 </span>
                                 <span className="kd-qoldiq-date">
                                     Partiya: {item?.date_invoys} || {item?.number_invoys}
@@ -265,25 +274,19 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                                 </button>
                             </div>
 
-                            {(user?.rol === "1" || user?.narx_korish) && (
-                                <>
-                                    <div className="kd-jami">
-                                        <span className="kd-jami-label">Jami summa:</span>
-                                        <span className="kd-jami-value">
-                                            {jami} {isVal ? "$" : "SO'M"}
-                                        </span>
-                                    </div>
-                                </>
-                            )}
-
-
+                            <div className="kd-jami">
+                                <span className="kd-jami-label">Jami summa:</span>
+                                <span className="kd-jami-value">
+                                    {jami} {`${isVal ? "so'm" : "$"}`}
+                                </span>
+                            </div>
 
                             <button
                                 className="kd-buyurtma-btn"
                                 onClick={handleBuyurtma}
                                 disabled={loading || quantity <= 0}
                             >
-                                {loading ? "Yuborilmoqda..." : "BUYURTMA"}
+                                {loading ? "Yuborilmoqda..." : "Mahsulot qaytarib olish"}
                             </button>
                         </div>
                     </div>

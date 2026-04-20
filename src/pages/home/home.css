@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 .home-header {
     display: flex;
     justify-content: space-between;
@@ -28,7 +29,7 @@
 .home-header .information .counter-title {
     font-size: 15px;
     color: #006CAC;
-    font-family: Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif;
+    font-family: "Inter", sans-serif;
     font-weight: 400;
 }
 

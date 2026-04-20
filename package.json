@@ -16,6 +16,7 @@
     "@capacitor/filesystem": "^8.1.2",
     "@capacitor/network": "^8.0.1",
     "@capacitor/preferences": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@react-google-maps/api": "^2.20.7",
     "axios": "^1.13.2",
     "date-fns": "^4.1.0",
@@ -30,6 +31,7 @@
     "react-router-dom": "^7.6.2",
     "react-toastify": "^11.0.5",
     "react-zoom-pan-pinch": "^3.7.0",
+    "styled-components": "^6.4.0",
     "sweetalert2": "^11.26.3",
     "xlsx": "^0.18.5"
   },

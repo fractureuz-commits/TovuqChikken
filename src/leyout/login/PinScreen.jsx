@@ -12,6 +12,7 @@ import {
     syncKurs,
     saveXodim,
     saveRegion,
+    saveHarajat,
 } from '../../utils/storage';
 const MAX_ATTEMPTS = 5;        // ← importlardan keyin
 const LOCK_DURATION = 30 * 1000;
@@ -180,18 +181,20 @@ export default function PinScreen({ onSuccess }) {
                 });
 
                 // ✅ 5 — Kontragent va Tovar parallel yuklaymiz
-                const [kontragentData, TovarData, _kurs, Xodim, Region] = await Promise.all([
+                const [kontragentData, TovarData, _kurs, Xodim, Region ,Harajat] = await Promise.all([
                     apiFetch("kontragent"),
                     apiFetch("Tovar"),
-                    syncKurs(),          // ← 3-chi = _kurs ✅
-                    apiFetch("Xodim"),   // ← 4-chi = Xodim ✅
-                    apiFetch("Region"),   // ← 4-chi = Xodim ✅
+                    syncKurs(),         
+                    apiFetch("Xodim"),  
+                    apiFetch("Region"), 
+                    apiFetch("Harajat"),
                 ]);
 
                 await saveKontragent(kontragentData);
                 await syncAndSaveTovar(TovarData);
                 await saveXodim(Xodim);
                 await saveRegion(Region);
+                await saveHarajat(Harajat);
                 // ✅ 6 — Muvaffaqiyat
                 Swal.fire({
                     icon: "success",

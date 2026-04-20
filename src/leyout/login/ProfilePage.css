@@ -1,0 +1,133 @@
+/* ── Phone frame ── */
+.phone-frame {
+  width: 100%;
+  min-height: 844px;
+  height: 100vh;
+  background: #f0f4f7;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.25);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* ── Status bar ── */
+.status-bar {
+  background: #006CAC;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
+
+.status-icons {
+  display: flex;
+  gap: 6px;
+  font-size: 14px;
+}
+
+/* ── Profile page body ── */
+.profile-page {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 0 0 24px;
+}
+
+/* ── Header: name, phone, avatar ── */
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 36px 24px 28px;
+  gap: 4px;
+}
+
+.profile-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: #006CAC;
+  letter-spacing: 0.2px;
+}
+
+.profile-phone {
+  font-size: 15px;
+  font-weight: 500;
+  color: #006CAC;
+  margin-bottom: 16px;
+}
+
+.avatar-wrapper {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: #dde3e8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  margin-top: 6px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+
+/* ── Menu list ── */
+.menu-list {
+  margin-top: 10px;
+  background: white;
+  border-top: 1px solid #dde3e8;
+  border-bottom: 1px solid #dde3e8;
+}
+
+.menu-item {
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 26px;
+  transition: background 0.15s ease;
+}
+
+.menu-item:hover {
+  background: #f0fbfe;
+}
+
+.menu-item.active {
+  background: #e6f8fd;
+}
+
+.menu-icon {
+  color: #e8472a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.menu-label {
+  font-size: 16px;
+  font-weight: 500;
+  color: #006CAC;
+  letter-spacing: 0.1px;
+}
+
+.divider {
+  height: 1px;
+  background: #e0e9ed;
+  margin: 0 20px;
+}
+
+/* ── Home indicator ── */
+.home-indicator {
+  width: 120px;
+  height: 4px;
+  background: #b0bec5;
+  border-radius: 4px;
+  margin: 10px auto 14px;
+}

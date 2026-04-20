@@ -14,7 +14,10 @@
     opacity: 0.85;
     transform: scale(0.98);
 }
-
+.partiya-title{
+    margin-top: 20px;
+    margin-bottom: 0;
+}
 /* ═══ LEFT — Raqam ═══ */
 .partya-no {
     width: 52px;

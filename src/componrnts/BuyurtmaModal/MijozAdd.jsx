@@ -4,9 +4,9 @@ import { BaseUrl } from "../../baseUrl";
 import Swal from "sweetalert2";
 import { apiFetch, apiPost } from "../../utils/api";
 import QrModal from "../QrModal/qrModal";
-import { saveKontragent ,loadKontragent } from "../../utils/storage";
+import { saveKontragent, loadKontragent } from "../../utils/storage";
 
-export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragent}) {
+export default function MijozaddModal({ onClose, onKontragentUpdate, setKontragent, setFormData }) {
     const [FormDataMijoz, setFormDataMijoz] = useState({
         name: "",
         tel_1: "",
@@ -27,7 +27,10 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
                 // ✅ Fildan o'qib yangi elementni qo'shamiz
                 const existing = await loadKontragent() || [];
                 const updated = [...existing, result];
-
+                setFormData((prev) => ({
+                    ...prev,
+                    ...result
+                }));
                 // ✅ Filega saqlaymiz (kontragent.json)
                 await saveKontragent(updated);
                 console.log("💾 kontragent.json yangilandi:", updated.length, "ta");
@@ -72,7 +75,7 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
                     <div className="modal-title">Yangi mijoz qo’shish</div>
                     <form onSubmit={handleSubmit}>
                         {/* Mijoz nomi */}
-                        <div className="input-group add" style={{width:'100%'}}>
+                        <div className="input-group add" style={{ width: '100%' }}>
                             <label>Mijoz nomi</label>
                             <div className="input-row">
                                 <input
@@ -86,7 +89,7 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
                         </div>
 
                         {/* Telefon raqami */}
-                        <div className="input-group" style={{width:'100%'}}>
+                        <div className="input-group" style={{ width: '100%' }}>
                             <label>Telefon raqami </label>
                             <input
                                 type="tel"
@@ -96,7 +99,7 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
                                 placeholder=""
                             />
                         </div>
-                        <div className="input-group" style={{width:'100%'}}>
+                        <div className="input-group" style={{ width: '100%' }}>
                             <label>Telefon raqami 2</label>
                             <input
                                 type="tel"
@@ -107,7 +110,7 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
                             />
                         </div>
                         {/* Hudud nomi */}
-                        <div className="input-group" style={{width:'100%'}}>
+                        <div className="input-group" style={{ width: '100%' }}>
                             <label>Manzil</label>
                             <input
                                 type="text"
@@ -119,7 +122,7 @@ export default function MijozaddModal({ onClose,onKontragentUpdate ,setKontragen
                         </div>
 
                         {/* Location */}
-                        <div className="input-group add" style={{width:'100%'}}>
+                        <div className="input-group add" style={{ width: '100%' }}>
                             <label>Location</label>
                             <div className="input-row">
                                 <input

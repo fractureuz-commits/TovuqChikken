@@ -1,5 +1,4 @@
-import { useState } from "react";
-import "./buyurtma.css";
+import { useEffect, useState } from "react";
 import MijozSelect from "../SelectMijoz/SelectMijoz";
 import { BaseUrl } from "../../baseUrl";
 import Swal from "sweetalert2";
@@ -9,37 +8,29 @@ import MijozaddModal from "./MijozAdd";
 import KorzinkaModal from "../Korzinka/korzinka";
 import CartModal from "../Korzinka/Cart";
 import { formatNarx } from "../../utils/narx";
+import { format } from "date-fns";
 import { getUser } from "../../leyout/login/auth";
-export default function BuyurtmaModal({ onClose, }) {
-    const user = getUser()
-    const [currency, setCurrency] = useState("som");
+export default function QaytarishModal({ onClose, }) {
+    const user = getUser(); 
     const [ShtrixModal, setShtrixModal] = useState(false);
     const [Korzinka, setKorzinka] = useState(false);
-    const [selectedNarx, setSelectedNarx] = useState();
     const [shtrixData, setshtrixData] = useState([]);
     const [openMijozadd, setopenMijozadd] = useState(false);
     const [kontragent, setKontragent] = useState([]);
-    const [error, seterror] = useState([]);
     const [activeView, setActiveView] = useState("sotib"); // "sotib" | "cart"
     const [FormData, setFormData] = useState({
-        code: "",
-        name: "",
-        tel_1: "",
-        tel_2: "",
-        hudud_code: "",
-        hudud_name: "",
-        dostav_code: "",
-        dostav_name: "",
-        manzil: "",
-        lat: "",
-        lang: "",
-
-        // qo‘shimcha sening form uchun kerak fieldlar
-        vid_valyuta: "",
+        kontragent: '',
+        kontragent_id: '',
+        hudud: '',
+        hudud_id: '',
+        vid_valyuta: '',
         dt_kt_sum: 0,
         dt_kt_val: 0,
+        tel_1: '',
         narh_turi: 1,
-        valyuta_turi: "1"
+        valyuta_turi: "1",
+        date_1: format(new Date(), "yyyy-MM-dd"),
+        date_2: format(new Date(), "yyyy-MM-dd"),
     });
     const [openSelectMijoz, setOpenSelectMijoz] = useState(false);
     const handleSubmit = async () => {
@@ -62,8 +53,40 @@ export default function BuyurtmaModal({ onClose, }) {
         <>
             <div className="overlay">
                 <div className="modal">
-                    <div className="modal-title" style={{ justifyContent: 'center' }}>Buyurtma berish</div>
+                    <div className="modal-title" style={{ justifyContent: 'center' }}>Qaytarish</div>
                     <form>
+                        <div className="tolov-row">
+                            <div className="input-group" style={{ width: '48%' }}>
+                                <label>Data 1:</label>
+                                <input
+                                    type="date"
+                                    className="input tolov-blue-input"
+                                    style={{ textAlign: "center" }}
+                                    value={FormData.date_1}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            date_1: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+                            <div className="input-group" style={{ width: '48%' }}>
+                                <label>Data 2:</label>
+                                <input
+                                    type="date"
+                                    className="input tolov-blue-input"
+                                    style={{ textAlign: "center" }}
+                                    value={FormData.date_2}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            date_2: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+                        </div>
                         {/* Mijoz nomi */}
                         <div className="input-group add" style={{ width: '100%' }}>
                             <label>Mijoz nomi</label>
@@ -88,7 +111,6 @@ export default function BuyurtmaModal({ onClose, }) {
                             <label>Hudud nomi</label>
                             <input readOnly type="text" value={FormData.hudud} className="input" placeholder="" />
                         </div>
-
                         {(user?.rol === "1" || user?.narx_korish) && (
                             <>
                                 {/* Qarzdorlik */}
@@ -107,33 +129,28 @@ export default function BuyurtmaModal({ onClose, }) {
                                     </div>
                                 </div>
                                 {/* So'm / valyuta */}
-                                {(user?.rol === "1" || user?.narx_turi_ozgartirish) && (
-                                    <>
-                                        <div className="checkbox-row" style={{ width: '100%' }}>
-                                            {["som", "valyuta"].map((c) => (
-                                                <label key={c} className="checkbox-label">
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={FormData.valyuta_turi === (c === "som" ? "1" : "2")}
-                                                        onChange={() => setFormData(prev => ({
-                                                            ...prev,
-                                                            valyuta_turi: c === "som" ? "1" : "2"
-                                                        }))}
+                                <div className="checkbox-row" style={{ width: '100%' }}>
+                                    {["som", "valyuta"].map((c) => (
+                                        <label key={c} className="checkbox-label">
+                                            <input
+                                                type="checkbox"
+                                                checked={FormData.valyuta_turi === (c === "som" ? "1" : "2")}
+                                                onChange={() => setFormData(prev => ({
+                                                    ...prev,
+                                                    valyuta_turi: c === "som" ? "1" : "2"
+                                                }))}
 
-                                                    />
-                                                    <span className="checkbox-custom">
-                                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                                                            <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                                        </svg>
-                                                    </span>
-                                                    {c === "som" ? "So'm" : "Valyuta"}
-                                                </label>
-                                            ))}
-                                        </div>
-                                        <div className="divider" />
-                                    </>
-                                )}
-
+                                            />
+                                            <span className="checkbox-custom">
+                                                <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                                    <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                                </svg>
+                                            </span>
+                                            {c === "som" ? "So'm" : "Valyuta"}
+                                        </label>
+                                    ))}
+                                </div>
+                                <div className="divider" />
                                 <div className="narx-grid" style={{ width: '100%' }}>
                                     {[1, 2, 3, 4].map((n) => (
                                         <label className="checkbox-label" key={n}>
@@ -155,6 +172,7 @@ export default function BuyurtmaModal({ onClose, }) {
                                 <div className="divider" />
                             </>
                         )}
+
 
                         {/* Buttons */}
                         <div className="btn-row" style={{ width: '100%' }}>
@@ -184,7 +202,6 @@ export default function BuyurtmaModal({ onClose, }) {
                     onKontragentUpdate={handleKontragentUpdate}
                     kontragent={kontragent}
                     setKontragent={setKontragent}
-                    setFormData={setFormData}
                 />}
             {ShtrixModal &&
                 <QrModal handleModal={() => setShtrixModal((prev) => !prev)}
@@ -199,15 +216,16 @@ export default function BuyurtmaModal({ onClose, }) {
                     setKontragent={setKontragent}
                     KorzinkaModal={() => setActiveView("cart")} // ← SOTIB OLISH bosilsa
                     FormData={FormData}
-                    qaytarish={false}
+                    qaytarish={true}
                 />
             }
             {activeView === "cart" && (
                 <CartModal
-                    qaytarish={false}
                     onExit={onClose}
                     onClose={() => setActiveView('sotib')}
                     KorzinkaModal={() => setActiveView("sotib")} // ← SOTIB OLISH bosilsa
+                    qaytarish={true}
+
                 />
             )}
         </>

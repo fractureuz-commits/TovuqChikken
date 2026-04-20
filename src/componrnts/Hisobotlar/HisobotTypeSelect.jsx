@@ -92,23 +92,22 @@ export default function HisobotModal({ onClose }) {
                     </div>
                 </div>
             </div>
-
             {SavdoRoyhati === 1 &&
                 <SavdoRoyhatiModal
-                    onClose={() => setSavdoRoyhati(false)}
+                    onClose={onClose}
                 />}
             {SavdoRoyhati === 2 &&
                 <MijozSolishtirmaRoyhatiModal
-                    onClose={() => setSavdoRoyhati(false)}
+                    onClose={onClose}
                 />}
 
-                {SavdoRoyhati === 3 &&
+            {SavdoRoyhati === 3 &&
                 <MijozQarzdorligiRoyhatiModal
-                    onClose={() => setSavdoRoyhati(false)}
+                    onClose={onClose}
                 />}
-                {SavdoRoyhati === 4 &&
+            {SavdoRoyhati === 4 &&
                 <MahsulotQoldigiRoyhatiModal
-                    onClose={() => setSavdoRoyhati(false)}
+                    onClose={onClose}
                 />}
         </>
     );

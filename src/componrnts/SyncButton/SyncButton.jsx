@@ -8,8 +8,10 @@ import {
     syncKurs,
     saveXodim,
     saveRegion,
+    saveHarajat,
 } from '../../utils/storage';
 import { apiFetch } from "../../utils/api";
+import Loader from "../loader/loader";
 
 const SyncButton = ({ onSyncComplete }) => {
     const [syncing, setSyncing] = useState(false);
@@ -70,18 +72,20 @@ const SyncButton = ({ onSyncComplete }) => {
                 });
 
                 // ✅ 5 — Kontragent va Tovar parallel yuklaymiz
-                const [kontragentData, TovarData, _kurs, Xodim ,Region] = await Promise.all([
+                const [kontragentData, TovarData, _kurs, Xodim, Region, Harajat] = await Promise.all([
                     apiFetch("kontragent"),
                     apiFetch("Tovar"),
                     syncKurs(),          // ← 3-chi = _kurs ✅
                     apiFetch("Xodim"),   // ← 4-chi = Xodim ✅
                     apiFetch("Region"),   // ← 4-chi = Xodim ✅
+                    apiFetch("Harajat"),   // ← 4-chi = Xodim ✅
                 ]);
 
                 await saveKontragent(kontragentData);
                 await syncAndSaveTovar(TovarData);
                 await saveXodim(Xodim);
                 await saveRegion(Region);
+                await saveHarajat(Harajat);
                 // ✅ 6 — Muvaffaqiyat
                 Swal.fire({
                     icon: "success",
@@ -175,6 +179,7 @@ const SyncButton = ({ onSyncComplete }) => {
 
     return (
         <>
+            {syncing ? <Loader /> : ""}
             <button className="button" onClick={!syncing ? handleSync : undefined} disabled={syncing}>
 
                 <svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -212,8 +217,6 @@ const SyncButton = ({ onSyncComplete }) => {
                 @keyframes spin { to { transform: rotate(360deg); } }
             `}</style>
             </button>
-
-
         </>
     );
 };

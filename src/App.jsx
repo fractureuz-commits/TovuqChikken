@@ -1,20 +1,50 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getUser } from './leyout/login/auth';
 import PinScreen from './leyout/login/PinScreen';
 import AppRoutes from './AppRoutes';
+import { StatusBar } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
 
 export default function App() {
     const [loggedIn, setLoggedIn] = useState(() => !!getUser());
 
-    if (!loggedIn) {
-        return <PinScreen onSuccess={() => setLoggedIn(true)} />;
-    }
+    useEffect(() => {
+        if (Capacitor.isNativePlatform()) {
+            StatusBar.setOverlaysWebView({ overlay: false });
+        }
+    }, []);
 
+   
+    document.addEventListener("wheel", function (e) {
+        if (e.ctrlKey) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    document.addEventListener("keydown", function (e) {
+        if (e.ctrlKey && (e.key === "+" || e.key === "-" || e.key === "=")) {
+            e.preventDefault();
+        }
+    });
+    useEffect(() => {
+
+        const handleContextMenu = (e) => {
+            e.preventDefault();
+        };
+        document.addEventListener("contextmenu", handleContextMenu);
+
+        return () => {
+            document.removeEventListener("contextmenu", handleContextMenu);
+
+        };
+
+    }, []);
+     if (!loggedIn) {
+        return <PinScreen onSuccess={() => setLoggedIn(true)} />;
+    }   
     return (
-        <>
-            <div className="app-safe">
-                <AppRoutes />
-            </div>
-        </>
+        <div className="app-safe">
+            <AppRoutes />
+        </div>
     );
 }

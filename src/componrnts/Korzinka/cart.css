@@ -92,7 +92,7 @@
 /* ═══ YOPISH TUGMASI ═══ */
 .cart-yopish-btn {
     position: absolute;
-    bottom: 0;
+    bottom: 25px;
     left: 0;
     right: 0;
     height: 64px;

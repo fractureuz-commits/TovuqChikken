@@ -116,7 +116,7 @@ html, body, #root {
 /* 480–767 */
 @media (min-width: 480px) and (max-width: 767px) {
     .home-body { padding: 12px 16px; padding-bottom: calc(12px + var(--safe-bottom)); }
-    .home-body .home-pages .button           { width: 30%; padding: 10px 0; margin-bottom: 14px; }
+    .home-body .home-pages .button           {  padding: 10px 0; margin-bottom: 14px; }
     .home-body .home-pages .button p         { font-size: 15px; }
     .home-body .home-pages .button button    { width: 90px; height: 90px; }
     .home-body .home-pages .button button svg{ width: 68px; height: 68px; }
@@ -127,7 +127,7 @@ html, body, #root {
     .home-header { flex-direction: row; flex-wrap: nowrap; margin-top: calc(4px + var(--safe-top)); padding: 4px 10px; gap: 6px; }
     .home-header .information                { flex: 1; min-width: 0; margin-bottom: 0; }
     .home-body { padding: 6px 16px; padding-bottom: calc(6px + var(--safe-bottom)); }
-    .home-body .home-pages .button           { width: 15%; padding: 4px 0; border-radius: 16px; margin-bottom: 0; }
+    .home-body .home-pages .button           {  padding: 4px 0; border-radius: 16px; margin-bottom: 0; }
     .home-body .home-pages .button p         { font-size: 10px; }
     .home-body .home-pages .button button    { width: 52px; height: 52px; }
     .home-body .home-pages .button button svg{ width: 38px; height: 38px; }
@@ -136,7 +136,7 @@ html, body, #root {
 /* Tablet 768px+ */
 @media (min-width: 768px) {
     .home-body { padding: 20px 24px; padding-bottom: calc(20px + var(--safe-bottom)); }
-    .home-body .home-pages .button           { width: 22%; padding: 12px 0; margin-bottom: 16px; }
+    .home-body .home-pages .button           {  padding: 12px 0; margin-bottom: 16px; }
     .home-body .home-pages .button p         { font-size: 18px; }
     .home-body .home-pages .button button    { width: 110px; height: 110px; }
     .home-body .home-pages .button button svg{ width: 84px; height: 84px; }
