@@ -1,13 +1,14 @@
 // ✅ To'g'ri — barcha import yuqorida
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { checkPin } from "../login/auth";
 import { apiFetch } from "../../utils/api";        // ← yuqoriga
 import Swal from "sweetalert2";
 import './PinScreen.css';
+import { getServerAddressInputValue, saveServerAddress } from "../../utils/serverConfig";
 import {
-    syncAndSave, cancelSync,
+    syncAndSave,
     checkInternet, clearAllData,
-    saveKontragent, saveTovar,
+    saveKontragent,
     syncAndSaveTovar,
     syncKurs,
     saveXodim,
@@ -16,6 +17,7 @@ import {
 } from '../../utils/storage';
 const MAX_ATTEMPTS = 5;        // ← importlardan keyin
 const LOCK_DURATION = 30 * 1000;
+const SECRET_TAP_COUNT = 6;
 
 const KEYS = [
     { num: "1" }, { num: "2", sub: "ABC" }, { num: "3", sub: "DEF" },
@@ -36,8 +38,7 @@ export default function PinScreen({ onSuccess }) {
     const [countdown, setCountdown] = useState(0);
     const [loading, setLoading] = useState(false);
     const [syncing, setSyncing] = useState(false);
-    const [progress, setProgress] = useState({ current: 0, total: 0 });
-    const [products, setProducts] = useState([]);
+    const secretTapRef = useRef({ count: 0, timeoutId: null });
     useEffect(() => {
         if (lockState.lockedUntil && Date.now() < lockState.lockedUntil) {
             setLocked(true);
@@ -59,6 +60,11 @@ export default function PinScreen({ onSuccess }) {
         }, 1000);
         return () => clearInterval(interval);
     }, [locked]);
+
+    useEffect(() => {
+        const secretTap = secretTapRef.current;
+        return () => window.clearTimeout(secretTap.timeoutId);
+    }, []);
 
     const triggerError = () => {
         setError(true);
@@ -103,31 +109,54 @@ export default function PinScreen({ onSuccess }) {
         if (!locked && !loading) setPin(p => p.slice(0, -1));
     };
 
-    const handleConfirm = async () => {
-        if (locked || loading || pin.length === 0) return;
+    const handleServerSettings = async () => {
+        const result = await Swal.fire({
+            title: "Server IP",
+            input: "text",
+            inputValue: getServerAddressInputValue(),
+            inputPlaceholder: "192.168.1.103",
+            showCancelButton: true,
+            confirmButtonText: "Saqlash",
+            cancelButtonText: "Bekor",
+            confirmButtonColor: "#1a2b4a",
+            preConfirm: (value) => {
+                try {
+                    return saveServerAddress(value);
+                } catch (err) {
+                    Swal.showValidationMessage(err.message);
+                    return false;
+                }
+            },
+        });
 
-        setLoading(true);
-        const ok = await checkPin(pin);
-        setLoading(false);
-
-        if (ok) {
-            lockState = { attempts: 0, lockedUntil: null };
-            onSuccess();
-        } else {
-            const attempts = lockState.attempts + 1;
-            if (attempts >= MAX_ATTEMPTS) {
-                lockState = { attempts: 0, lockedUntil: Date.now() + LOCK_DURATION };
-                setLocked(true);
-                setCountdown(LOCK_DURATION / 1000);
-            } else {
-                lockState = { ...lockState, attempts };
-            }
-            triggerError();
+        if (result.isConfirmed) {
+            Swal.fire({
+                icon: "success",
+                title: "IP saqlandi",
+                text: result.value,
+                confirmButtonColor: "#1a2b4a",
+                timer: 900,
+                showConfirmButton: false,
+            });
         }
     };
-    const onSyncComplete = (newProducts) => {
-        setProducts([...newProducts]); // ← yangi array reference
+
+    const handleSecretTitleTap = () => {
+        window.clearTimeout(secretTapRef.current.timeoutId);
+
+        const nextCount = secretTapRef.current.count + 1;
+        if (nextCount >= SECRET_TAP_COUNT) {
+            secretTapRef.current.count = 0;
+            handleServerSettings();
+            return;
+        }
+
+        secretTapRef.current.count = nextCount;
+        secretTapRef.current.timeoutId = window.setTimeout(() => {
+            secretTapRef.current.count = 0;
+        }, 1800);
     };
+
     const handleSync = async () => {
         const confirm = await Swal.fire({
             icon: "question",
@@ -155,7 +184,6 @@ export default function PinScreen({ onSuccess }) {
         }
 
         setSyncing(true);
-        setProgress({ current: 0, total: 0 });
 
         apiFetch("products")
             .then(async (data) => {
@@ -169,16 +197,11 @@ export default function PinScreen({ onSuccess }) {
                         text: "1C dan bo'sh ma'lumot keldi. Barcha ma'lumotlar o'chirildi.",
                         confirmButtonColor: "#1a2b4a",
                     });
-                    if (onSyncComplete) onSyncComplete([]);
                     return;
                 }
 
                 // ✅ 4 — Mahsulotlarni saqlash
-                setProgress({ current: 0, total: data.length });
-
-                const products = await syncAndSave(data, (current, total) => {
-                    setProgress({ current, total });
-                });
+                const products = await syncAndSave(data);
 
                 // ✅ 5 — Kontragent va Tovar parallel yuklaymiz
                 const [kontragentData, TovarData, _kurs, Xodim, Region ,Harajat] = await Promise.all([
@@ -205,8 +228,6 @@ export default function PinScreen({ onSuccess }) {
                     timerProgressBar: true,
                     showConfirmButton: false,
                 });
-
-                if (onSyncComplete) onSyncComplete(products);
             })
             .catch(async (err) => {
 
@@ -223,7 +244,6 @@ export default function PinScreen({ onSuccess }) {
                         text: "Barcha ma'lumotlar o'chirildi. Qayta yangilang.",
                         confirmButtonColor: "#1a2b4a",
                     });
-                    if (onSyncComplete) onSyncComplete([]);
                     return;
                 }
 
@@ -237,14 +257,13 @@ export default function PinScreen({ onSuccess }) {
             })
             .finally(() => {
                 setSyncing(false);
-                setProgress({ current: 0, total: 0 });
             });
     };
 
     return (
         <div className="pin-page">
             <div className="pin-top">
-                <p className="pin-title">
+                <p className="pin-title" onClick={handleSecretTitleTap}>
                     {locked
                         ? `🔒 ${countdown} soniyadan so'ng urinib ko'ring`
                         : error

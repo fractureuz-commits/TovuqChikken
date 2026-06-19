@@ -10,7 +10,6 @@ import HarajataddModal from "./HarajatAdd";
 export default function HarajatModal({
     editData,
     onClose,
-    removeSyncedHarajatlar,
     setHarajatlar
 }) {
     const user = getUser();
@@ -112,7 +111,8 @@ export default function HarajatModal({
                 naqd_val: clean(FormData.naqd_val),
                 perech_sum: clean(FormData.perech_sum),
                 perech_val: clean(FormData.perech_val),
-                jami_sum,
+                jami_sum: jami_som,
+                jami_val: jami_dollar,
                 kurs: clean(kurs)
             };
 

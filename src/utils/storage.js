@@ -60,7 +60,7 @@ export const loadData = async (key) => {
             encoding: "utf8",
         });
         return JSON.parse(result.data);
-    } catch (e) {
+    } catch {
         return null;
     }
 };
@@ -136,7 +136,9 @@ export const syncAndSave = async (apiData, onProgress) => {
             directory: Directory.Data,
             recursive: true,
         });
-    } catch (e) { }
+    } catch {
+        // Eski cache papkasi bo'lmasligi mumkin.
+    }
 
     Object.keys(imageMemoryCache).forEach(k => delete imageMemoryCache[k]);
 
@@ -237,7 +239,7 @@ export const loadImage = async (imagePath) => {
         imageMemoryCache[imagePath] = src;
         return src;
 
-    } catch (e) {
+    } catch {
         return null;
     }
 };
@@ -352,25 +354,7 @@ export const syncAndSaveTovar = async (apiData, onProgress) => {
 
 export const syncKurs = async () => {
     try {
-        const BASE_URL = import.meta.env.PROD
-            ? "http://192.168.1.103"
-            : "/tovuq-api";
-
-        const USERNAME = "Mobil";
-        const PASSWORD = "12345";
-        const AUTH = btoa(unescape(encodeURIComponent(`${USERNAME}:${PASSWORD}`)));
-
-        const res = await fetch(`${BASE_URL}/tovuq/hs/konsta/get_kurs`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Basic ${AUTH}`,
-            }
-        });
-
-        if (!res.ok) throw new Error(`HTTP xato: ${res.status}`);
-
-        const result = await res.json();
+        const result = await apiFetch("kurs");
         console.log("📦 Kurs raw:", result);
 
         const kurs = {

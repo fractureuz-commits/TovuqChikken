@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./cart.css";
 import QrModal from "../QrModal/qrModal";
 import ProductQoshish from "./ProductQoshish";
@@ -7,7 +7,7 @@ import Swal from "sweetalert2";
 import { apiPost } from "../../utils/api";
 import ModalHeader from "../BuyurtmaModal/ModalHeader";
 import { getUser } from "../../leyout/login/auth";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 
 export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }) {
 
@@ -21,7 +21,7 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
     const [ProductData, setProductData] = useState(null);
     const [Productadd, setProductadd] = useState(false);
     const user = getUser();
-    const loadCart = () => {
+    const loadCart = useCallback(() => {
         try {
             const data = JSON.parse(localStorage.getItem(CART_KEY) || "{}");
             const cartData = {
@@ -39,7 +39,7 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
 
         } catch {
             setCart({
-                date: date,
+                date: format(new Date(), "dd.MM.yyyy HH:mm:ss"),
                 mijoz_code: FormData?.kontragent_id,
                 ost_sum: FormData?.dt_kt_sum,
                 ost_val: FormData?.dt_kt_val,
@@ -48,10 +48,18 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
                 tovarlar: [],
             });
         }
-    };
+    }, [
+        CART_KEY,
+        FormData?.dt_kt_sum,
+        FormData?.dt_kt_val,
+        FormData?.kontragent_id,
+        FormData?.narh_turi,
+        FormData?.valyuta_turi,
+        user?.code,
+    ]);
     useEffect(() => {
         loadCart();
-    }, []);
+    }, [loadCart]);
     // qidiruv
     const filtered = useMemo(() => {
 
@@ -124,7 +132,7 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
         setSending(true);
 
         try {
-            const result = await apiPost("tovuq/hs/realiz/get_realiz", cart);
+            await apiPost("tovuq/hs/realiz/get_realiz", cart);
 
             // ===== QO‘SHIMCHA BUYURTMALAR LOCALGA SAQLASH =====
             const oldOrders = JSON.parse(localStorage.getItem("buyurtmalar") || "[]");
@@ -198,7 +206,7 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
         setSending(true);
 
         try {
-            const result = await apiPost("tovuq/hs/vozvrat/post_vozvrat/", newData);
+            await apiPost("tovuq/hs/vozvrat/post_vozvrat/", newData);
 
             localStorage.removeItem(CART_KEY);
             localStorage.removeItem(FormData_KEY);
@@ -355,6 +363,13 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
                     setProductData={setProductData}
                     ProductData={ProductData}
                     setProductadd={setProductadd}
+                />
+            }
+            {Productadd &&
+                <ProductQoshish
+                    item={ProductData}
+                    onClose={() => setProductadd(false)}
+                    FormData={FormData}
                 />
             }
         </>

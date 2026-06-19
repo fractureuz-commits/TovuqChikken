@@ -15,6 +15,7 @@
     background: #006CAC;
     backdrop-filter: blur(48px);
 }
+
 /* ---- Top section ---- */
 .pin-top {
   display: flex;
@@ -29,6 +30,8 @@
   font-weight: 700;
   margin: 0;
   letter-spacing: 0.2px;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .pin-dots {

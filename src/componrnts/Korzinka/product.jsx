@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { loadTovar, loadImage, loadKurs } from "../../utils/storage";
+import { loadTovar, loadImage } from "../../utils/storage";
 import { apiPost } from "../../utils/api";
 import QrModal from "../QrModal/qrModal";
 import ProductQoshish from "./ProductQoshish";
@@ -71,6 +71,8 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
     const [QaytarishPartiya, setQaytarishPartiya] = useState(false);
     const [ProductGroupLoading, setProductGroupLoading] = useState(true);
     const [ProductGroupError, setProductGroupError] = useState(null);
+    const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
+    const user = getUser();
     useEffect(() => {
         loadTovar()
             .then(data => setProductGroup(data || []))
@@ -121,48 +123,12 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
             };
             const result = await apiPost("tovuq/hs/tovar/get_partya", body);
             setProductData(result);
-            setPartiyaSelectModal(true); z
+            setPartiyaSelectModal(true);
         } catch (err) {
             console.error("❌ Xato:", err.message);
         }
     };
-    const CART_KEY = "buyurtma_cart";
-    const FormData_KEY = "formData";
-    const data = JSON.parse(localStorage.getItem(CART_KEY) || "{}");
-    const date = JSON.parse(localStorage.getItem(CART_KEY) || "{}");
-
-    const loadCart = () => {
-        try {
-            const cartData = {
-                date: data?.date || '',
-                mijoz_code: FormData?.kontragent_id,
-                ost_sum: FormData?.dt_kt_sum,
-                ost_val: FormData?.dt_kt_val,
-                vid_val: FormData?.valyuta_turi,
-                narh_turi: FormData?.narh_turi,
-                user_code: user?.code,
-                tovarlar: Array.isArray(data?.tovarlar) ? data.tovarlar : [],
-            };
-            setCart(cartData);
-        } catch {
-            setCart({
-                date: date,
-                mijoz_code: FormData?.kontragent_id,
-                ost_sum: FormData?.dt_kt_sum,
-                ost_val: FormData?.dt_kt_val,
-                vid_val: FormData?.valyuta_turi,
-                narh_turi: FormData?.narh_turi,
-                tovarlar: [],
-            });
-        }
-    };
-    useEffect(() => {
-        loadCart();
-    }, []);
-
-    const [cart, setCart] = useState({ tovarlar: [] });
     const [Sending, setSending] = useState({ tovarlar: [] });
-    const user = getUser();
     const handleQaytarish = async (item) => {
         const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
         if (!item) return;

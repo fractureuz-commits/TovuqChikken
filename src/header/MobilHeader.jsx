@@ -1,8 +1,6 @@
-import { Link, NavLink } from "react-router";
+import { NavLink } from "react-router";
 import "./MobilHeader.css";
-import logo from "../../images/logo.png";
-import Clock from "../componrnts/clock/clock";
-import { getUser } from "../leyout/login/auth";
+import { getUser, logout } from "../leyout/login/auth";
 import avaimage from '../../images/avatar.png';
 import Logo from '../../images/logo.svg';
 
@@ -24,7 +22,7 @@ function MobilHeader() {
 
     // ✅ user ma'lumotlarini olish
     useEffect(() => {
-        getUser().then((data) => setUser(data));
+        setUser(getUser());
     }, []);
     return (
         <>
@@ -51,7 +49,7 @@ function MobilHeader() {
                                 <div className="m-dropdown-header">
                                     <img src={avaimage} alt="" />
                                     <div>
-                                        <p className="m-dropdown-name">{user.name}</p>
+                                        <p className="m-dropdown-name">{user?.name || "Foydalanuvchi"}</p>
                                         <p className="m-dropdown-role">Diller</p>
                                     </div>
                                 </div>
@@ -72,7 +70,7 @@ function MobilHeader() {
                                         Sozlamalar
                                     </li>
                                     <hr className="m-dropdown-divider" />
-                                    <li className="m-dropdown-logout" onClick={() => { logoutUser() }}>
+                                    <li className="m-dropdown-logout" onClick={() => { logout(); setUser(null); setDropdownOpen(false); }}>
                                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                                             <polyline points="16 17 21 12 16 7" />

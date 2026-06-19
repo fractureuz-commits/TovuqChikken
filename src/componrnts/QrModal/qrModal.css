@@ -132,23 +132,14 @@
     overflow: hidden;
 }
 
-.qr-camera-box #qr-reader {
+.qr-live-video {
     width: 100% !important;
     height: 100% !important;
-    border: none !important;
-}
-
-/* Hide html5-qrcode default UI */
-.qr-camera-box #qr-reader video {
-    width: 100% !important;
-    height: 100% !important;
+    display: block;
     object-fit: cover;
 }
-.qr-camera-box #qr-reader img,
-.qr-camera-box #qr-reader button,
-.qr-camera-box #qr-reader select,
-.qr-camera-box #qr-reader span,
-.qr-camera-box #qr-reader a {
+
+.qr-scan-buffer {
     display: none !important;
 }
 

@@ -39,6 +39,7 @@
 .qr-camera-box {
     position: relative;
     width: 100%;
+    aspect-ratio: 1 / 1;
     border-radius: 16px;
     overflow: hidden;
     background: #000;
@@ -46,15 +47,16 @@
 
 .kaf-qr-live {
     width: 100% !important;
+    height: 100% !important;
+    display: block;
+    object-fit: cover;
     border-radius: 16px;
     overflow: hidden;
 }
 
-/* html5-qrcode override */
-#qr-reader { border: none !important; width: 100% !important; }
-#qr-reader video { width: 100% !important; object-fit: cover; }
-#qr-reader__scan_region { border: none !important; }
-#qr-reader__dashboard { display: none !important; }
+.qr-scan-buffer {
+    display: none;
+}
 
 /* ── Burchak chiziqlari ── */
 .qr-corner {

@@ -10,9 +10,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Imsoft Group',
-        short_name: 'Imsoft',
-        theme_color: '#1a2b4a',
+        name: 'Tovuq',
+        short_name: 'Tovuq',
+        theme_color: '#b3261e',
         background_color: '#ffffff',
         display: 'standalone',
         icons: []
@@ -28,12 +28,12 @@ export default defineConfig({
     https: true,
     proxy: {
       "/tovuq-api": {
-        target: "http://192.168.1.103",
+        target: "http://192.168.1.107",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/tovuq-api/, "")
       },
       "/konsta-api": {
-        target: "http://192.168.1.103",
+        target: "http://192.168.1.107",
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/konsta-api/, "")
       }
