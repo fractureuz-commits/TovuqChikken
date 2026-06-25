@@ -3,7 +3,7 @@ import { getApiBaseUrl, SERVER_ADDRESS_CHANGED_EVENT } from "./serverConfig";
 const USERNAME = "Mobil";
 const PASSWORD = "12345";
 const toBase64 = (str) => btoa(unescape(encodeURIComponent(str)));
-const DEFAULT_GET_TIMEOUT_MS = 60000;
+const DEFAULT_GET_TIMEOUT_MS = 0;
 const DEFAULT_POST_TIMEOUT_MS = 90000;
 
 export const AUTH_HEADER = {
@@ -80,13 +80,16 @@ const apiRequest = async (path, fetchOptions = {}, options = {}) => {
     let lastError;
 
     for (let attempt = 0; attempt <= retries; attempt += 1) {
-        const controller = new AbortController();
-        const timeoutId = globalThis.setTimeout(() => controller.abort(), timeoutMs);
+        const shouldUseTimeout = Number.isFinite(timeoutMs) && timeoutMs > 0;
+        const controller = shouldUseTimeout ? new AbortController() : null;
+        const timeoutId = shouldUseTimeout
+            ? globalThis.setTimeout(() => controller.abort(), timeoutMs)
+            : null;
 
         try {
             const response = await fetch(url, {
                 ...fetchOptions,
-                signal: controller.signal,
+                ...(controller ? { signal: controller.signal } : {}),
             });
 
             return await parseResponse(response, url);
@@ -99,7 +102,7 @@ const apiRequest = async (path, fetchOptions = {}, options = {}) => {
 
             await sleep(retryDelayMs * (attempt + 1));
         } finally {
-            globalThis.clearTimeout(timeoutId);
+            if (timeoutId) globalThis.clearTimeout(timeoutId);
         }
     }
 

@@ -17,6 +17,7 @@ const FILES = {
 };
 
 // RAM cache
+const dataMemoryCache = {};
 const imageMemoryCache = {};
 
 const normalizeImageData = (value) => {
@@ -51,6 +52,45 @@ const normalizeImageData = (value) => {
     return normalized;
 };
 
+const IMAGE_TYPES = {
+    png: "image/png",
+    jpg: "image/jpeg",
+    jpeg: "image/jpeg",
+    webp: "image/webp",
+    gif: "image/gif",
+    svg: "image/svg+xml",
+};
+
+const getImageType = (rawValue, normalized) => {
+    const dataUriMatch = typeof rawValue === "string"
+        ? rawValue.match(/^data:(image\/(?:png|jpe?g|webp|gif|svg\+xml));base64,/i)
+        : null;
+
+    if (dataUriMatch) {
+        const mime = dataUriMatch[1].toLowerCase();
+        const extension = mime.includes("jpeg") ? "jpg" : mime.split("/").pop().replace("+xml", "");
+        return { mime, extension };
+    }
+
+    if (normalized.startsWith("/9j/")) return { mime: IMAGE_TYPES.jpg, extension: "jpg" };
+    if (normalized.startsWith("iVBOR")) return { mime: IMAGE_TYPES.png, extension: "png" };
+    if (normalized.startsWith("UklGR")) return { mime: IMAGE_TYPES.webp, extension: "webp" };
+    if (normalized.startsWith("R0lGOD")) return { mime: IMAGE_TYPES.gif, extension: "gif" };
+    if (normalized.startsWith("PHN2Zy")) return { mime: IMAGE_TYPES.svg, extension: "svg" };
+
+    return { mime: IMAGE_TYPES.png, extension: "png" };
+};
+
+const safeImageCode = (code) => {
+    const normalized = String(code || "image").replace(/[^a-zA-Z0-9._-]/g, "_");
+    return normalized || "image";
+};
+
+const getImageMimeFromPath = (imagePath) => {
+    const extension = String(imagePath || "").split(".").pop()?.toLowerCase();
+    return IMAGE_TYPES[extension] || IMAGE_TYPES.png;
+};
+
 // Sync to'xtatish
 let abortSync = false;
 export const cancelSync = () => { abortSync = true; };
@@ -74,6 +114,8 @@ export const saveData = async (key, data) => {
         return;
     }
     try {
+        dataMemoryCache[key] = data;
+
         await Filesystem.writeFile({
             path: FILES[key],
             data: JSON.stringify(data),
@@ -92,13 +134,19 @@ export const loadData = async (key) => {
         console.error("❌ Noma'lum kalit:", key);
         return null;
     }
+    if (Object.prototype.hasOwnProperty.call(dataMemoryCache, key)) {
+        return dataMemoryCache[key];
+    }
+
     try {
         const result = await Filesystem.readFile({
             path: FILES[key],
             directory: Directory.Data,
             encoding: "utf8",
         });
-        return JSON.parse(result.data);
+        const parsed = JSON.parse(result.data);
+        dataMemoryCache[key] = parsed;
+        return parsed;
     } catch {
         return null;
     }
@@ -160,6 +208,33 @@ const saveImage = async (code, base64) => {
     }
 };
 
+const saveImageFast = async (code, base64) => {
+    try {
+        const clean = normalizeImageData(base64);
+        if (!clean) return null;
+
+        await Filesystem.mkdir({
+            path: CACHE_DIR,
+            directory: Directory.Data,
+            recursive: true,
+        }).catch(() => { });
+
+        const { extension } = getImageType(base64, clean);
+        const filePath = `${CACHE_DIR}/${safeImageCode(code)}.${extension}`;
+
+        await Filesystem.writeFile({
+            path: filePath,
+            data: clean,
+            directory: Directory.Data,
+        });
+
+        return filePath;
+    } catch (e) {
+        console.error("Rasm xato:", code, e.message);
+        return null;
+    }
+};
+
 export const syncAndSave = async (apiData, onProgress) => {
     abortSync = false;
 
@@ -196,7 +271,7 @@ export const syncAndSave = async (apiData, onProgress) => {
                 let imagePath = null;
 
                 try {
-                    imagePath = await saveImage(item.code, item.image);
+                    imagePath = await saveImageFast(item.code, item.image);
                 } catch (e) {
                     console.error("❌ Rasm xato:", item.code, e.message);
                     failed.push(item.code);
@@ -264,7 +339,7 @@ export const loadImage = async (imagePath) => {
             directory: Directory.Data,
         });
 
-        const src = `data:image/webp;base64,${result.data}`;
+        const src = `data:${getImageMimeFromPath(imagePath)};base64,${result.data}`;
 
         imageMemoryCache[imagePath] = src;
         return src;
@@ -276,6 +351,8 @@ export const loadImage = async (imagePath) => {
 
 // ✅ Barcha ma'lumotlarni o'chirish
 export const clearAllData = async () => {
+    Object.keys(dataMemoryCache).forEach(k => delete dataMemoryCache[k]);
+
     // 1 — cache papkasini o'chirish
     try {
         await Filesystem.rmdir({
@@ -335,7 +412,7 @@ export const syncAndSaveTovar = async (apiData, onProgress) => {
 
                 let imagePath = null;
                 try {
-                    imagePath = await saveImage(item.code, item.image);
+                    imagePath = await saveImageFast(item.code, item.image);
                 } catch (e) {
                     console.error("❌ Tovar rasm xato:", item.code, e.message);
                     failed.push(item.code);
