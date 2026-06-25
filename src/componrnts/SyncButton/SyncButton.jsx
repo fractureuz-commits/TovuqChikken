@@ -53,7 +53,7 @@ const SyncButton = ({ onSyncComplete }) => {
                 icon: hasIssues ? "warning" : "success",
                 title: hasIssues ? "Qisman yangilandi" : "Yangilandi!",
                 text: hasIssues
-                    ? `${result.products.length} ta guruh, ${result.tovars.length} ta tovar tayyor. Xato bo'lgan route'lar eski cache bilan ishladi.`
+                    ? `${result.products.length} ta guruh, ${result.tovars.length} ta tovar tayyor. Xato bo'lgan route'lar saqlanmadi.`
                     : `${result.products.length} ta guruh, ${result.tovars.length} ta tovar saqlandi.`,
                 confirmButtonColor: "#1a2b4a",
                 timer: hasIssues ? 2200 : 1200,

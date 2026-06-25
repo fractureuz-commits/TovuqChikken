@@ -2,13 +2,6 @@ import { apiFetch, apiPost } from "./api";
 import {
     clearAllData,
     isSyncCancelled,
-    loadHarajat,
-    loadKontragent,
-    loadKurs,
-    loadProducts,
-    loadRegion,
-    loadTovar,
-    loadXodim,
     resetSyncCancel,
     saveHarajat,
     saveKontragent,
@@ -45,11 +38,6 @@ const getCount = (value) => {
     return 1;
 };
 
-const isUsableCache = (value, allowObject = false) => {
-    if (Array.isArray(value)) return value.length > 0;
-    return allowObject ? Boolean(value) : false;
-};
-
 const getErrorMessage = (err) => {
     if (!err) return "Noma'lum xato";
     const status = err.status ? `HTTP ${err.status}` : "";
@@ -57,20 +45,20 @@ const getErrorMessage = (err) => {
 };
 
 const DOWNLOAD_ENDPOINTS = [
-    { key: "products", endpoint: "products", label: "Mahsulot guruhlari", loadCache: loadProducts },
-    { key: "kontragent", endpoint: "kontragent", label: "Mijozlar", loadCache: loadKontragent },
-    { key: "tovar", endpoint: "Tovar", label: "Tovarlar", loadCache: loadTovar },
-    { key: "kurs", endpoint: "kurs", label: "Kurs", loadCache: loadKurs, allowObjectCache: true },
-    { key: "xodim", endpoint: "Xodim", label: "Xodimlar", loadCache: loadXodim },
-    { key: "region", endpoint: "Region", label: "Hududlar", loadCache: loadRegion },
-    { key: "harajat", endpoint: "Harajat", label: "Harajatlar", loadCache: loadHarajat },
+    { key: "products", endpoint: "products", label: "Mahsulot guruhlari" },
+    { key: "kontragent", endpoint: "kontragent", label: "Mijozlar" },
+    { key: "tovar", endpoint: "Tovar", label: "Tovarlar" },
+    { key: "kurs", endpoint: "kurs", label: "Kurs" },
+    { key: "xodim", endpoint: "Xodim", label: "Xodimlar" },
+    { key: "region", endpoint: "Region", label: "Hududlar" },
+    { key: "harajat", endpoint: "Harajat", label: "Harajatlar" },
 ];
 
-const fetchEndpointWithCache = async (config, firstOptions, retryOptions) => {
+const fetchEndpointFresh = async (config, options) => {
     const start = now();
 
     try {
-        const data = await apiFetch(config.endpoint, firstOptions);
+        const data = await apiFetch(config.endpoint, options);
         return {
             ...config,
             ok: true,
@@ -79,46 +67,16 @@ const fetchEndpointWithCache = async (config, firstOptions, retryOptions) => {
             durationMs: Math.round(now() - start),
             count: getCount(data),
         };
-    } catch (firstError) {
-        const cached = await config.loadCache?.();
-
-        if (isUsableCache(cached, config.allowObjectCache)) {
-            return {
-                ...config,
-                ok: false,
-                stale: true,
-                data: cached,
-                error: getErrorMessage(firstError),
-                durationMs: Math.round(now() - start),
-                count: getCount(cached),
-            };
-        }
-
-        try {
-            const retryStart = now();
-            const data = await apiFetch(config.endpoint, retryOptions);
-            return {
-                ...config,
-                ok: true,
-                fresh: true,
-                retried: true,
-                data,
-                durationMs: Math.round(now() - start),
-                retryDurationMs: Math.round(now() - retryStart),
-                count: getCount(data),
-            };
-        } catch (retryError) {
-            return {
-                ...config,
-                ok: false,
-                failed: true,
-                data: cached,
-                error: getErrorMessage(retryError),
-                firstError: getErrorMessage(firstError),
-                durationMs: Math.round(now() - start),
-                count: getCount(cached),
-            };
-        }
+    } catch (error) {
+        return {
+            ...config,
+            ok: false,
+            failed: true,
+            data: null,
+            error: getErrorMessage(error),
+            durationMs: Math.round(now() - start),
+            count: 0,
+        };
     }
 };
 
@@ -126,7 +84,7 @@ const logDownloadDiagnostics = (results) => {
     const rows = results.map(item => ({
         endpoint: item.endpoint,
         label: item.label,
-        status: item.fresh ? "fresh" : item.stale ? "cache" : "failed",
+        status: item.fresh ? "fresh" : "failed",
         count: item.count,
         durationMs: item.durationMs,
         error: item.error || "",
@@ -134,13 +92,12 @@ const logDownloadDiagnostics = (results) => {
 
     console.table(rows);
 
-    const backendIssues = results.filter(item => item.stale || item.failed);
+    const backendIssues = results.filter(item => item.failed);
     if (backendIssues.length > 0) {
         console.warn("Backend sync muammolari:", backendIssues.map(item => ({
             endpoint: item.endpoint,
             label: item.label,
             error: item.error,
-            usedCache: Boolean(item.stale),
         })));
     }
 };
@@ -153,37 +110,39 @@ const resultMap = (results) =>
 
 const requireArrayData = (item) => {
     if (Array.isArray(item.data)) return item.data;
-    throw new Error(`${item.label} yuklanmadi va cache topilmadi. ${item.error || ""}`.trim());
+    throw new Error(`${item.label} yuklanmadi. ${item.error || ""}`.trim());
 };
 
 export const downloadBackendData = async ({ onProgress } = {}) => {
     resetSyncCancel();
     progress(onProgress, { stage: "Ma'lumotlar backenddan olinmoqda..." });
-    const firstOptions = { timeoutMs: 0, retries: 0 };
-    const retryOptions = { timeoutMs: 0, retries: 2, retryDelayMs: 1000 };
+    const downloadOptions = { timeoutMs: 0, retries: 2, retryDelayMs: 1000 };
+    const endpointResults = [];
 
-    const settled = await Promise.allSettled(
-        DOWNLOAD_ENDPOINTS.map(config => fetchEndpointWithCache(config, firstOptions, retryOptions))
-    );
-    const endpointResults = settled.map((item, index) => (
-        item.status === "fulfilled"
-            ? item.value
-            : {
-                ...DOWNLOAD_ENDPOINTS[index],
-                ok: false,
-                failed: true,
-                error: getErrorMessage(item.reason),
-                durationMs: 0,
-                count: 0,
-            }
-    ));
+    for (let index = 0; index < DOWNLOAD_ENDPOINTS.length; index += 1) {
+        const config = DOWNLOAD_ENDPOINTS[index];
+        progress(onProgress, {
+            stage: `${config.label} yuklanmoqda...`,
+            current: index,
+            total: DOWNLOAD_ENDPOINTS.length,
+        });
+
+        const result = await fetchEndpointFresh(config, downloadOptions);
+        endpointResults.push(result);
+
+        if (!result.ok) {
+            logDownloadDiagnostics(endpointResults);
+            throw new Error(`${result.label} yuklanmadi. ${result.error}`);
+        }
+    }
+
     const endpoints = resultMap(endpointResults);
 
     logDownloadDiagnostics(endpointResults);
 
     const productsSource = requireArrayData(endpoints.products);
 
-    if (endpoints.products.fresh && productsSource.length === 0) {
+    if (productsSource.length === 0) {
         await clearAllData();
         progress(onProgress, { stage: "Backenddan bo'sh ma'lumot keldi", current: 0, total: 0 });
         return { cleared: true, products: [], tovars: [] };
@@ -195,43 +154,41 @@ export const downloadBackendData = async ({ onProgress } = {}) => {
     const regionSource = requireArrayData(endpoints.region);
     const harajatSource = requireArrayData(endpoints.harajat);
 
-    let products = productsSource;
-    if (endpoints.products.fresh) {
+    progress(onProgress, { stage: "Eski ma'lumotlar o'chirilmoqda..." });
+    const saveStart = now();
+    await clearAllData();
+
+    progress(onProgress, {
+        stage: "Mahsulot guruhlari saqlanmoqda...",
+        current: 0,
+        total: productsSource.length,
+    });
+
+    const products = await syncAndSave(productsSource, (current, total) => {
         progress(onProgress, {
             stage: "Mahsulot guruhlari saqlanmoqda...",
-            current: 0,
-            total: productsSource.length,
+            current,
+            total,
         });
-
-        products = await syncAndSave(productsSource, (current, total) => {
-            progress(onProgress, {
-                stage: "Mahsulot guruhlari saqlanmoqda...",
-                current,
-                total,
-            });
-        });
-    }
+    });
 
     if (isSyncCancelled()) {
         throw new Error("Yuklash to'xtatildi");
     }
 
-    let tovars = tovarSource;
-    if (endpoints.tovar.fresh) {
+    progress(onProgress, {
+        stage: "Tovarlar saqlanmoqda...",
+        current: 0,
+        total: tovarSource.length,
+    });
+
+    const tovars = await syncAndSaveTovar(tovarSource, (current, total) => {
         progress(onProgress, {
             stage: "Tovarlar saqlanmoqda...",
-            current: 0,
-            total: tovarSource.length,
+            current,
+            total,
         });
-
-        tovars = await syncAndSaveTovar(tovarSource, (current, total) => {
-            progress(onProgress, {
-                stage: "Tovarlar saqlanmoqda...",
-                current,
-                total,
-            });
-        });
-    }
+    });
 
     if (isSyncCancelled()) {
         throw new Error("Yuklash to'xtatildi");
@@ -240,26 +197,17 @@ export const downloadBackendData = async ({ onProgress } = {}) => {
     progress(onProgress, { stage: "Qo'shimcha ma'lumotlar saqlanmoqda..." });
 
     await Promise.all([
-        endpoints.kontragent.fresh ? saveKontragent(kontragentSource) : null,
-        endpoints.xodim.fresh ? saveXodim(xodimSource) : null,
-        endpoints.region.fresh ? saveRegion(regionSource) : null,
-        endpoints.harajat.fresh ? saveHarajat(harajatSource) : null,
-    ].filter(Boolean));
+        saveKontragent(kontragentSource),
+        saveXodim(xodimSource),
+        saveRegion(regionSource),
+        saveHarajat(harajatSource),
+    ]);
+    saveKurs(endpoints.kurs.data);
 
-    if (endpoints.kurs.fresh) saveKurs(endpoints.kurs.data);
-
-    const issues = endpointResults
-        .filter(item => item.stale || item.failed)
-        .map(item => ({
-            endpoint: item.endpoint,
-            label: item.label,
-            error: item.error,
-            usedCache: Boolean(item.stale),
-            durationMs: item.durationMs,
-        }));
+    const saveDurationMs = Math.round(now() - saveStart);
 
     progress(onProgress, {
-        stage: issues.length ? "Qisman yangilandi" : "Yuklash yakunlandi",
+        stage: "Yuklash yakunlandi",
         current: products.length + tovars.length,
         total: productsSource.length + tovarSource.length,
     });
@@ -276,11 +224,12 @@ export const downloadBackendData = async ({ onProgress } = {}) => {
             region: regionSource.length,
             harajat: harajatSource.length,
         },
-        issues,
+        issues: [],
+        saveDurationMs,
         timings: endpointResults.map(item => ({
             endpoint: item.endpoint,
             label: item.label,
-            status: item.fresh ? "fresh" : item.stale ? "cache" : "failed",
+            status: item.fresh ? "fresh" : "failed",
             count: item.count,
             durationMs: item.durationMs,
             error: item.error || "",
