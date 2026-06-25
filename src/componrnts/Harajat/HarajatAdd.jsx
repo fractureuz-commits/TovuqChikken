@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { BaseUrl } from "../../baseUrl";
 import Swal from "sweetalert2";
-import { apiFetch, apiPost } from "../../utils/api";
+import { apiPost } from "../../utils/api";
 import QrModal from "../QrModal/qrModal";
 import { saveKontragent, loadKontragent, loadHarajat, saveHarajat } from "../../utils/storage";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 export default function HarajataddModal({ onClose, handleHarajatUpdate, setFormData }) {
+    useBackHandler(onClose);
+
     const [FormDataHarajat, setFormDataHarajat] = useState({
         name: "",
     });

@@ -2,14 +2,20 @@ import { useEffect, useState } from "react";
 import "./Tolov.css";
 import MijozSelect from "../SelectMijoz/SelectMijoz";
 import Swal from "sweetalert2";
-import { apiPost } from "../../utils/api";
 import { format } from "date-fns";
 import { loadKurs } from "../../utils/storage";
 import { getUser } from "../../leyout/login/auth";
+import { listQueueItems, QUEUE_TYPES, saveQueueItem } from "../../utils/offlineQueue";
+import { canViewDebt, canViewNotes } from "../../utils/permissions";
+import { toNumber } from "../../utils/queueSummary";
+import { useBackHandler } from "../../utils/backButtonStack";
 
-export default function TolovModal({ editData, onClose, removeSyncedTolovlar, setTolovlar }) {
+export default function TolovModal({ editData, onClose, setTolovlar }) {
     const user = getUser();
-    const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
+    const canSeeDebt = canViewDebt(user);
+    const canWriteNote = canViewNotes(user);
+    useBackHandler(onClose);
+
     const [kurs, setKurs] = useState(() => {
         const kursData = loadKurs();
         return parseFloat(kursData?.kurs || 1);
@@ -17,6 +23,7 @@ export default function TolovModal({ editData, onClose, removeSyncedTolovlar, se
     const [activeTab, setActiveTab] = useState("som");
     const [openSelectMijoz, setOpenSelectMijoz] = useState(false);
     const [kontragent, setKontragent] = useState([]);
+    const [saving, setSaving] = useState(false);
     const [FormData, setFormData] = useState({
         kontragent: '',
         kontragent_id: '',
@@ -92,8 +99,7 @@ export default function TolovModal({ editData, onClose, removeSyncedTolovlar, se
     const set = (key, value) =>
         setFormData(prev => ({ ...prev, [key]: value }));
 
-    const clean = (v) =>
-        parseFloat(String(v || "0").replace(/\s|,/g, "")) || 0;
+    const clean = (v) => toNumber(v);
 
     const fmt = (num) =>
         Math.round(num).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
@@ -170,11 +176,15 @@ export default function TolovModal({ editData, onClose, removeSyncedTolovlar, se
     //     }
     // };
 
-    const saveTolovlar = (data) => {
-        localStorage.setItem("tolovlar", JSON.stringify(data));
-        setTolovlar(data);
+    const saveTolov = async (payload) => {
+        await saveQueueItem(QUEUE_TYPES.TOLOVLAR, payload);
+        const data = await listQueueItems(QUEUE_TYPES.TOLOVLAR);
+        await setTolovlar?.(data);
+        return data;
     };
     const handleSubmit = async () => {
+        if (saving) return;
+
         if (!FormData.kontragent_id) {
             Swal.fire({
                 icon: "warning",
@@ -185,6 +195,7 @@ export default function TolovModal({ editData, onClose, removeSyncedTolovlar, se
         }
 
         try {
+            setSaving(true);
             const payload = {
                 id: editData ? editData.id : Date.now(),
                 date: editData ? editData.date : FormData.date,
@@ -214,16 +225,10 @@ export default function TolovModal({ editData, onClose, removeSyncedTolovlar, se
                     clean(FormData.click_val) +
                     clean(FormData.plastik_val),
 
-                izoh: FormData.izox,
+                izoh: canWriteNote ? FormData.izox : "",
             };
 
-            const oldData = JSON.parse(localStorage.getItem("tolovlar") || "[]");
-
-            const newData = editData
-                ? oldData.map((p) => (p.id === editData.id ? payload : p))
-                : [...oldData, payload];
-
-            saveTolovlar(newData);
+            const updatedTolovlar = await saveTolov(payload);
 
             // Swal.fire({
             //     icon: "success",
@@ -232,7 +237,7 @@ export default function TolovModal({ editData, onClose, removeSyncedTolovlar, se
             //     showConfirmButton: false
             // });
 
-            onClose();
+            onClose(updatedTolovlar);
 
         } catch (err) {
             Swal.fire({
@@ -241,6 +246,8 @@ export default function TolovModal({ editData, onClose, removeSyncedTolovlar, se
                 text: err.message,
                 confirmButtonColor: "#006CAC"
             });
+        } finally {
+            setSaving(false);
         }
     };
     const formatNumber = (value) => {
@@ -298,17 +305,19 @@ export default function TolovModal({ editData, onClose, removeSyncedTolovlar, se
                     </div>
 
                     {/* Dt-Kt */}
-                    <div className="tolov-row">
-                        <div className="input-group" style={{ width: '48%' }}>
-                            <label>Dt-Kt (so'm):</label>
-                            <input readOnly style={{ textAlign: 'center' }} type="text" className="input" value={formatNumber(FormData.dt_kt_sum)} />
-                        </div>
-                        <div className="input-group" style={{ width: '48%' }}>
-                            <label>Dt-Kt ($):</label>
-                            <input readOnly style={{ textAlign: 'center' }} type="text" className="input" value={formatNumber(FormData.dt_kt_val)} />
-                        </div>
+                    {canSeeDebt && (
+                        <div className="tolov-row">
+                            <div className="input-group" style={{ width: '48%' }}>
+                                <label>Dt-Kt (so'm):</label>
+                                <input readOnly style={{ textAlign: 'center' }} type="text" className="input" value={formatNumber(FormData.dt_kt_sum)} />
+                            </div>
+                            <div className="input-group" style={{ width: '48%' }}>
+                                <label>Dt-Kt ($):</label>
+                                <input readOnly style={{ textAlign: 'center' }} type="text" className="input" value={formatNumber(FormData.dt_kt_val)} />
+                            </div>
 
-                    </div>
+                        </div>
+                    )}
 
                     {/* Tabs */}
                     <div className="tolov-tabs">
@@ -560,8 +569,8 @@ export default function TolovModal({ editData, onClose, removeSyncedTolovlar, se
 
                                 <svg width="41" height="130" viewBox="0 0 41 130" fill="none" xmlns="http://www.w3.org/2000/svg">
                                     <path d="M1 1C4.84564 1 8.53377 2.68571 11.253 5.68629C13.9723 8.68687 15.5 12.7565 15.5 17V41C15.5 47.3652 17.0277 53.4697 19.747 57.9706C22.4662 62.4714 26.1544 65 30 65C26.1544 65 22.4662 67.5286 19.747 72.0294C17.0277 76.5303 15.5 82.6348 15.5 89V113C15.5 117.243 13.9723 121.313 11.253 124.314C8.53377 127.314 4.84564 129 1 129" stroke="#006CAC" />
-                                    <path d="M31.9167 63.6665H40.0834" stroke="#006CAC" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M31.9167 66.3335H40.0834" stroke="#006CAC" stroke-linecap="round" stroke-linejoin="round" />
+                                    <path d="M31.9167 63.6665H40.0834" stroke="#006CAC" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M31.9167 66.3335H40.0834" stroke="#006CAC" strokeLinecap="round" strokeLinejoin="round" />
                                 </svg>
 
 
@@ -611,23 +620,25 @@ export default function TolovModal({ editData, onClose, removeSyncedTolovlar, se
                     )}
 
                     {/* Izox */}
-                    <div className="input-group" style={{ width: '100%' }}>
-                        <label>Izox:</label>
-                        <textarea
-                            className="input tolov-textarea"
-                            value={FormData.izox}
-                            onChange={e => set("izox", e.target.value)}
-                            rows={3}
-                        />
-                    </div>
+                    {canWriteNote && (
+                        <div className="input-group" style={{ width: '100%' }}>
+                            <label>Izox:</label>
+                            <textarea
+                                className="input tolov-textarea"
+                                value={FormData.izox}
+                                onChange={e => set("izox", e.target.value)}
+                                rows={3}
+                            />
+                        </div>
+                    )}
 
                     {/* Buttons */}
                     <div className="btn-row">
-                        <button type="button" className="btn-cancel" onClick={onClose}>
+                        <button type="button" className="btn-cancel" onClick={onClose} disabled={saving}>
                             BEKOR QILISH
                         </button>
-                        <button type="button" className="btn-submit" onClick={handleSubmit}>
-                            SAQLASH
+                        <button type="button" className="btn-submit" onClick={handleSubmit} disabled={saving}>
+                            {saving ? "SAQLANMOQDA..." : "SAQLASH"}
                         </button>
                     </div>
                 </div>

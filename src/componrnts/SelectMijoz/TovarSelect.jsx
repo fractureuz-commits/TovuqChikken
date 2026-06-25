@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { loadTovar } from "../../utils/storage";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 export default function TovarSelect({
     onClose,
@@ -11,6 +12,7 @@ export default function TovarSelect({
     const [search, setSearch] = useState("");
     const [TovarLoading, setTovarLoading] = useState(true);
     const [TovarError, setTovarError] = useState(null);
+    useBackHandler(onClose);
 
     useEffect(() => {
         loadTovar()

@@ -1,7 +1,10 @@
 import React from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 export default function HtmlViewer({ HTMLdata, setHTMLdataModal , title}) {
+    useBackHandler(() => setHTMLdataModal(false));
+
     return (
         <div
             style={{

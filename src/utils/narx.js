@@ -23,6 +23,8 @@ const clean = (val) => {
     return parseFloat(str) || 0;
 };
 
+export const parseNarx = clean;
+
 export const getNarx = (item, FormData) => {
     const narxIndex = FormData?.narh_turi || 1;
     const formVal = String(FormData?.valyuta_turi ?? "1");

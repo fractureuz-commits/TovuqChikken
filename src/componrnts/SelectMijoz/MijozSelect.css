@@ -8,6 +8,7 @@
     padding: 0 10px;
     background-color: #F1F1F1;
     width: 100%;
+    flex-shrink: 0;
 }
 
 .search input {
@@ -15,6 +16,8 @@
     border: none;
     background-color: transparent;
     width: 90%;
+    min-width: 0;
+    font-size: 16px;
 }
 
 .search input:focus {
@@ -38,6 +41,8 @@
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: #bbb transparent;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
 }
 
 /* Scroll kengligi */
@@ -63,10 +68,47 @@
 .selects .select {
     width: 100%;
     border: 2px solid #006CAC;
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
+    gap: 8px;
     padding: 10px;
     border-radius: 10px;
     color: #006CAC;
+    min-width: 0;
+}
+
+.selects .select>* {
+    min-width: 0;
+}
+
+.selects .select p {
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 430px) {
+    .selects {
+        gap: 8px;
+        max-height: none;
+        flex: 1 1 auto;
+    }
+
+    .selects .select {
+        padding: 9px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    .search {
+        height: 38px;
+        padding: 0 8px;
+    }
+
+    .selects .select {
+        grid-template-columns: 1fr;
+        gap: 4px;
+        padding: 8px;
+    }
 }

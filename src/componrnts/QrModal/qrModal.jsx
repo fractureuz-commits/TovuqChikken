@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import "./QrModal.css";
 import { apiPost } from "../../utils/api";
 import { startFastQrScanner } from "../../utils/fastQrScanner";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 const scanFormats = [
     "qr_code",
@@ -44,6 +45,8 @@ function QrModal({ setProductadd, onScan, onClose, setshtrixData, handleModal, s
         onClose?.();
         handleModal?.();
     }, [handleModal, onClose, stopScanner]);
+
+    useBackHandler(handleClose);
 
     const handleDecoded = useCallback(async (decodedText) => {
         if (!decodedText || scannedSet.current.has(decodedText) || isProcessing.current) return;

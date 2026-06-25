@@ -8,11 +8,15 @@ import { apiPost } from "../../utils/api";
 import ModalHeader from "../BuyurtmaModal/ModalHeader";
 import { getUser } from "../../leyout/login/auth";
 import { format } from "date-fns";
+import { useBackHandler } from "../../utils/backButtonStack";
+import { QUEUE_TYPES, saveQueueItem } from "../../utils/offlineQueue";
+import { getCartItemTotal } from "../../utils/queueSummary";
+import { makeSavdoItemId } from "../../utils/savdoIdentity";
 
 export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }) {
 
     const [search, setSearch] = useState('');
-    const [cart, setCart] = useState({ tovarlar: [] });
+    const [cart, setCart] = useState(null);
     const [sending, setSending] = useState(false);
     const CART_KEY = qaytarish ? "qaytarish" : "buyurtma_cart"; const FormData_KEY = "formData";
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
@@ -21,6 +25,8 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
     const [ProductData, setProductData] = useState(null);
     const [Productadd, setProductadd] = useState(false);
     const user = getUser();
+    useBackHandler(onClose);
+
     const loadCart = useCallback(() => {
         try {
             const data = JSON.parse(localStorage.getItem(CART_KEY) || "{}");
@@ -60,21 +66,22 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
     useEffect(() => {
         loadCart();
     }, [loadCart]);
+
+    const cartLoaded = cart !== null;
+    const cartItems = useMemo(() => cart?.tovarlar || [], [cart?.tovarlar]);
+
     // qidiruv
     const filtered = useMemo(() => {
-
-        const items = cart?.tovarlar || [];
-
-        if (!search.trim()) return items;
+        if (!search.trim()) return cartItems;
 
         const q = search.toLowerCase();
 
-        return items.filter(item =>
+        return cartItems.filter(item =>
             item.name?.toLowerCase().includes(q) ||
             item.tovar_code?.toLowerCase().includes(q)
         );
 
-    }, [search, cart]);
+    }, [search, cartItems]);
 
     // jami summa
     const totalSum = useMemo(() => {
@@ -84,8 +91,17 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
         );
     }, [cart?.tovarlar]);
 
+    const itemsWithTotals = useMemo(() => {
+        return cartItems.map(item => ({
+            ...item,
+            Summa: getCartItemTotal(item),
+        }));
+    }, [cartItems]);
+
     // delete
     const handleDelete = (itemId) => {
+        if (!cartLoaded) return;
+
         Swal.fire({
             title: "O'chirilsinmi?",
             icon: "warning",
@@ -96,7 +112,7 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
         }).then(res => {
             if (!res.isConfirmed) return;
 
-            const newTovarlar = cart.tovarlar.filter(i => i.itemId !== itemId);
+            const newTovarlar = cartItems.filter(i => i.itemId !== itemId);
 
             // ✅ Oxirgi tovar o'chirilsa — ikkalasini ham tozala
             if (newTovarlar.length === 0) {
@@ -111,18 +127,18 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
             setCart(updated);
         });
     };
-    // buyurtmani yuborish
+    // buyurtmani localga saqlash
     const handleYopish = async () => {
-        const items = cart?.tovarlar || [];
+        const items = cartItems;
 
         if (items.length === 0) return;
 
         const confirm = await Swal.fire({
-            title: "Buyurtmani yopish",
-            text: `${items.length} ta mahsulot yuboriladi`,
+            title: "Savdoni saqlash",
+            text: `${items.length} ta mahsulot yuborilmagan savdolarga qo'shiladi`,
             icon: "question",
             showCancelButton: true,
-            confirmButtonText: "Yuborish",
+            confirmButtonText: "Saqlash",
             cancelButtonText: "Bekor",
             confirmButtonColor: "#006CAC",
         });
@@ -132,22 +148,22 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
         setSending(true);
 
         try {
-            await apiPost("tovuq/hs/realiz/get_realiz", cart);
-
-            // ===== QO‘SHIMCHA BUYURTMALAR LOCALGA SAQLASH =====
-            const oldOrders = JSON.parse(localStorage.getItem("buyurtmalar") || "[]");
-
+            const itemId = makeSavdoItemId();
             const newOrder = {
-                id: Date.now(),
+                id: itemId,
+                itemId,
+                name: FormData?.kontragent || cart?.mijoz_code || "Noma'lum mijoz",
                 sana: new Date().toLocaleString("uz-UZ"),
-                data: cart,
+                created_at: new Date().toISOString(),
+                data: {
+                    ...cart,
+                    itemId,
+                    date: cart?.date || format(new Date(), "dd.MM.yyyy HH:mm:ss"),
+                    tovarlar: itemsWithTotals,
+                },
             };
 
-            localStorage.setItem(
-                "buyurtmalar",
-                JSON.stringify([...oldOrders, newOrder])
-            );
-            // ================================================
+            await saveQueueItem(QUEUE_TYPES.SAVDOLAR, newOrder);
 
             localStorage.removeItem(CART_KEY);
             localStorage.removeItem(FormData_KEY);
@@ -156,8 +172,8 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
             onExit();
             Swal.fire({
                 icon: "success",
-                title: "Muvaffaqiyatli!",
-                text: "Buyurtma yuborildi va saqlandi",
+                title: "Saqlandi!",
+                text: "Savdo yuborilmagan savdolarga qo'shildi",
                 confirmButtonColor: "#006CAC",
                 timer: 500,
                 showConfirmButton: false,
@@ -175,7 +191,7 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
         }
     };
     const handleQaytarish = async () => {
-        const items = cart?.tovarlar || [];
+        const items = cartItems;
         if (items.length === 0) return;
 
         const cleanedItems = items.map(item => ({
@@ -189,8 +205,6 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
             term: cleanedItems[0]?.term || "",
             tovarlar: cleanedItems,
         };
-
-        console.log("Yuboriladigan data:", newData);
 
         const confirm = await Swal.fire({
             title: "Mahsulotni qaytarish",
@@ -234,7 +248,7 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
     return (
         <>
             <div className="overlay" style={{ flexDirection: 'column' }}>
-                <div className="app-safe">
+                <div className="app-safe cart-safe">
                     {/* header */}
                     <ModalHeader
                         activeTab="koriznka"
@@ -243,8 +257,8 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
                         onSkaner={() => setShtrixModal(prev => !prev)}
                     />
 
-                    <div className="modal"
-                        style={{ height: '100vh', width: '100%', borderRadius: "0px", }}
+                    <div className="modal cart-modal"
+                        style={{ width: '100%', borderRadius: "0px", }}
                     >
                         <div className="modal-title" style={{
                             justifyContent: 'space-between',
@@ -299,7 +313,7 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
 
 
                         {/* cart items */}
-                        {filtered.length === 0 ? (
+                        {!cartLoaded ? null : filtered.length === 0 ? (
                             <p style={{ padding: 20, textAlign: 'center', color: '#999' }}>
                                 Korzinka bo'sh
                             </p>
@@ -334,7 +348,7 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
                                                 className="cart-item-delete"
                                                 onClick={() => handleDelete(item.itemId)}
                                             >
-                                                <svg color="#fff" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-x"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
+                                                <svg color="#fff" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-x"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M18 6l-12 12" /><path d="M6 6l12 12" /></svg>
                                             </button>
                                         </div>
                                     </div>
@@ -347,9 +361,11 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
                         <button
                             className="cart-yopish-btn"
                             onClick={qaytarish ? handleQaytarish : handleYopish}
-                            disabled={sending || !cart?.tovarlar?.length}
+                            disabled={sending || !cartLoaded || cartItems.length === 0}
                         >
-                            {sending ? "Yuborilmoqda..." : "BUYURTMANI YOPISH"}
+                            {sending
+                                ? (qaytarish ? "Yuborilmoqda..." : "Saqlanmoqda...")
+                                : (qaytarish ? "BUYURTMANI YOPISH" : "SAQLASH")}
                         </button>
                     </div>
                 </div>

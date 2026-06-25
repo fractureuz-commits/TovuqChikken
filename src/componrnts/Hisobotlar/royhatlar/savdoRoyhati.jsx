@@ -9,6 +9,7 @@ import "../savdoRoyhati.css";
 import Swal from "sweetalert2";
 import { apiPost } from "../../../utils/api";
 import HtmlViewer from "../../htmlviewer/htmlviewer";
+import { useBackHandler } from "../../../utils/backButtonStack";
 export default function SavdoRoyhatiModal({ onClose }) {
     const [selected, setSelected] = useState(1);
     const [kontragent, setKontragent] = useState([]);
@@ -22,6 +23,8 @@ export default function SavdoRoyhatiModal({ onClose }) {
     const [openSelectTovar, setOpenSelectTovar] = useState(false);
     const [openSelectMahsulotGroup, setopenSelectMahsulotGroup] = useState(false);
     const user = getUser();
+    useBackHandler(onClose);
+
     const [SavdoFormData, setSavdoFormData] = useState({
         repost: 1,
         date_1: format(new Date(), "yyyy-MM-dd"),

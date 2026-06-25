@@ -1,7 +1,10 @@
 import { useEffect } from "react";
 import "./modal.css";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 export default function Modal({ open, onClose, title, children }) {
+    useBackHandler(onClose, open);
+
     // Body scroll lock
     useEffect(() => {
         if (open) document.body.style.overflow = "hidden";

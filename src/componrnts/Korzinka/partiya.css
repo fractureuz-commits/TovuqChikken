@@ -1,87 +1,290 @@
+.overlay>.app-safe.partiya-safe {
+    width: 100%;
+    height: 100% !important;
+    min-height: 0;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden !important;
+    background: #ffffff;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.overlay>.app-safe.partiya-safe>.modal.partiya-modal {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 0;
+    max-height: 100%;
+    flex: 1 1 auto;
+    max-width: none;
+    border-radius: 0 !important;
+    box-shadow: none;
+    overflow: hidden !important;
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    background: #ffffff;
+}
+
+.partiya-title,
+.partiya-modal>.modal-title {
+    flex: 0 0 auto;
+    margin: 8px 0 12px;
+    min-height: 42px;
+}
+
+.partiya-modal>.modal-title p {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.15;
+}
+
+.partiya-modal>.modal-title svg {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 42px;
+}
+
+.partya-list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 108, 172, 0.55) transparent;
+}
+
+.partya-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.partya-list::-webkit-scrollbar-thumb {
+    background: rgba(0, 108, 172, 0.55);
+    border-radius: 999px;
+}
+
 .partya-card {
     display: flex;
-    background: #006CAC;
-    color: white;
-    border-radius: 14px;
-    overflow: hidden;
+    flex: 0 0 auto;
     width: 100%;
-    margin-bottom: 10px;
+    min-width: 0;
+    margin-bottom: 12px;
+    overflow: hidden;
+    color: #ffffff;
+    background: #0076b6;
+    border-radius: 12px;
     cursor: pointer;
     transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
 .partya-card:active {
     opacity: 0.85;
-    transform: scale(0.98);
+    transform: scale(0.99);
 }
-.partiya-title{
-    margin-top: 20px;
-    margin-bottom: 0;
-}
-/* ═══ LEFT — Raqam ═══ */
+
 .partya-no {
-    width: 52px;
-    min-width: 52px;
+    width: 58px;
+    min-width: 58px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 4px;
+    padding: 10px 6px;
     background: rgba(0, 0, 0, 0.15);
-    padding: 12px 6px;
-    gap: 2px;
 }
 
 .no-label {
     font-size: 10px;
-    color: rgba(255, 255, 255, 0.65);
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.72);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0;
 }
 
 .no-value {
-    font-size: 20px;
-    font-weight: 700;
-    color: #fff;
+    font-size: 26px;
+    font-weight: 800;
     line-height: 1;
+    color: #ffffff;
 }
 
-/* ═══ RIGHT — Ma'lumotlar ═══ */
 .partya-body {
-    flex: 1;
+    flex: 1 1 auto;
+    min-width: 0;
     display: flex;
     flex-direction: column;
 }
 
 .partya-row {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(88px, 32%) minmax(0, 1fr);
     align-items: center;
-    justify-content: space-between;
+    gap: 8px;
+    min-width: 0;
+    min-height: 36px;
     padding: 7px 12px;
 }
 
 .partya-row.border-bottom {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
 }
 
 .partya-label {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.65);
-    white-space: nowrap;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.2;
+    color: rgba(255, 255, 255, 0.66);
+    overflow-wrap: anywhere;
 }
 
 .partya-value {
-    font-size: 13px;
-    font-weight: 500;
-    color: #fff;
+    min-width: 0;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 750;
+    line-height: 1.2;
     text-align: right;
+    overflow-wrap: anywhere;
+    word-break: normal;
 }
 
 .partya-value.highlight {
-    color: #FFD700;
-    font-weight: 700;
+    color: #ffe15a;
+    font-weight: 800;
 }
-.line{
-    height: 100%;
-    background-color: #fff;
-    width: 2px;
+
+.partya-empty {
+    padding: 20px 10px;
+    color: #6b7280;
+    font-size: 14px;
+    text-align: center;
+}
+
+.line,
+.partya-row-pairs,
+.partya-field {
+    display: none;
+}
+
+@media (max-width: 430px) {
+    .overlay>.app-safe.partiya-safe>.modal.partiya-modal {
+        padding: 8px 10px 0;
+    }
+
+    .partiya-title,
+    .partiya-modal>.modal-title {
+        margin: 6px 0 10px;
+        gap: 8px;
+        min-height: 38px;
+    }
+
+    .partiya-modal>.modal-title p {
+        font-size: 22px;
+    }
+
+    .partiya-modal>.modal-title svg {
+        width: 38px;
+        height: 38px;
+        flex-basis: 38px;
+    }
+
+    .partya-card {
+        margin-bottom: 12px;
+        border-radius: 11px;
+    }
+
+    .partya-no {
+        width: 56px;
+        min-width: 56px;
+        padding: 9px 5px;
+    }
+
+    .no-value {
+        font-size: 25px;
+    }
+
+    .partya-row {
+        grid-template-columns: minmax(78px, 30%) minmax(0, 1fr);
+        min-height: 34px;
+        padding: 6px 10px;
+        gap: 7px;
+    }
+
+    .partya-label {
+        font-size: 12px;
+    }
+
+    .partya-value {
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    .overlay>.app-safe.partiya-safe>.modal.partiya-modal {
+        padding: 7px 8px 0;
+    }
+
+    .partiya-modal>.modal-title p {
+        font-size: 20px;
+    }
+
+    .partiya-modal>.modal-title svg {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+    }
+
+    .partya-no {
+        width: 48px;
+        min-width: 48px;
+        padding: 8px 4px;
+    }
+
+    .no-label {
+        font-size: 9px;
+    }
+
+    .no-value {
+        font-size: 22px;
+    }
+
+    .partya-row {
+        grid-template-columns: minmax(70px, 30%) minmax(0, 1fr);
+        min-height: 32px;
+        padding: 6px 8px;
+        gap: 6px;
+    }
+
+    .partya-label {
+        font-size: 11px;
+    }
+
+    .partya-value {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 320px) {
+    .partya-no {
+        width: 44px;
+        min-width: 44px;
+    }
+
+    .partya-row {
+        grid-template-columns: minmax(62px, 28%) minmax(0, 1fr);
+        padding-left: 7px;
+        padding-right: 7px;
+    }
+
+    .partya-label {
+        font-size: 10px;
+    }
+
+    .partya-value {
+        font-size: 11px;
+    }
 }

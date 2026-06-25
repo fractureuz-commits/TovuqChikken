@@ -5,6 +5,9 @@ import { loadImage, loadTovar } from "../../utils/storage";
 import { getNarx, formatNarx } from "../../utils/narx";
 import { format, parse } from "date-fns";
 import { getUser } from "../../leyout/login/auth";
+import { canViewPrice } from "../../utils/permissions";
+import { toNumber } from "../../utils/queueSummary";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 export default function ProductQoshish({ onClose, item, handlePartiya }) {
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
@@ -14,6 +17,8 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
     const { narx: currentNarx, isVal } = getNarx(item, FormData);
     const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
     const user = getUser();
+    const canSeePrice = canViewPrice(user);
+    useBackHandler(onClose);
 
     const jami = formatNarx(currentNarx * quantity); // ← formatNarx import dan
     useEffect(() => {
@@ -45,15 +50,16 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
         }
 
         const tovarlar = cart?.tovarlar || [];
-
         const inCart = tovarlar.find(i => i.itemId === itemId);
 
-        const qoldiq = parseFloat(item?.qoldiq || 0);
-        const already = inCart ? inCart.soni : 0;
+        const qoldiq = Number(
+            String(item?.qoldiq || 0).replace(/\s/g, "")
+        );
+
+        const already = Number(inCart?.soni || 0);
 
         return qoldiq - already;
-
-    }, [item?.date_invoys, item?.code]);
+    }, [item?.date_invoys, item?.code, item?.term, item?.qoldiq]);
 
     const handleQuantity = (type) => {
         setQuantity((prev) => {
@@ -90,7 +96,11 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
 
         try {
             const itemId = `${item?.date_invoys}_${item?.code}`;
-            const maxQoldiq = parseFloat(item?.qoldiq || 0);
+            const maxQoldiq = Number(
+                String(item?.qoldiq || 0)
+                    .replace(/\s/g, "")
+                    .replace(",", ".")
+            );
 
             let existing = JSON.parse(localStorage.getItem("buyurtma_cart"));
 
@@ -98,6 +108,7 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                 existing = {
                     date: date,
                     mijoz_code: FormData?.kontragent_id,
+                    mijoz_name: FormData?.kontragent,
                     ost_sum: FormData.dt_kt_sum,
                     ost_val: FormData.dt_kt_val,
                     vid_val: FormData?.valyuta_turi,
@@ -112,8 +123,8 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
             );
 
             if (alreadyIndex !== -1) {
-                const currentQty = existing.tovarlar[alreadyIndex].soni;
-                const newQty = currentQty + quantity;
+                const currentQty = toNumber(existing.tovarlar[alreadyIndex].soni);
+                const newQty = currentQty + toNumber(quantity);
 
                 if (newQty > maxQoldiq) {
                     Swal.fire({
@@ -138,9 +149,9 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                         "yyyyMMdd"
                     ),
                     qoldiq: item?.qoldiq,
-                    soni: quantity,
+                    soni: toNumber(quantity),
                     narh: currentNarx,
-                    Summa: currentNarx * quantity,
+                    Summa: currentNarx * toNumber(quantity),
                     bayyer: item.bayyer,
                     group_tovar_code: item.group_tovar_code,
                     group_tovar_name: item.group_tovar_name,
@@ -196,7 +207,7 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                         <div className="kd-content">
                             <h2 className="kd-name">{item?.name}</h2>
 
-                            {(user?.rol === "1" || user?.narx_korish) && (
+                            {canSeePrice && (
                                 <>
                                     <div className="kd-section">
                                         <label className="kd-label">Mahsulot narxi:</label>
@@ -265,7 +276,7 @@ export default function ProductQoshish({ onClose, item, handlePartiya }) {
                                 </button>
                             </div>
 
-                            {(user?.rol === "1" || user?.narx_korish) && (
+                            {canSeePrice && (
                                 <>
                                     <div className="kd-jami">
                                         <span className="kd-jami-label">Jami summa:</span>

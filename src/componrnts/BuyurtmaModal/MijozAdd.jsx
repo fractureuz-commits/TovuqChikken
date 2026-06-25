@@ -1,12 +1,18 @@
 import { useState } from "react";
 import MijozSelect from "../SelectMijoz/SelectMijoz";
-import { BaseUrl } from "../../baseUrl";
 import Swal from "sweetalert2";
-import { apiFetch, apiPost } from "../../utils/api";
+import { apiPost } from "../../utils/api";
 import QrModal from "../QrModal/qrModal";
 import { saveKontragent, loadKontragent } from "../../utils/storage";
+import { getUser } from "../../leyout/login/auth";
+import { canViewNotes } from "../../utils/permissions";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 export default function MijozaddModal({ onClose, onKontragentUpdate, setKontragent, setFormData }) {
+    const user = getUser();
+    const canWriteNote = canViewNotes(user);
+    useBackHandler(onClose);
+
     const [FormDataMijoz, setFormDataMijoz] = useState({
         name: "",
         tel_1: "",
@@ -20,7 +26,8 @@ export default function MijozaddModal({ onClose, onKontragentUpdate, setKontrage
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const result = await apiPost("tovuq/hs/kontragent/get_kontragent", FormDataMijoz);
+            const payload = canWriteNote ? FormDataMijoz : { ...FormDataMijoz, izoh: "" };
+            const result = await apiPost("tovuq/hs/kontragent/get_kontragent", payload);
             console.log("✅ Javob:", result);
 
             if (result.success) {
@@ -159,14 +166,16 @@ export default function MijozaddModal({ onClose, onKontragentUpdate, setKontrage
                         </div>
 
                         {/* Izoh */}
-                        <div className="input-group">
-                            <label>Izoh</label>
-                            <textarea
-                                className="input"
-                                value={FormDataMijoz.izoh || ""}
-                                onChange={(e) => setFormDataMijoz(prev => ({ ...prev, izoh: e.target.value }))}
-                            />
-                        </div>
+                        {canWriteNote && (
+                            <div className="input-group">
+                                <label>Izoh</label>
+                                <textarea
+                                    className="input"
+                                    value={FormDataMijoz.izoh || ""}
+                                    onChange={(e) => setFormDataMijoz(prev => ({ ...prev, izoh: e.target.value }))}
+                                />
+                            </div>
+                        )}
 
                         <div className="divider" />
 

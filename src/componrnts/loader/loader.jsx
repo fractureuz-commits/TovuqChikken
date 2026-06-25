@@ -1,24 +1,39 @@
-import React from 'react';
 import styled from 'styled-components';
 
-const Loader = () => {
+const Loader = ({ message = "Yuklanmoqda...", current = 0, total = 0 }) => {
+  const showProgress = Number(total) > 0;
+  const percent = showProgress
+    ? Math.min(100, Math.round((Number(current || 0) / Number(total)) * 100))
+    : 0;
+
   return (
     <StyledWrapper>
       <div className="full">
-        <div className="spinner center">
-        <div className="spinner-blade" />
-        <div className="spinner-blade" />
-        <div className="spinner-blade" />
-        <div className="spinner-blade" />
-        <div className="spinner-blade" />
-        <div className="spinner-blade" />
-        <div className="spinner-blade" />
-        <div className="spinner-blade" />
-        <div className="spinner-blade" />
-        <div className="spinner-blade" />
-        <div className="spinner-blade" />
-        <div className="spinner-blade" />
-      </div>
+        <div className="loader-panel" data-i18n-skip="true">
+          <div className="spinner">
+            <div className="spinner-blade" />
+            <div className="spinner-blade" />
+            <div className="spinner-blade" />
+            <div className="spinner-blade" />
+            <div className="spinner-blade" />
+            <div className="spinner-blade" />
+            <div className="spinner-blade" />
+            <div className="spinner-blade" />
+            <div className="spinner-blade" />
+            <div className="spinner-blade" />
+            <div className="spinner-blade" />
+            <div className="spinner-blade" />
+          </div>
+          <div className="loader-message">{message}</div>
+          {showProgress && (
+            <>
+              <div className="loader-progress">
+                <div style={{ width: `${percent}%` }} />
+              </div>
+              <div className="loader-count">{current}/{total}</div>
+            </>
+          )}
+        </div>
       </div>
     </StyledWrapper>
   );
@@ -31,9 +46,29 @@ const StyledWrapper = styled.div`
     position:fixed;
     top:0;
     left:0;
-    background-color: #ffffff77;
-    z-index:1000;
+    background-color: rgba(255, 255, 255, 0.78);
+    z-index:10000;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    backdrop-filter: blur(3px);
   }
+
+  .loader-panel {
+    min-width: 220px;
+    max-width: calc(100vw - 48px);
+    min-height: 148px;
+    padding: 26px 24px 22px;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.16);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap: 18px;
+  }
+
   .spinner {
     font-size: 28px;
     position: relative;
@@ -42,13 +77,33 @@ const StyledWrapper = styled.div`
     height: 1em;
   }
 
-  .spinner.center {
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    margin: auto;
+  .loader-message {
+    color: #1a2b4a;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.35;
+  }
+
+  .loader-progress {
+    width: 100%;
+    height: 7px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #e5edf4;
+  }
+
+  .loader-progress > div {
+    height: 100%;
+    border-radius: inherit;
+    background: #006CAC;
+    transition: width 0.2s ease;
+  }
+
+  .loader-count {
+    color: #5b6b7d;
+    font-size: 12px;
+    font-weight: 700;
   }
 
   .spinner .spinner-blade {

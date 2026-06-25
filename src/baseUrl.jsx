@@ -1,9 +1,19 @@
-//export const BaseUrl = "https://javohirgroup.uz/api";
-// export const BaseUrl = "https://lyquimoly2.uz/api";
-// export const BaseUrl = "http://192.168.100.26:8000";
-// export const BaseUrl = "http://localhost:8000";
-export const BaseUrl = "http://192.168.1.103/";
-export const BaseUrl1C = "http://192.168.1.0.113:8000";
+import { getApiBaseUrl } from "./utils/serverConfig";
+
+const dynamicBaseUrl = {
+  toString: () => getApiBaseUrl(),
+  valueOf: () => getApiBaseUrl(),
+  [Symbol.toPrimitive]: () => getApiBaseUrl(),
+};
+
+export const BaseUrl = dynamicBaseUrl;
+export const BaseUrl1C = dynamicBaseUrl;
+export const getBaseUrl = getApiBaseUrl;
+
+export const buildBaseUrl = (path = "") => {
+  const cleanPath = String(path).startsWith("/") ? path : `/${path}`;
+  return `${getApiBaseUrl()}${cleanPath}`;
+};
 
 export const narxlar = {
   val: true,

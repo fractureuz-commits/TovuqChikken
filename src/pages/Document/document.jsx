@@ -1,25 +1,23 @@
-import './document.css'
-import { BaseUrl } from '../../baseUrl';
+import './document.css';
 import { getUser } from '../../leyout/login/auth';
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { apiGet } from '../../utils/api';
 
 const PAGE_SIZE = 20;
 
 function Document() {
     const [allDocuments, setAllDocuments] = useState([]);
-    const [all1c, setall1c] = useState([]);
     const [visible, setVisible] = useState([]);
     const [search, setSearch] = useState('');
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(false);
     const visibleCountRef = useRef(PAGE_SIZE);
     const observerRef = useRef(null);
-    const allDocumentsRef = useRef([]); // ✅ observer ichida fresh data
-    all1c.map((item) => {
-        console.log(item.name)
-    })
+    const allDocumentsRef = useRef([]);
+
     const filtered = useMemo(() => {
-        if (!search.trim()) return visible; // ✅ search yo'q → paginated visible
+        if (!search.trim()) return visible;
+
         const tokens = search.toLowerCase().trim().split(/\s+/);
         return allDocuments.filter((doc) => {
             const haystack = [
@@ -28,106 +26,72 @@ function Document() {
                 doc.mahsulot_id_1s,
                 doc.sotilgan_sana,
                 doc.QR,
-                doc.id
+                doc.id,
             ]
                 .filter(Boolean)
-                .join(" ")
+                .join(' ')
                 .toLowerCase();
+
             return tokens.every((token) => haystack.includes(token));
         });
     }, [search, allDocuments, visible]);
 
     useEffect(() => {
-        getUser().then((data) => setUser(data));
+        setUser(getUser());
     }, []);
 
     useEffect(() => {
         if (!user?.id_1s) return;
         fetchDocument();
-        fetch1C()
-    }, [user]);
+    }, [user?.id_1s]);
 
     useEffect(() => {
         const observer = new IntersectionObserver(
             (entries) => {
-                if (entries[0].isIntersecting) {
-                    const all = allDocumentsRef.current;
-                    const next = visibleCountRef.current + PAGE_SIZE;
-                    if (visibleCountRef.current >= all.length) return;
-                    visibleCountRef.current = next;
-                    setVisible(all.slice(0, next)); // ✅ ref dan oladi
-                }
+                if (!entries[0].isIntersecting) return;
+
+                const all = allDocumentsRef.current;
+                const next = visibleCountRef.current + PAGE_SIZE;
+                if (visibleCountRef.current >= all.length) return;
+
+                visibleCountRef.current = next;
+                setVisible(all.slice(0, next));
             },
-            { threshold: 0.1 } // ✅ 1.0 emas, 0.1 — mobilda ishonchli
+            { threshold: 0.1 }
         );
+
         if (observerRef.current) observer.observe(observerRef.current);
         return () => observer.disconnect();
     }, [allDocuments]);
 
-    const fetchDocument = () => {
-        setLoading(true);
-        fetch(`${BaseUrl}/diller_umumiy/${user.id_1s}/`, {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-        })
-            .then((res) => {
-                if (!res.ok) throw new Error(`HTTP xato! status: ${res.status}`);
-                return res.json();
-            })
-            .then((data) => {
-                allDocumentsRef.current = data; // ✅
-                setAllDocuments(data);
-                visibleCountRef.current = PAGE_SIZE;
-                setVisible(data.slice(0, PAGE_SIZE));
-            })
-            .catch((error) => console.log(`Xato: ${error.message}`))
-            .finally(() => setLoading(false));
+    const applyDocuments = (data) => {
+        const rows = Array.isArray(data) ? data : [];
+        allDocumentsRef.current = rows;
+        setAllDocuments(rows);
+        visibleCountRef.current = PAGE_SIZE;
+        setVisible(rows.slice(0, PAGE_SIZE));
     };
 
-    const fetch1C = () => {
+    const fetchDocument = async () => {
         setLoading(true);
-
-        const toBase64 = (str) => btoa(unescape(encodeURIComponent(str)));
-        const username = "Администратор";
-        const password = "";
-
-        console.log("🔄 Fetch boshlandi...");
-        console.log("🔑 Credentials:", `${username}:${password}`);
-
-        fetch("/1c-api/IM/hs/products/get_product", {
-            method: "GET",
-            headers: {
-                "Authorization": `Basic ${toBase64(`${username}:${password}`)}`,
-                "Content-Type": "application/json",
-            },
-        })
-            .then((res) => {
-                return res.text(); // ← json() emas, text() bilan tekshiramiz
-            })
-            .then((text) => {
-                try {
-                    const data = JSON.parse(text);
-                    console.log("✅ JSON parse OK:", data);
-                    allDocumentsRef.current = data;
-                    setAllDocuments(data);
-                    visibleCountRef.current = PAGE_SIZE;
-                    setall1c(data.slice(0, PAGE_SIZE));
-                } catch (e) {
-                    console.error("❌ JSON parse xato:", e.message);
-                    console.error("❌ Kelgan text:", text);
-                }
-            })
-            .catch((error) => {
-                console.error("❌ Fetch xato:", error);
-                console.error("❌ Xato turi:", error.name);
-                console.error("❌ Xato xabari:", error.message);
-            })
+        try {
+            const data = await apiGet(`/diller_umumiy/${user.id_1s}/`, {
+                auth: false,
+                timeoutMs: 60000,
+                retries: 0,
+            });
+            applyDocuments(data);
+        } catch (error) {
+            console.log(`Xato: ${error.message}`);
+        } finally {
+            setLoading(false);
+        }
     };
-    const highlightText = (text, search) => {
-        if (!search?.trim() || typeof text !== "string") return text;
 
-        // Tokenlarni regex uchun escape qilib, bitta pattern qil
-        const tokens = search
+    const highlightText = (text, searchValue) => {
+        if (!searchValue?.trim() || typeof text !== 'string') return text;
+
+        const tokens = searchValue
             .trim()
             .split(/\s+/)
             .map(token => token.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'))
@@ -135,8 +99,7 @@ function Document() {
 
         if (!tokens.length) return text;
 
-        // "falo|9166|mar" — har birini alohida qidiradi
-        const regex = new RegExp(`(${tokens.join("|")})`, "gi");
+        const regex = new RegExp(`(${tokens.join('|')})`, 'gi');
         const parts = text.split(regex);
 
         return parts.map((part, i) =>
@@ -147,17 +110,18 @@ function Document() {
             )
         );
     };
+
     return (
         <>
             <div className="Home">
                 <h1 className="home-title" style={{ marginTop: '1vh' }}>
-                    <p>Savdolar ro'yxati</p>
+                    <p>Savdolar ro&apos;yxati</p>
                 </h1>
             </div>
             <div className="search">
                 <input
                     type="text"
-                    placeholder='Qidirish...'
+                    placeholder="Qidirish..."
                     value={search}
                     autoComplete="off"
                     onChange={(e) => setSearch(e.target.value)}
@@ -197,19 +161,16 @@ function Document() {
                     </div>
                 ))}
 
-                {/* ✅ Trigger — faqat search yo'q paytda */}
                 {!search.trim() && visible.length < allDocuments.length && (
                     <div ref={observerRef} style={{ height: 30 }} />
                 )}
 
-                {/* ✅ Hammasi yuklandi */}
                 {!loading && !search.trim() && visible.length === allDocuments.length && allDocuments.length > 0 && (
                     <p style={{ textAlign: 'center', padding: '10px', color: '#999' }}>
                         Hammasi yuklandi ({allDocuments.length} ta)
                     </p>
                 )}
 
-                {/* ✅ Search natijasi */}
                 {!loading && search.trim() && (
                     <p style={{ textAlign: 'center', padding: '10px', color: '#999' }}>
                         {filtered.length} ta natija topildi

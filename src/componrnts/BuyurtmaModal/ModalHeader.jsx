@@ -1,6 +1,6 @@
 export default function ModalHeader({qaytarish, activeTab, onSotib, onKoriznka, onSkaner ,allClose}) {
     return (
-        <div className="modal-header" style={{ paddingTop: '4   0px' }}>
+        <div className="modal-header">
             {/* SOTIB OLISH */}
             <button
                 className={`header-button ${activeTab === "sotib" ? "active" : ""}`}

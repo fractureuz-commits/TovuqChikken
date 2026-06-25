@@ -1,38 +1,46 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import HarajatModal from "../../componrnts/Harajat/HarajatModal";
 import Swal from "sweetalert2";
+import { listQueueItems, QUEUE_TYPES, removeQueueItem } from "../../utils/offlineQueue";
+import { getUser } from "../../leyout/login/auth";
+import { canViewNotes } from "../../utils/permissions";
+import { formatMoney, getExpenseDollarTotal, getExpenseSomTotal } from "../../utils/queueSummary";
 
-export default function HarajatPage({ onBack, onSend }) {
+export default function HarajatPage({ onBack, onSend, onQueueChange }) {
+    const user = getUser();
+    const canSeeNotes = canViewNotes(user);
     const [sending, setSending] = useState(false);
     const [editPayment, setEditPayment] = useState(null);
 
-    const [payments, setPayments] = useState(() => {
-        return JSON.parse(localStorage.getItem("harajatlar") || "[]");
-    });
+    const [payments, setPayments] = useState(null);
 
-    const formatMoney = (num = 0, currency = "so'm") => {
-        return `${Number(num || 0).toLocaleString("ru-RU")} ${currency}`;
-    };
+    const reloadPayments = useCallback(async () => {
+        const data = await listQueueItems(QUEUE_TYPES.HARAJATLAR);
+        setPayments(data);
+        return data;
+    }, []);
 
-    const getSomTotal = (p) => {
-        return (
-            Number(p.naqd_sum || 0) +
-            Number(p.plastik_sum || 0) +
-            Number(p.clic_sum || 0)
-        );
-    };
+    const syncAfterQueueChange = useCallback(async (nextRows) => {
+        const data = Array.isArray(nextRows) ? nextRows : await reloadPayments();
+        setPayments(data);
+        await onQueueChange?.(data);
+        return data;
+    }, [onQueueChange, reloadPayments]);
 
-    const getDollarTotal = (p) => {
-        return Number(p.naqd_val || 0);
-    };
+    useEffect(() => {
+        reloadPayments();
+    }, [reloadPayments]);
+
+    const paymentRows = payments || [];
+    const paymentsLoaded = payments !== null;
 
     const totalSom = useMemo(
-        () => payments.reduce((sum, p) => sum + getSomTotal(p), 0),
-        [payments]
+        () => paymentRows.reduce((sum, p) => sum + getExpenseSomTotal(p), 0),
+        [paymentRows]
     );
     const totalDollar = useMemo(
-        () => payments.reduce((sum, p) => sum + getDollarTotal(p), 0),
-        [payments]
+        () => paymentRows.reduce((sum, p) => sum + getExpenseDollarTotal(p), 0),
+        [paymentRows]
     );
 
     // ── O'chirish ─────────────────────────────────────────────────
@@ -46,11 +54,11 @@ export default function HarajatPage({ onBack, onSend }) {
             cancelButtonColor: "#3085d6",
             confirmButtonText: "Ha, o'chirish",
             cancelButtonText: "Bekor qilish"
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
-                const updated = payments.filter((p) => p.id !== id);
-                setPayments(updated);
-                localStorage.setItem("harajatlar", JSON.stringify(updated));
+                await removeQueueItem(QUEUE_TYPES.HARAJATLAR, id);
+                const updated = await reloadPayments();
+                await onQueueChange?.(updated);
 
                 Swal.fire({
                     title: "O'chirildi!",
@@ -64,18 +72,27 @@ export default function HarajatPage({ onBack, onSend }) {
     };
 
     // ── Edit saqlash ──────────────────────────────────────────────
-    const handleEditSave = (newData) => {
-        setPayments(newData);
-        localStorage.setItem("harajatlar", JSON.stringify(newData));
+    const handleEditSave = async (newData) => {
+        await syncAfterQueueChange(newData);
         setEditPayment(null);
     };
 
     // ── Yuborish ──────────────────────────────────────────────────
-    const handleSend = () => {
+    const handleSend = async () => {
         setSending(true);
-        setTimeout(() => setSending(false), 1800);
-        if (onSend) onSend();
-        if (onBack) onBack();
+        try {
+            await onSend?.();
+            const updated = await reloadPayments();
+            await onQueueChange?.(updated);
+            onBack?.();
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleBack = async () => {
+        await onQueueChange?.();
+        onBack?.();
     };
 
     return (
@@ -89,7 +106,7 @@ export default function HarajatPage({ onBack, onSend }) {
                             <div>
                                 <button
                                     className="tolov-back-btn"
-                                    onClick={onBack}
+                                    onClick={handleBack}
                                     aria-label="Orqaga"
                                 >
                                     <span className="icon-arrow-left" />
@@ -126,13 +143,13 @@ export default function HarajatPage({ onBack, onSend }) {
                                 <div className="tolov-total-row">
                                     <span className="tolov-total-label">Jami summa so'mda:</span>
                                     <span className="tolov-total-value">
-                                        {formatMoney(totalSom, "so'm")}
+                                        {paymentsLoaded ? formatMoney(totalSom, "so'm") : ""}
                                     </span>
                                 </div>
                                 <div className="tolov-total-row">
                                     <span className="tolov-total-label">Jami summa dollarda:</span>
                                     <span className="tolov-total-value">
-                                        {formatMoney(totalDollar, "$")}
+                                        {paymentsLoaded ? formatMoney(totalDollar, "$") : ""}
                                     </span>
                                 </div>
                             </div>
@@ -141,14 +158,14 @@ export default function HarajatPage({ onBack, onSend }) {
 
                             {/* List */}
                             <div className="tolov-list">
-                                {payments.length === 0 ? (
+                                {paymentsLoaded && paymentRows.length === 0 ? (
                                     <div className="tolov-empty">
                                         Hozircha harajat mavjud emas
                                     </div>
                                 ) : (
-                                    payments.map((p) => {
-                                        const somTotal = getSomTotal(p);
-                                        const dollarTotal = getDollarTotal(p);
+                                    paymentRows.map((p) => {
+                                        const somTotal = getExpenseSomTotal(p);
+                                        const dollarTotal = getExpenseDollarTotal(p);
 
                                         return (
                                             <div key={p.id} className="tolov-item">
@@ -158,7 +175,7 @@ export default function HarajatPage({ onBack, onSend }) {
                                                     <span className="tolov-item-title">
                                                         {p.operatsiya_name || "Noma'lum harajat"}
                                                     </span>
-                                                    {p.izoh && (
+                                                    {canSeeNotes && p.izoh && (
                                                         <span style={{ fontSize: "12px", opacity: 0.7 }}>
                                                             {p.izoh}
                                                         </span>
@@ -169,9 +186,9 @@ export default function HarajatPage({ onBack, onSend }) {
                                                 {/* Summa + amallar */}
                                                 <div className="tolov-item-right">
                                                     <span className="tolov-item-amount">
-                                                        {dollarTotal > 0
-                                                            ? formatMoney(dollarTotal, "$")
-                                                            : formatMoney(somTotal, "so'm")}
+                                                        {somTotal > 0 && <span>{formatMoney(somTotal, "so'm")}</span>}
+                                                        {dollarTotal > 0 && <span>{formatMoney(dollarTotal, "$")}</span>}
+                                                        {somTotal === 0 && dollarTotal === 0 && <span>{formatMoney(0, "so'm")}</span>}
                                                     </span>
                                                     <div className="tolov-actions">
                                                         <button
@@ -212,7 +229,7 @@ export default function HarajatPage({ onBack, onSend }) {
                         <button
                             className="tolov-send-btn"
                             onClick={handleSend}
-                            disabled={sending || payments.length === 0}
+                            disabled={sending || !paymentsLoaded || paymentRows.length === 0}
                         >
                             {sending ? "YUBORILMOQDA..." : "YUBORISH"}
                         </button>
@@ -224,7 +241,12 @@ export default function HarajatPage({ onBack, onSend }) {
             {editPayment && (
                 <HarajatModal
                     editData={editPayment}
-                    onClose={() => setEditPayment(null)}
+                    onClose={(rows) => {
+                        if (Array.isArray(rows)) {
+                            syncAfterQueueChange(rows);
+                        }
+                        setEditPayment(null);
+                    }}
                     setHarajatlar={handleEditSave}
                     removeSyncedHarajatlar={() => { }}
                 />

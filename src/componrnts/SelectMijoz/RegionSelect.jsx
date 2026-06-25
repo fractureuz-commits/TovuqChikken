@@ -2,11 +2,13 @@ import { useState, useEffect, useMemo } from "react";
 import { apiFetch } from "../../utils/api";
 import { loadRegion } from "../../utils/storage";
 import { apiPost } from "../../utils/api";
+import { useBackHandler } from "../../utils/backButtonStack";
     
 export default function RegionSelect({ onClose,FormData, setFormData, setRegion, Region  }) {
     const [search, setSearch] = useState('');
     const [RegionLoading, setRegionLoading] = useState(true);
     const [RegionError, setRegionError] = useState(null);
+    useBackHandler(onClose);
 
     useEffect(() => {
         loadRegion()
@@ -67,10 +69,10 @@ export default function RegionSelect({ onClose,FormData, setFormData, setRegion,
             <div className="modal" style={{ height: '95vh' }}>
                 <div className="modal-title" onClick={onClose}>
                     <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <g clip-path="url(#clip0_2001_556)">
-                            <path d="M10 24H38" stroke="#006CAC" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M10 24L18 32" stroke="#006CAC" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
-                            <path d="M10 24L18 16" stroke="#006CAC" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" />
+                        <g clipPath="url(#clip0_2001_556)">
+                            <path d="M10 24H38" stroke="#006CAC" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M10 24L18 32" stroke="#006CAC" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+                            <path d="M10 24L18 16" stroke="#006CAC" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
                         </g>
                         <defs>
                             <clipPath id="clip0_2001_556">

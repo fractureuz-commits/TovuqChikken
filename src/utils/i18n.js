@@ -1,0 +1,512 @@
+import { useCallback, useEffect, useState } from "react";
+
+export const LANGUAGE_STORAGE_KEY = "app_language";
+
+export const LANGUAGE_OPTIONS = [
+    { code: "uz", label: "O'zbekcha" },
+    { code: "ru", label: "Ruscha" },
+];
+
+const SUPPORTED_LANGUAGES = new Set(LANGUAGE_OPTIONS.map(item => item.code));
+
+const ru = {
+    "✖ Yopish": "✖ Закрыть",
+    "📦 Yuklanmoqda...": "📦 Загрузка...",
+    "1C dan bo'sh ma'lumot keldi. Barcha ma'lumotlar o'chirildi.": "Из 1C пришли пустые данные. Все данные удалены.",
+    "1C dan xato javob keldi.": "Из 1C пришел ошибочный ответ.",
+    "Ayol": "Женщина",
+    "Backenddan xato javob keldi.": "С backend пришел ошибочный ответ.",
+    "Bank val:": "Банк вал.:",
+    "Bank:": "Банк:",
+    "Barcha ma'lumotlar o'chirildi. Qayta yangilang.": "Все данные удалены. Обновите заново.",
+    "Barchasidan qidirish...": "Поиск по всем...",
+    "Batafsil": "Подробно",
+    "Bekor": "Отмена",
+    "Bekor qilish": "Отменить",
+    "BEKOR QILISH": "ОТМЕНИТЬ",
+    "Bir nechtasini tanlash": "Выбрать несколько",
+    "Biror nima yozing": "Введите что-нибудь",
+    "BOK": "БОК",
+    "Bosing va skanerlang": "Нажмите и сканируйте",
+    "Bu amalni bajarishga sizda ruxsat mavjud emas": "У вас нет разрешения выполнить это действие",
+    "Bu amalni ortga qaytarib bo'lmaydi!": "Это действие нельзя отменить!",
+    "Bu amalni ortga qaytarib bo‘lmaydi!": "Это действие нельзя отменить!",
+    "Bu bo‘limni ko‘rishga sizda ruxsat yo‘q": "У вас нет доступа к просмотру этого раздела",
+    "Buyurtma berish": "Оформить заказ",
+    "Buyurtma yuborildi va saqlandi": "Заказ отправлен и сохранен",
+    "Buyurtmalar tarixi": "История заказов",
+    "Buyurtmani yopish": "Закрыть заказ",
+    "BUYURTMA": "ЗАКАЗ",
+    "BUYURTMANI YOPISH": "ЗАКРЫТЬ ЗАКАЗ",
+    "Click ( $ → So'm ):": "Click ($ → сум):",
+    "Click:": "Click:",
+    "Chiqish": "Выход",
+    "Chiqishni xohlaysizmi?": "Хотите выйти?",
+    "Chiqsangiz, saqlangan buyurtma ma’lumotlari o‘chiriladi.": "Если выйдете, сохраненные данные заказа будут удалены.",
+    "Dasturdan chiqish": "Выйти из программы",
+    "Data 1:": "Дата 1:",
+    "Data 2:": "Дата 2:",
+    "DAVOM ETISH": "ПРОДОЛЖИТЬ",
+    "Demo login bosilsa offline demo user, yuk beruvchi, mahsulot turi va mahsulotlar qo'shiladi.": "При нажатии Demo login добавятся offline demo user, поставщик, типы товаров и товары.",
+    "Demo user, yuk beruvchi, mahsulot turi va mahsulotlar qo'shildi.": "Demo user, поставщик, типы товаров и товары добавлены.",
+    "Dev login": "Dev login",
+    "Dev login tayyor": "Dev login готов",
+    "Diller": "Дилер",
+    "Dt-Kt ($):": "Дт-Кт ($):",
+    "Dt-Kt (so'm):": "Дт-Кт (сум):",
+    "Erkak": "Мужчина",
+    "Excelga yuklash": "Выгрузить в Excel",
+    "Exelga kochirish": "Перенести в Excel",
+    "Foydalanuvchi:": "Пользователь:",
+    "Foydalanuvchi": "Пользователь",
+    "Ha": "Да",
+    "Ha, chiqish": "Да, выйти",
+    "Ha, to'xtatish": "Да, остановить",
+    "Ha, yangilash": "Да, обновить",
+    "Ha, o'chirish": "Да, удалить",
+    "Ha, o‘chirish": "Да, удалить",
+    "Hammasi yuklandi (": "Все загружено (",
+    "Harajat": "Расход",
+    "Harajat muvaffaqiyatli o'chirildi.": "Расход успешно удален.",
+    "Harajat nomi": "Название расхода",
+    "Harajat tanlanmagan!": "Расход не выбран!",
+    "Harajat turi": "Тип расхода",
+    "Harajat turi:": "Тип расхода:",
+    "Harajat o'chirilsinmi?": "Удалить расход?",
+    "Harajatlar royxati": "Список расходов",
+    "Harajatlar ro'yxati": "Список расходов",
+    "Harajatlar tarixi": "История расходов",
+    "Hech narsa topilmadi": "Ничего не найдено",
+    "Hisobotlar": "Отчеты",
+    "Hisobotlar (Mahsulot qoldig'i)": "Отчеты (остаток товара)",
+    "Hisobotlar (Mijoz qarzdorligi)": "Отчеты (задолженность клиента)",
+    "Hisobotlar (MijozSolishtirma ro'yhati)": "Отчеты (акт сверки клиента)",
+    "Hisobotlar (Savdo ro'yhati)": "Отчеты (список продаж)",
+    "Hisobotlar (Solishtirma dalolatnoma)": "Отчеты (акт сверки)",
+    "Hozircha harajat mavjud emas": "Пока расходов нет",
+    "Hozircha to'lovlar mavjud emas": "Пока платежей нет",
+    "Hudud nomi": "Название региона",
+    "Hudud:": "Регион:",
+    "Hududni tanlang": "Выберите регион",
+    "Iltimos kimligini tekshiring": "Пожалуйста, проверьте кто вошел",
+    "Iltimos, mijozni tanlang": "Пожалуйста, выберите клиента",
+    "Ilova tili": "Язык приложения",
+    "IP saqlandi": "IP сохранен",
+    "IP saqlash": "Сохранить IP",
+    "Izoh": "Комментарий",
+    "Izox:": "Комментарий:",
+    "Jami summa dollarda:": "Общая сумма в долларах:",
+    "Jami summa so'mda:": "Общая сумма в сумах:",
+    "Jami summa:": "Общая сумма:",
+    "Jami to'lov :": "Итого оплата:",
+    "Jami to'lov:": "Итого оплата:",
+    "Jinsi": "Пол",
+    "Jinsni tanlang": "Выберите пол",
+    "Kafolat": "Гарантия",
+    "KIRISH": "ВОЙТИ",
+    "Kirishga ruxsat yo‘q": "Нет доступа",
+    "Kod:": "Код:",
+    "Korzinka bo'sh": "Корзина пуста",
+    "Kurs:": "Курс:",
+    "Ko'proq (": "Еще (",
+    "Limit to'lgan!": "Лимит заполнен!",
+    "Location": "Локация",
+    "Location mavjud emas": "Локация отсутствует",
+    "Lokatsiya xato:": "Ошибка локации:",
+    "Ma'lumot buzilgan!": "Данные повреждены!",
+    "Ma'lumot yo'q": "Данных нет",
+    "Ma'lumot yo'q!": "Данных нет!",
+    "Ma'lumotlarni 1C dan yangilashni xohlaysizmi?": "Хотите обновить данные из 1C?",
+    "Mahsulot": "Товар",
+    "Mahsulot guruhi:": "Группа товара:",
+    "Mahsulot guruhini tanlang": "Выберите группу товара",
+    "Mahsulot narxi:": "Цена товара:",
+    "Mahsulot qaytarildi": "Товар возвращен",
+    "Mahsulot qaytarib olish": "Вернуть товар",
+    "Mahsulot qoldigi": "Остаток товара",
+    "Mahsulot qoldig'i:": "Остаток товара:",
+    "Mahsulot topilmadi": "Товар не найден",
+    "Mahsulot:": "Товар:",
+    "MahsulotGrouplar royxati": "Список групп товаров",
+    "Mahsulotni qaytarish": "Возврат товара",
+    "Mahsulotni tanlang": "Выберите товар",
+    "Manzil": "Адрес",
+    "Mijoz": "Клиент",
+    "Mijoz nomi": "Имя клиента",
+    "Mijoz nomi:": "Имя клиента:",
+    "Mijoz qarzdorligi": "Задолженность клиента",
+    "Mijoz saqlandi": "Клиент сохранен",
+    "Mijoz tanlanmagan!": "Клиент не выбран!",
+    "Mijoz yaratish": "Создать клиента",
+    "Mijozlar royxati": "Список клиентов",
+    "Mijozni tanlang": "Выберите клиента",
+    "Mijoz nomi yoki nomeri": "Имя или номер клиента",
+    "Muvaffaqiyatli!": "Успешно!",
+    "Muvofaqiyatli!": "Успешно!",
+    "Naqd ( $ → So'm ):": "Наличные ($ → сум):",
+    "Naqd ( so'm → $ ):": "Наличные (сум → $):",
+    "Naqd:": "Наличные:",
+    "Narx": "Цена",
+    "Next": "Далее",
+    "No": "Нет",
+    "Nomi": "Название",
+    "Nomsiz": "Без названия",
+    "Noma'lum harajat": "Неизвестный расход",
+    "Noma'lum mijoz": "Неизвестный клиент",
+    "Nusxa olish": "Копировать",
+    "Ok": "ОК",
+    "OK": "ОК",
+    "Orqaga": "Назад",
+    "Other": "Другое",
+    "Papka yaratish": "Создать папку",
+    "Papkaga kochirish": "Переместить в папку",
+    "Parolni kiriting": "Введите пароль",
+    "Parol noto'g'ri": "Неверный пароль",
+    "Partiya royxati": "Список партий",
+    "Partiya:": "Партия:",
+    "Partya": "Партия",
+    "PINni tasdiqlang": "Подтвердите PIN",
+    "Plastik ( $ → So'm ):": "Пластик ($ → сум):",
+    "Plastik:": "Пластик:",
+    "Prev": "Назад",
+    "Profil": "Профиль",
+    "Qarzdorlik": "Задолженность",
+    "Qaytarish": "Возврат",
+    "Qaytarish ro‘yxati": "Список возвратов",
+    "Qidirish (ctrl + spase)": "Поиск (ctrl + пробел)",
+    "Qidirish...": "Поиск...",
+    "Qoldiq": "Остаток",
+    "Qoshish": "Добавить",
+    "QR kodni ramkaga to'g'rilang": "Поместите QR-код в рамку",
+    "QR yoki shtrix kodni ramkaga to'g'rilang": "Поместите QR или штрих-код в рамку",
+    "Qo'shildi!": "Добавлено!",
+    "Qo'shish": "Добавить",
+    "Regionlar royxati": "Список регионов",
+    "Ruscha": "Русский",
+    "Ruxsat yo‘q": "Нет разрешения",
+    "Sana:": "Дата:",
+    "Sanaga:": "На дату:",
+    "Saqlandi!": "Сохранено!",
+    "Saqlash": "Сохранить",
+    "SAQLASH": "СОХРАНИТЬ",
+    "SAQLANMOQDA...": "СОХРАНЯЕТСЯ...",
+    "SAVATCHA": "КОРЗИНА",
+    "Savatcha": "Корзина",
+    "Savdo": "Продажа",
+    "SAVDO": "ПРОДАЖА",
+    "Savdo ro'yhati": "Список продаж",
+    "Savdolar ro'yxati": "Список продаж",
+    "Server ga ulanib bo'lmadi! WiFi ni tekshiring.": "Не удалось подключиться к серверу! Проверьте Wi-Fi.",
+    "Server IP": "IP сервера",
+    "Secret parol": "Секретный пароль",
+    "Secret sozlamalar": "Секретные настройки",
+    "Skaner": "Сканер",
+    "Solishtirma dalolatnoma": "Акт сверки",
+    "Soni": "Количество",
+    "Soni:": "Количество:",
+    "Sotilgan mahsulot soni:": "Количество проданного товара:",
+    "Sotuvchi": "Продавец",
+    "Sozlamalar": "Настройки",
+    "So'm": "Сум",
+    "SO'M": "СУМ",
+    "so'm": "сум",
+    "ta natija topildi": "результатов найдено",
+    "ta qoldi)": "осталось)",
+    "ta)": "шт.)",
+    "Tahrirlandi!": "Изменено!",
+    "Tahrirlash": "Изменить",
+    "Tanlangan": "Выбрано",
+    "Tel 1": "Тел. 1",
+    "Tel 2": "Тел. 2",
+    "Tekshirilmoqda...": "Проверяется...",
+    "Telefon raqami": "Номер телефона",
+    "Telefon raqami 2": "Номер телефона 2",
+    "Til": "Язык",
+    "Til sozlamalari": "Настройки языка",
+    "Tolovlar tarixi": "История платежей",
+    "To'lov": "Оплата",
+    "To’lov": "Оплата",
+    "To‘lov muvaffaqiyatli o‘chirildi.": "Платеж успешно удален.",
+    "To‘lov o‘chirilsinmi?": "Удалить платеж?",
+    "To‘lovlar va harajatlar serverga yuboriladi": "Платежи и расходы будут отправлены на сервер",
+    "To'xtatildi": "Остановлено",
+    "To'xtatish": "Остановить",
+    "Tovarlar": "Товары",
+    "Tovarlar guruhi": "Группы товаров",
+    "Tovarlar ro‘yxati": "Список товаров",
+    "Tug'ilgan sana": "Дата рождения",
+    "Ulanish xatosi!": "Ошибка подключения!",
+    "Ulushi": "Доля",
+    "Umumiy": "Общий",
+    "UMUMIY": "ОБЩИЙ",
+    "Valyuta": "Валюта",
+    "Viloyat": "Область",
+    "Xato!": "Ошибка!",
+    "Xatolik!": "Ошибка!",
+    "Xatolik:": "Ошибка:",
+    "Xisobot": "Отчет",
+    "Yana bir foydalanuvchi tizimga kirdi": "В систему вошел другой пользователь",
+    "Yangi mijoz qo’shish": "Добавить нового клиента",
+    "Yangilandi!": "Обновлено!",
+    "Yangilash": "Обновить",
+    "Yangi PIN o'rnating": "Установите новый PIN",
+    "Yaroqlilik muddati:": "Срок годности:",
+    "Yaroqlilik Muddati:": "Срок годности:",
+    "Yetarli mahsulot yo'q!": "Недостаточно товара!",
+    "Yonilg‘i turlari": "Типы топлива",
+    "Yuboriladigan amallar yoq!": "Нет действий для отправки!",
+    "Yuborildi!": "Отправлено!",
+    "Yuborilmagan to'lovlar": "Неотправленные платежи",
+    "Yuborilmagan to'lovlar ro'yxati": "Список неотправленных платежей",
+    "Yuborilmagan xarajatlar": "Неотправленные расходы",
+    "Yuborilmoqda...": "Отправка...",
+    "YUBORILMOQDA...": "ОТПРАВЛЯЕТСЯ...",
+    "Yuborish": "Отправить",
+    "YUBORISH": "ОТПРАВИТЬ",
+    "Yuborishni hohlaysizmi?": "Хотите отправить?",
+    "Yuklanishni to'xtatishni xohlaysizmi?": "Хотите остановить загрузку?",
+    "Yuklanmoqda...": "Загрузка...",
+    "Yuklash": "Загрузить",
+    "Yo'q": "Нет",
+    "Yo‘q": "Нет",
+    "Yo'q, davom etsin": "Нет, продолжить",
+    "Shahar": "Город",
+    "O'zbekcha": "Узбекский",
+    "O'zgartirish": "Изменить",
+    "O'chirildi!": "Удалено!",
+    "O‘chirildi!": "Удалено!",
+    "O'chirilsinmi?": "Удалить?",
+    "O'chirish": "Удалить",
+};
+
+const ruPatterns = [
+    [/^Ko'proq \((\d+) ta qoldi\)$/u, (_, count) => `Еще (${count} осталось)`],
+    [/^(\d+) ta natija topildi$/u, (_, count) => `Найдено результатов: ${count}`],
+    [/^(\d+) ta mahsulot saqlandi\.$/u, (_, count) => `Сохранено товаров: ${count}.`],
+    [/^(\d+) ta mahsulot yuboriladi$/u, (_, count) => `Будет отправлено товаров: ${count}`],
+    [/^(\d+) ta to['‘]lov sinxron qilindi$/u, (_, count) => `Синхронизировано платежей: ${count}`],
+    [/^(\d+) ta harajat sinxron qilindi$/u, (_, count) => `Синхронизировано расходов: ${count}`],
+    [/^(\d+) ta to['‘]lov, (\d+) ta harajat sinxron qilindi$/u, (_, pay, expense) => `Синхронизировано платежей: ${pay}, расходов: ${expense}`],
+    [/^(.+) ta mahsulot saqlandi\.$/u, (_, count) => `Сохранено товаров: ${count}.`],
+    [/^(.+) ta mahsulot yuboriladi$/u, (_, count) => `Будет отправлено товаров: ${count}`],
+    [/^Yuklanmoqda(\.*)$/u, (_, dots) => `Загрузка${dots}`],
+    [/^Yuborilmoqda(\.*)$/u, (_, dots) => `Отправка${dots}`],
+    [/^🔒 (\d+) soniyadan so'ng urinib ko'ring$/u, (_, seconds) => `🔒 Попробуйте через ${seconds} секунд`],
+    [/^❌ Noto'g'ri parol \((\d+)\/(\d+)\)$/u, (_, attempt, max) => `❌ Неверный пароль (${attempt}/${max})`],
+    [/^Noto'g'ri parol \((\d+)\/(\d+)\)$/u, (_, attempt, max) => `Неверный пароль (${attempt}/${max})`],
+    [/^Xatolik: (.+)$/u, (_, error) => `Ошибка: ${error}`],
+    [/^Soni: (.+)$/u, (_, value) => `Количество: ${value}`],
+    [/^Kod: (.+)$/u, (_, value) => `Код: ${value}`],
+    [/^Hammasi yuklandi \((\d+) ta\)$/u, (_, count) => `Все загружено (${count} шт.)`],
+];
+
+const dictionaries = { ru };
+const textNodeOriginals = new WeakMap();
+const translatedAttributes = ["placeholder", "aria-label", "title", "alt"];
+let observer = null;
+let applying = false;
+
+export const getLanguage = () => {
+    const saved = localStorage.getItem(LANGUAGE_STORAGE_KEY);
+    return SUPPORTED_LANGUAGES.has(saved) ? saved : "uz";
+};
+
+export const setLanguage = (language) => {
+    const nextLanguage = SUPPORTED_LANGUAGES.has(language) ? language : "uz";
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, nextLanguage);
+    document.documentElement.lang = nextLanguage;
+    window.dispatchEvent(new CustomEvent("app-language-change", {
+        detail: { language: nextLanguage },
+    }));
+};
+
+const translateCore = (core, language) => {
+    if (!core || language === "uz") return core;
+
+    const dictionary = dictionaries[language];
+    if (!dictionary) return core;
+
+    if (dictionary[core]) return dictionary[core];
+
+    for (const [regex, replacer] of ruPatterns) {
+        const match = core.match(regex);
+        if (match) return replacer(...match);
+    }
+
+    return core;
+};
+
+export const translateText = (value, language = getLanguage()) => {
+    const text = String(value ?? "");
+    const leading = text.match(/^\s*/u)?.[0] ?? "";
+    const trailing = text.match(/\s*$/u)?.[0] ?? "";
+    const core = text.trim().replace(/\s+/gu, " ");
+    const translated = translateCore(core, language);
+    return `${leading}${translated}${trailing}`;
+};
+
+const attrStoreName = (attr) => `data-i18n-original-${attr.replace(/[^a-z0-9]/gi, "-")}`;
+
+const isKnownTranslationVariant = (original, current) => {
+    if (current === original) return true;
+
+    return Object.keys(dictionaries).some(language =>
+        current === translateText(original, language)
+    );
+};
+
+const shouldSkipElement = (element) => {
+    if (!element?.tagName) return false;
+    if (element.closest("[data-i18n-skip]")) return true;
+    return ["SCRIPT", "STYLE", "NOSCRIPT", "CODE", "PRE"].includes(element.tagName);
+};
+
+const translateTextNode = (node, language) => {
+    const current = node.nodeValue;
+    let original = textNodeOriginals.get(node);
+
+    if (original === undefined) {
+        original = current;
+        textNodeOriginals.set(node, original);
+    } else if (!isKnownTranslationVariant(original, current)) {
+        original = current;
+        textNodeOriginals.set(node, original);
+    }
+
+    const nextValue = translateText(original, language);
+    if (node.nodeValue !== nextValue) node.nodeValue = nextValue;
+};
+
+const translateElementAttributes = (element, language) => {
+    for (const attr of translatedAttributes) {
+        if (!element.hasAttribute(attr)) continue;
+
+        const storeName = attrStoreName(attr);
+        let original = element.getAttribute(storeName);
+        const current = element.getAttribute(attr);
+
+        if (original !== null) {
+            if (!isKnownTranslationVariant(original, current)) {
+                original = current;
+            }
+        } else {
+            original = current;
+        }
+
+        if (!element.hasAttribute(storeName)) {
+            element.setAttribute(storeName, original);
+        } else if (element.getAttribute(storeName) !== original) {
+            element.setAttribute(storeName, original);
+        }
+
+        const nextValue = translateText(original, language);
+        if (element.getAttribute(attr) !== nextValue) {
+            element.setAttribute(attr, nextValue);
+        }
+    }
+};
+
+export const applyTranslations = (root = document.body, language = getLanguage()) => {
+    if (!root || applying) return;
+
+    applying = true;
+    document.documentElement.lang = language;
+
+    try {
+        if (root.nodeType === Node.TEXT_NODE) {
+            translateTextNode(root, language);
+            return;
+        }
+
+        if (root.nodeType !== Node.ELEMENT_NODE && root.nodeType !== Node.DOCUMENT_NODE) {
+            return;
+        }
+
+        if (root.nodeType === Node.ELEMENT_NODE && shouldSkipElement(root)) return;
+
+        if (root.nodeType === Node.ELEMENT_NODE) {
+            translateElementAttributes(root, language);
+        }
+
+        const walker = document.createTreeWalker(
+            root,
+            NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+            {
+                acceptNode(node) {
+                    if (node.nodeType === Node.ELEMENT_NODE && shouldSkipElement(node)) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    if (node.nodeType === Node.TEXT_NODE && !node.nodeValue.trim()) {
+                        return NodeFilter.FILTER_REJECT;
+                    }
+                    return NodeFilter.FILTER_ACCEPT;
+                },
+            }
+        );
+
+        let node = walker.nextNode();
+        while (node) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                translateTextNode(node, language);
+            } else if (node.nodeType === Node.ELEMENT_NODE) {
+                translateElementAttributes(node, language);
+            }
+            node = walker.nextNode();
+        }
+    } finally {
+        applying = false;
+    }
+};
+
+export const setupDomTranslator = () => {
+    if (typeof window === "undefined" || observer) return;
+
+    const root = document.body || document.documentElement;
+
+    const scheduleTranslate = () => {
+        if (applying) return;
+        window.requestAnimationFrame(() => applyTranslations(document.body || document.documentElement));
+    };
+
+    observer = new MutationObserver(scheduleTranslate);
+    observer.observe(root, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: translatedAttributes,
+    });
+
+    window.addEventListener("app-language-change", () => {
+        applyTranslations(document.body || document.documentElement);
+    });
+
+    window.addEventListener("storage", (event) => {
+        if (event.key === LANGUAGE_STORAGE_KEY) {
+            applyTranslations(document.body || document.documentElement);
+        }
+    });
+
+    applyTranslations(root);
+};
+
+export const useLanguage = () => {
+    const [language, setLanguageState] = useState(getLanguage);
+
+    useEffect(() => {
+        const handleChange = () => setLanguageState(getLanguage());
+        window.addEventListener("app-language-change", handleChange);
+        window.addEventListener("storage", handleChange);
+        return () => {
+            window.removeEventListener("app-language-change", handleChange);
+            window.removeEventListener("storage", handleChange);
+        };
+    }, []);
+
+    const changeLanguage = useCallback((nextLanguage) => {
+        setLanguage(nextLanguage);
+        setLanguageState(getLanguage());
+    }, []);
+
+    return { language, setLanguage: changeLanguage };
+};

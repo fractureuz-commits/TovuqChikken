@@ -5,7 +5,7 @@ import QrScanner from '../../componrnts/qr/qr';
 import { useRef } from "react";
 import { NavLink } from 'react-router';
 import MijozModal from './MijozCreate';
-import { BaseUrl } from '../../baseUrl';
+import { apiGet } from '../../utils/api';
 
 function Kafolat() {
     const [formDataKafolat, setformDataKafolat] = useState({
@@ -16,26 +16,18 @@ function Kafolat() {
     const [mijozOpen, setMijozOpen] = useState(false);
 
     const [searchMijoz, setsearchMijoz] = useState("");
-    const [Mijoz, setMijoz] = useState("");
-    const fetchMijoz = () => {
-        fetch(`${BaseUrl}/mijoz/`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`HTTP xato! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then((data) => {
-                setMijoz(data);
-            })
-            .catch((error) => {
-                alert(`Xato:qaefeq ${error.message}\n\nURL: ${BaseUrl}/mijoz/`);
+    const [Mijoz, setMijoz] = useState([]);
+    const fetchMijoz = async () => {
+        try {
+            const data = await apiGet("/mijoz/", {
+                auth: false,
+                timeoutMs: 60000,
+                retries: 0,
             });
+            setMijoz(Array.isArray(data) ? data : []);
+        } catch (error) {
+            alert(`Xato: ${error.message}${error.url ? `\n\nURL: ${error.url}` : ""}`);
+        }
     };
 
     useEffect(() => {
@@ -65,10 +57,10 @@ function Kafolat() {
                         />
                         <button className='kaf-add' onClick={() => setMijozOpen(true)}>
                             <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <g clip-path="url(#clip0_180_1104)">
-                                    <path d="M3.33887 15.5C3.33887 16.8789 3.61046 18.2443 4.13813 19.5182C4.66581 20.7921 5.43923 21.9496 6.41425 22.9246C7.38926 23.8996 8.54677 24.6731 9.82069 25.2007C11.0946 25.7284 12.46 26 13.8389 26C15.2177 26 16.5831 25.7284 17.857 25.2007C19.131 24.6731 20.2885 23.8996 21.2635 22.9246C22.2385 21.9496 23.0119 20.7921 23.5396 19.5182C24.0673 18.2443 24.3389 16.8789 24.3389 15.5C24.3389 12.7152 23.2326 10.0445 21.2635 8.07538C19.2944 6.10625 16.6236 5 13.8389 5C11.0541 5 8.38338 6.10625 6.41425 8.07538C4.44511 10.0445 3.33887 12.7152 3.33887 15.5Z" stroke="white" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M10.3389 15.5H17.3389" stroke="white" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
-                                    <path d="M13.8389 12V19" stroke="white" stroke-width="1.66667" stroke-linecap="round" stroke-linejoin="round" />
+                                <g clipPath="url(#clip0_180_1104)">
+                                    <path d="M3.33887 15.5C3.33887 16.8789 3.61046 18.2443 4.13813 19.5182C4.66581 20.7921 5.43923 21.9496 6.41425 22.9246C7.38926 23.8996 8.54677 24.6731 9.82069 25.2007C11.0946 25.7284 12.46 26 13.8389 26C15.2177 26 16.5831 25.7284 17.857 25.2007C19.131 24.6731 20.2885 23.8996 21.2635 22.9246C22.2385 21.9496 23.0119 20.7921 23.5396 19.5182C24.0673 18.2443 24.3389 16.8789 24.3389 15.5C24.3389 12.7152 23.2326 10.0445 21.2635 8.07538C19.2944 6.10625 16.6236 5 13.8389 5C11.0541 5 8.38338 6.10625 6.41425 8.07538C4.44511 10.0445 3.33887 12.7152 3.33887 15.5Z" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M10.3389 15.5H17.3389" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
+                                    <path d="M13.8389 12V19" stroke="white" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round" />
                                 </g>
                                 <defs>
                                     <clipPath id="clip0_180_1104">

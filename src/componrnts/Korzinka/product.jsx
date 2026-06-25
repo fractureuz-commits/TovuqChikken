@@ -7,10 +7,12 @@ import "./tovar.css";
 import Swal from "sweetalert2";
 import PartiyaSelect from "./PartiyiyaSelect";
 import ModalHeader from "../BuyurtmaModal/ModalHeader";
-import { getNarx } from "../../utils/narx";
+import { formatNarx, getNarx } from "../../utils/narx";
 import { format } from "date-fns";
 import { getUser } from "../../leyout/login/auth";
 import QaytarishSelect from "./QaytarishPartiya";
+import { canViewPrice } from "../../utils/permissions";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 export function Tovar({ item, search, highlightText, onClick }) {
     const [imgSrc, setImgSrc] = useState(null);
@@ -20,6 +22,7 @@ export function Tovar({ item, search, highlightText, onClick }) {
         if (item?.i) loadImage(item.i).then(src => setImgSrc(src));
     }, [item?.i]);
     const user = getUser()
+    const canSeePrice = canViewPrice(user);
 
     const name = item?.name || item?.n || "";
     return (
@@ -40,18 +43,15 @@ export function Tovar({ item, search, highlightText, onClick }) {
                     {item?.hajm && (
                         <div className="volume">{item.hajm} {item?.ul_bir}</div>
                     )}
-                    <div className="tovar-narxlar">
-                        {currentNarx > 0 && (
+                    {canSeePrice && (
+                        <div className="tovar-narxlar">
+                            {currentNarx > 0 && (
                             <span className={isVal ? "price-val" : "price"}>
-                                {(user?.rol === "1" || user?.narx_korish) && (
-                                    <>
-                                        {currentNarx.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ")} {isVal ? "$" : "so'm"}
-                                    </>
-                                )}
-
+                                {formatNarx(currentNarx)} {isVal ? "$" : "so'm"}
                             </span>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </div>
         </>
@@ -73,6 +73,8 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
     const [ProductGroupError, setProductGroupError] = useState(null);
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
     const user = getUser();
+    useBackHandler(onClose);
+
     useEffect(() => {
         loadTovar()
             .then(data => setProductGroup(data || []))
@@ -125,6 +127,12 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
             setProductData(result);
             setPartiyaSelectModal(true);
         } catch (err) {
+            if (Number(selectedItem.qoldiq || 0) > 0) {
+                setProductData([selectedItem]);
+                setPartiyaSelectModal(true);
+                return;
+            }
+
             console.error("❌ Xato:", err.message);
         }
     };
@@ -202,6 +210,7 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
                     <ModalHeader
                         activeTab="sotib"
                         onSotib={() => { }}
+                        qaytarish={qaytarish}
                         onKoriznka={() => KorzinkaModal?.()}
                         onSkaner={() => setShtrixModal(prev => !prev)}
                     />

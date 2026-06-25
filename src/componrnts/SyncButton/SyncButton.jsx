@@ -1,25 +1,16 @@
 import { useEffect, useState } from "react";
 import Swal from "sweetalert2";
-import {
-    syncAndSave, cancelSync,
-    checkInternet, clearAllData,
-    saveKontragent, saveTovar,
-    syncAndSaveTovar,
-    syncKurs,
-    saveXodim,
-    saveRegion,
-    saveHarajat,
-} from '../../utils/storage';
-import { apiFetch } from "../../utils/api";
+import { cancelSync } from "../../utils/storage";
+import { downloadBackendData } from "../../utils/backendSync";
 import Loader from "../loader/loader";
 
 const SyncButton = ({ onSyncComplete }) => {
     const [syncing, setSyncing] = useState(false);
     const [progress, setProgress] = useState({ current: 0, total: 0 });
+    const [syncMessage, setSyncMessage] = useState("Yuklanmoqda...");
+    const [dots, setDots] = useState("");
 
     const handleSync = async () => {
-
-        // ✅ 1 — Bosishni tasdiqlash
         const confirm = await Swal.fire({
             icon: "question",
             title: "Yangilash",
@@ -33,105 +24,54 @@ const SyncButton = ({ onSyncComplete }) => {
 
         if (!confirm.isConfirmed) return;
 
-        // ✅ 2 — Internet tekshirish
-        const online = await checkInternet();
-        if (!online) {
-            Swal.fire({
-                icon: "error",
-                title: "Ulanish xatosi!",
-                text: "Server ga ulanib bo'lmadi! WiFi ni tekshiring.",
-                confirmButtonColor: "#1a2b4a",
-            });
-            return;
-        }
-
         setSyncing(true);
         setProgress({ current: 0, total: 0 });
+        setSyncMessage("Yuklanmoqda...");
 
-        apiFetch("products")
-            .then(async (data) => {
-
-                // ✅ 3 — Bo'sh JSON
-                if (!data || data.length === 0) {
-                    await clearAllData();
-                    Swal.fire({
-                        icon: "warning",
-                        title: "Ma'lumot yo'q!",
-                        text: "1C dan bo'sh ma'lumot keldi. Barcha ma'lumotlar o'chirildi.",
-                        confirmButtonColor: "#1a2b4a",
-                    });
-                    if (onSyncComplete) onSyncComplete([]);
-                    return;
-                }
-
-                // ✅ 4 — Mahsulotlarni saqlash
-                setProgress({ current: 0, total: data.length });
-
-                const products = await syncAndSave(data, (current, total) => {
+        try {
+            const result = await downloadBackendData({
+                onProgress: ({ stage, current, total }) => {
+                    setSyncMessage(stage || "Yuklanmoqda...");
                     setProgress({ current, total });
-                });
-
-                // ✅ 5 — Kontragent va Tovar parallel yuklaymiz
-                const [kontragentData, TovarData, _kurs, Xodim, Region, Harajat] = await Promise.all([
-                    apiFetch("kontragent"),
-                    apiFetch("Tovar"),
-                    syncKurs(),          // ← 3-chi = _kurs ✅
-                    apiFetch("Xodim"),   // ← 4-chi = Xodim ✅
-                    apiFetch("Region"),   // ← 4-chi = Xodim ✅
-                    apiFetch("Harajat"),   // ← 4-chi = Xodim ✅
-                ]);
-
-                await saveKontragent(kontragentData);
-                await syncAndSaveTovar(TovarData);
-                await saveXodim(Xodim);
-                await saveRegion(Region);
-                await saveHarajat(Harajat);
-                // ✅ 6 — Muvaffaqiyat
-                Swal.fire({
-                    icon: "success",
-                    title: "Yangilandi!",
-                    text: `${products.length} ta mahsulot saqlandi.`,
-                    confirmButtonColor: "#1a2b4a",
-                    timer: 1000,
-                    timerProgressBar: true,
-                    showConfirmButton: false,
-                });
-
-                if (onSyncComplete) onSyncComplete(products);
-            })
-            .catch(async (err) => {
-
-                // ✅ 7 — JSON xatosi
-                if (
-                    err.message.includes("Unexpected") ||
-                    err.message.includes("JSON") ||
-                    err.message.includes("json")
-                ) {
-                    await clearAllData();
-                    Swal.fire({
-                        icon: "error",
-                        title: "Ma'lumot buzilgan!",
-                        text: "Barcha ma'lumotlar o'chirildi. Qayta yangilang.",
-                        confirmButtonColor: "#1a2b4a",
-                    });
-                    if (onSyncComplete) onSyncComplete([]);
-                    return;
-                }
-
-                // ✅ 8 — Boshqa xatolar
-                Swal.fire({
-                    icon: "error",
-                    title: "Xato!",
-                    text: err.message,
-                    confirmButtonColor: "#1a2b4a",
-                });
-            })
-            .finally(() => {
-                setSyncing(false);
-                setProgress({ current: 0, total: 0 });
+                },
             });
+
+            if (result.cleared) {
+                await Swal.fire({
+                    icon: "warning",
+                    title: "Ma'lumot yo'q!",
+                    text: "1C dan bo'sh ma'lumot keldi. Barcha ma'lumotlar o'chirildi.",
+                    confirmButtonColor: "#1a2b4a",
+                });
+                onSyncComplete?.([]);
+                return;
+            }
+
+            await Swal.fire({
+                icon: "success",
+                title: "Yangilandi!",
+                text: `${result.products.length} ta guruh, ${result.tovars.length} ta tovar saqlandi.`,
+                confirmButtonColor: "#1a2b4a",
+                timer: 1200,
+                timerProgressBar: true,
+                showConfirmButton: false,
+            });
+
+            onSyncComplete?.(result.products);
+        } catch (err) {
+            await Swal.fire({
+                icon: err.message === "Yuklash to'xtatildi" ? "info" : "error",
+                title: err.message === "Yuklash to'xtatildi" ? "To'xtatildi" : "Xato!",
+                text: err.message,
+                confirmButtonColor: "#1a2b4a",
+            });
+        } finally {
+            setSyncing(false);
+            setProgress({ current: 0, total: 0 });
+            setSyncMessage("Yuklanmoqda...");
+        }
     };
-    const [dots, setDots] = useState("");
+
     useEffect(() => {
         if (!syncing) {
             setDots("");
@@ -139,16 +79,12 @@ const SyncButton = ({ onSyncComplete }) => {
         }
 
         const interval = setInterval(() => {
-            setDots(prev => {
-                if (prev === "...") return "";
-                return prev + ".";
-            });
+            setDots(prev => (prev === "..." ? "" : `${prev}.`));
         }, 500);
 
         return () => clearInterval(interval);
     }, [syncing]);
 
-    // ✅ To'xtatish
     const handleCancel = async () => {
         const confirm = await Swal.fire({
             icon: "warning",
@@ -166,12 +102,12 @@ const SyncButton = ({ onSyncComplete }) => {
         cancelSync();
         setSyncing(false);
 
-        Swal.fire({
+        await Swal.fire({
             icon: "info",
             title: "To'xtatildi",
-            text: `${progress.current} ta mahsulot saqlandi.`,
+            text: `${progress.current} ta ma'lumot saqlandi.`,
             confirmButtonColor: "#1a2b4a",
-            timer: 2000,
+            timer: 1800,
             timerProgressBar: true,
             showConfirmButton: false,
         });
@@ -179,9 +115,14 @@ const SyncButton = ({ onSyncComplete }) => {
 
     return (
         <>
-            {syncing ? <Loader /> : ""}
-            <button className="button" onClick={!syncing ? handleSync : undefined} disabled={syncing}>
-
+            {syncing && (
+                <Loader
+                    message={syncMessage}
+                    current={progress.current}
+                    total={progress.total}
+                />
+            )}
+            <button className="button" onClick={!syncing ? handleSync : handleCancel} disabled={false}>
                 <svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <g clipPath="url(#clip0_2001_92)">
                         <g clipPath="url(#clip1_2001_92)">
@@ -200,22 +141,7 @@ const SyncButton = ({ onSyncComplete }) => {
                     </defs>
                 </svg>
 
-                {/* {syncing && progress.total > 0 && (
-                    <small>{progress.current}/{progress.total}</small>
-                )} */}
                 <p>{syncing ? `Yuklanmoqda${dots}` : "Yuklash"}</p>
-
-                {/* {syncing && (
-                    <div
-                        onClick={(e) => { e.stopPropagation(); handleCancel(); }}
-                        style={{ fontSize: 10, color: "red", marginTop: 4 }}>
-                        ⛔ To'xtatish
-                    </div>
-                )} */}
-
-                <style>{`
-                @keyframes spin { to { transform: rotate(360deg); } }
-            `}</style>
             </button>
         </>
     );

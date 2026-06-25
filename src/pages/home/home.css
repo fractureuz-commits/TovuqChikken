@@ -11,6 +11,7 @@
     background-color: #fff;
     margin-top: 20px;
     border-radius: 20px;
+    overflow: hidden;
 
 }
 
@@ -77,7 +78,7 @@
 }
 
 /* Badge */
-.home-body .home-pages .button button.has-badge::after {
+.home-body .home-pages .button.has-badge::after {
     content: attr(data-badge);
     position: absolute;
     top: 6px;

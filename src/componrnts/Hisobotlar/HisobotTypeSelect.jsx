@@ -4,6 +4,7 @@ import "./savdoRoyhati.css";
 import MijozSolishtirmaRoyhatiModal from "./royhatlar/MijozSolishtirmaRoyhati";
 import MijozQarzdorligiRoyhatiModal from "./royhatlar/MijozQarzdorligiRoyhati";
 import MahsulotQoldigiRoyhatiModal from "./royhatlar/MahsulotQoqldigi";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 const OPTIONS = [
     { id: 1, label: "Savdo ro'yhati", sub: null },
@@ -15,6 +16,8 @@ const OPTIONS = [
 export default function HisobotModal({ onClose }) {
     const [selected, setSelected] = useState(1);
     const [SavdoRoyhati, setSavdoRoyhati] = useState(false);
+    useBackHandler(onClose);
+
     const handleSubmit = () => {
         setSavdoRoyhati(selected);
     };

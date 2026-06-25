@@ -4,13 +4,15 @@
     flex-direction: column;
     overflow: hidden;
     background: #fff;
+    min-height: 0;
+    height: 100%;
 }
 
 /* IMAGE */
 .kd-image-wrap {
     position: relative;
     width: 100%;
-    height: 42vh;
+    height: clamp(190px, 36dvh, 340px);
     background-color: #006CAC;
     flex-shrink: 0;
     display: flex;
@@ -55,12 +57,16 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
 }
 
 .kd-name {
     font-size: 20px;
     font-weight: 700;
     color: #006CAC;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
 }
 
 /* NARX INPUT */
@@ -132,6 +138,8 @@
     border-radius: 12px;
     padding: 10px 14px;
     font-size: 15px;
+    gap: 4px;
+    min-width: 0;
 }
 
 .kd-qoldiq-title {
@@ -143,6 +151,7 @@
 .kd-qoldiq-info {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 10px;
     margin-top: 2px;
 }
@@ -200,8 +209,10 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 8px;
     padding: 4px 0;
     border-top: 1px solid #eee;
+    min-width: 0;
 }
 
 .kd-jami-label {
@@ -213,6 +224,8 @@
     font-size: 16px;
     font-weight: 700;
     color: #333;
+    text-align: right;
+    overflow-wrap: anywhere;
 }
 
 /* BUYURTMA */
@@ -236,4 +249,122 @@
 
 .kd-buyurtma-btn:active {
     opacity: 0.85;
+}
+
+@media (max-width: 430px) {
+    .kd-image-wrap {
+        height: clamp(170px, 32dvh, 270px);
+        border-radius: 12px;
+    }
+
+    .kd-back {
+        top: 10px;
+        left: 10px;
+        width: 36px;
+        height: 36px;
+    }
+
+    .kd-content {
+        padding: 12px 14px calc(14px + env(safe-area-inset-bottom));
+        gap: 10px;
+    }
+
+    .kd-name {
+        font-size: 18px;
+    }
+
+    .kd-input {
+        font-size: 16px;
+        padding: 9px 10px;
+    }
+
+    .kd-qoldiq-row {
+        padding: 9px 10px;
+    }
+
+    .kd-qoldiq-row>div {
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .kd-qoldiq-title {
+        font-size: 13px !important;
+        line-height: 1.2;
+    }
+
+    .kd-qoldiq-value {
+        font-size: 15px !important;
+        line-height: 1.2;
+    }
+
+    .kd-qoldiq-date {
+        font-size: 12px !important;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
+    .kd-counter {
+        gap: 12px;
+    }
+
+    .kd-counter-input {
+        width: 86px;
+        font-size: 16px;
+    }
+
+    .kd-buyurtma-btn {
+        min-height: 50px;
+        padding: 12px;
+        font-size: 14px;
+        letter-spacing: 0.4px;
+        margin-top: 4px;
+    }
+}
+
+@media (max-width: 360px) {
+    .kd-image-wrap {
+        height: clamp(145px, 28dvh, 220px);
+    }
+
+    .kd-image-placeholder {
+        width: 130px;
+        height: 130px;
+    }
+
+    .kd-content {
+        padding: 10px 10px calc(12px + env(safe-area-inset-bottom));
+        gap: 8px;
+    }
+
+    .kd-name {
+        font-size: 16px;
+    }
+
+    .kd-label,
+    .kd-jami-label {
+        font-size: 12px;
+    }
+
+    .kd-jami {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .kd-jami-value {
+        text-align: left;
+        font-size: 15px;
+    }
+
+    .kd-counter {
+        gap: 8px;
+    }
+
+    .kd-counter-input {
+        width: 72px;
+        padding: 7px;
+    }
+
+    .kd-buyurtma-btn {
+        font-size: 13px;
+    }
 }

@@ -18,6 +18,7 @@
     display: flex;
     flex-direction: column;
     gap: 0;
+    min-width: 0;
 }
 
 /* ── Title ── */
@@ -145,6 +146,9 @@
     padding: 7px 22px;
     border-radius: 6px;
     letter-spacing: 0.3px;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    text-align: center;
 }
 
 /* ── Table ── */
@@ -225,6 +229,7 @@
     display: flex;
     justify-content: center;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
 .kaf-btn-cancel {
@@ -318,3 +323,74 @@
     transition: background 0.2s;
 }
 .kaf-qr-stop:hover { background: #c1121f; }
+
+@media (max-width: 430px) {
+    .kaf-card {
+        padding: 18px 12px 18px;
+        max-width: 100%;
+    }
+
+    .kaf-title {
+        font-size: 24px;
+        margin-bottom: 12px;
+    }
+
+    .kaf-search-wrap {
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .kaf-search-wrap .input-group.create {
+        height: 42px;
+        min-width: 0;
+    }
+
+    .kaf-qr-box {
+        height: 92px;
+        margin-bottom: 14px;
+    }
+
+    .kaf-qr-icon {
+        width: 58px;
+        height: 58px;
+    }
+
+    .kaf-table th,
+    .kaf-table td {
+        font-size: 12px;
+        padding: 9px 4px;
+    }
+
+    .kaf-btn-pdf {
+        width: 100%;
+        font-size: 13px;
+        padding: 11px 0;
+    }
+
+    .kaf-btn-cancel,
+    .kaf-btn-ok {
+        flex: 1;
+        min-width: 120px;
+        padding: 10px 8px;
+    }
+}
+
+@media (max-width: 360px) {
+    .kaf-title {
+        font-size: 21px;
+    }
+
+    .kaf-search-wrap {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .kaf-search-wrap .kaf-add {
+        width: 100%;
+        height: 40px;
+    }
+
+    .kaf-bottom-btns {
+        flex-direction: column;
+    }
+}

@@ -2,19 +2,23 @@ import { useState, useEffect, useMemo } from "react";
 import "./qoshish.css";
 import Swal from "sweetalert2";
 import { loadImage, loadTovar } from "../../utils/storage";
-import { getNarx, formatNarx } from "../../utils/narx";
+import { formatNarx, parseNarx } from "../../utils/narx";
 import { format, parse } from "date-fns";
 import { getUser } from "../../leyout/login/auth";
+import { canViewPrice } from "../../utils/permissions";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) {
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
     const [quantity, setQuantity] = useState(1);
     const [imgSrc, setImgSrc] = useState(null);
     const [loading, setLoading] = useState(false);
-    const currentNarx = parseFloat(String(item?.narh || 0).replace(/\s/g, ""));
+    const currentNarx = parseNarx(item?.narh);
     const isVal = item?.narh_turi;
     const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
     const user = getUser();
+    const canSeePrice = canViewPrice(user);
+    useBackHandler(onClose);
 
     const jami = formatNarx(currentNarx * quantity); // ← formatNarx import dan
     useEffect(() => {
@@ -210,18 +214,20 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
                         <div className="kd-content">
                             <h2 style={{ color: "red" }} className="kd-name">{item?.name}</h2>
 
-                            <div className="kd-section">
-                                <label className="kd-label">Mahsulot narxi:</label>
-                                <div className="kd-narx-input">
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        style={{ textAlign: 'center', fontWeight: "bold" }}
-                                        value={`${formatNarx(currentNarx)}  ${isVal ? "so'm" : "$"}`}
-                                        className="kd-input"
-                                    />
+                            {canSeePrice && (
+                                <div className="kd-section">
+                                    <label className="kd-label">Mahsulot narxi:</label>
+                                    <div className="kd-narx-input">
+                                        <input
+                                            type="text"
+                                            readOnly
+                                            style={{ textAlign: 'center', fontWeight: "bold" }}
+                                            value={`${formatNarx(currentNarx)}  ${isVal ? "so'm" : "$"}`}
+                                            className="kd-input"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                             <div className="kd-qoldiq-row">
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <p style={{ fontSize: '18px' }} className="kd-qoldiq-title">Sotilgan mahsulot soni:</p>
@@ -274,12 +280,14 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
                                 </button>
                             </div>
 
-                            <div className="kd-jami">
-                                <span className="kd-jami-label">Jami summa:</span>
-                                <span className="kd-jami-value">
-                                    {jami} {`${isVal ? "so'm" : "$"}`}
-                                </span>
-                            </div>
+                            {canSeePrice && (
+                                <div className="kd-jami">
+                                    <span className="kd-jami-label">Jami summa:</span>
+                                    <span className="kd-jami-value">
+                                        {jami} {`${isVal ? "so'm" : "$"}`}
+                                    </span>
+                                </div>
+                            )}
 
                             <button
                                 className="kd-buyurtma-btn"

@@ -6,6 +6,7 @@ import ProductQoshish from "./ProductQoshish";
 import TovarModal from "./product";
 import Swal from "sweetalert2";
 import ModalHeader from "../BuyurtmaModal/ModalHeader";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 // ═══ ProductCard ═══
 function ProductCard({ item, search, highlightText, onClick, KorzinkaModal }) {
@@ -40,6 +41,37 @@ export default function KorzinkaModal({qaytarish,  onClose, handleModal, Korzink
     const FormData_KEY = "formData";
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
     const Buyurtma_cart = JSON.parse(localStorage.getItem("buyurtma_cart") || "{}");
+    const handleBackClose = useCallback(async () => {
+        const cartData = localStorage.getItem(CART_KEY);
+        const formData = localStorage.getItem(FormData_KEY);
+
+        if (cartData || formData) {
+            const result = await Swal.fire({
+                title: "Chiqishni xohlaysizmi?",
+                text: "Chiqsangiz, saqlangan buyurtma ma'lumotlari o'chiriladi.",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Ha, chiqish",
+                cancelButtonText: "Bekor qilish",
+                confirmButtonColor: "#d33",
+                cancelButtonColor: "#3085d6",
+            });
+
+            if (result.isConfirmed) {
+                localStorage.removeItem(CART_KEY);
+                localStorage.removeItem(Qaytarish_KEY);
+                localStorage.removeItem(FormData_KEY);
+                handleModal();
+            }
+
+            return;
+        }
+
+        handleModal();
+    }, [handleModal]);
+
+    useBackHandler(handleBackClose);
+
     useEffect(() => {
         loadProducts()
             .then(data => setProductGroup(data || []))
@@ -93,32 +125,7 @@ export default function KorzinkaModal({qaytarish,  onClose, handleModal, Korzink
                             alignItems: 'center'
                         }}>
                             <button
-                                onClick={async () => {
-                                    const cartData = localStorage.getItem(CART_KEY);
-                                    const formData = localStorage.getItem(FormData_KEY);
-
-                                    if (cartData || formData) {
-                                        const result = await Swal.fire({
-                                            title: "Chiqishni xohlaysizmi?",
-                                            text: "Chiqsangiz, saqlangan buyurtma ma’lumotlari o‘chiriladi.",
-                                            icon: "warning",
-                                            showCancelButton: true,
-                                            confirmButtonText: "Ha, chiqish",
-                                            cancelButtonText: "Bekor qilish",
-                                            confirmButtonColor: "#d33",
-                                            cancelButtonColor: "#3085d6",
-                                        });
-
-                                        if (result.isConfirmed) {
-                                            localStorage.removeItem(CART_KEY);
-                                            localStorage.removeItem(Qaytarish_KEY);
-                                            localStorage.removeItem(FormData_KEY);
-                                            handleModal();
-                                        }
-                                    } else {
-                                        handleModal();
-                                    }
-                                }}
+                                onClick={handleBackClose}
                                 style={{
                                     background: 'none',
                                     border: 'none',

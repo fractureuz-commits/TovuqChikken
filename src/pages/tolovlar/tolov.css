@@ -24,6 +24,7 @@
 .tolov-container {
   width: 100%;
   min-height: 100vh;
+  min-height: 100dvh;
   background: #fff;
   overflow: hidden;
   display: flex;
@@ -87,6 +88,8 @@
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tolov-body::-webkit-scrollbar {
@@ -105,6 +108,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
 .tolov-total-label {
@@ -117,6 +122,8 @@
   font-size: 15px;
   color: #006CAC;
   font-weight: 700;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 /* ── Divider ── */
@@ -131,7 +138,10 @@
   display: flex;
   flex-direction: column;
   max-height: 70vh;
+  max-height: 70dvh;
   overflow-y: auto;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
 }
 
 .tolov-list::-webkit-scrollbar {
@@ -207,12 +217,14 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .tolov-item-title {
   font-size: 15px;
   font-weight: 600;
   color: #1a1a2e;
+  overflow-wrap: anywhere;
 }
 
 .tolov-item-right {
@@ -220,12 +232,18 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 3px;
+  min-width: 0;
 }
 
 .tolov-item-amount {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   font-size: 15px;
   font-weight: 700;
   color: #006CAC;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 
 .tolov-item-date {
@@ -487,3 +505,72 @@
 
 .delete-btn { color: #e24a4a; }
 .delete-btn:hover { background: rgba(226, 74, 74, 0.1); }
+
+@media (max-width: 430px) {
+  .tolov-header {
+    padding: calc(18px + env(safe-area-inset-top)) 14px 14px;
+    gap: 10px;
+  }
+
+  .tolov-header-title {
+    font-size: 18px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .tolov-body {
+    padding: 16px 14px 0;
+  }
+
+  .tolov-list {
+    max-height: none;
+    flex: 1 1 auto;
+  }
+
+  .tolov-item {
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .tolov-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .tolov-item-title,
+  .tolov-item-amount,
+  .tolov-total-label,
+  .tolov-total-value {
+    font-size: 13px;
+  }
+
+  .tolov-send-btn {
+    padding: 14px 8px calc(14px + env(safe-area-inset-bottom));
+    font-size: 13px;
+    letter-spacing: 0.5px;
+  }
+}
+
+@media (max-width: 360px) {
+  .tolov-body {
+    padding: 12px 10px 0;
+  }
+
+  .tolov-total-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .tolov-total-value {
+    text-align: left;
+  }
+
+  .tolov-item {
+    align-items: stretch;
+  }
+
+  .tolov-item-right {
+    align-items: flex-start;
+  }
+}

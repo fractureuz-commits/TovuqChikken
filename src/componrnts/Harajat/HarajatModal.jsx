@@ -6,6 +6,10 @@ import { loadKurs } from "../../utils/storage";
 import { getUser } from "../../leyout/login/auth";
 import "./harajat.css";
 import HarajataddModal from "./HarajatAdd";
+import { listQueueItems, QUEUE_TYPES, saveQueueItem } from "../../utils/offlineQueue";
+import { canViewNotes } from "../../utils/permissions";
+import { toNumber } from "../../utils/queueSummary";
+import { useBackHandler } from "../../utils/backButtonStack";
 
 export default function HarajatModal({
     editData,
@@ -13,6 +17,8 @@ export default function HarajatModal({
     setHarajatlar
 }) {
     const user = getUser();
+    const canWriteNote = canViewNotes(user);
+    useBackHandler(onClose);
 
     const [kurs, setKurs] = useState(() => {
         const kursData = loadKurs();
@@ -22,6 +28,7 @@ export default function HarajatModal({
     const [openSelectHarajat, setOpenSelectHarajat] = useState(false);
     const [HarajatAdd, setHarajatAdd] = useState(false);
     const [Harajat, setHarajat] = useState([]);
+    const [saving, setSaving] = useState(false);
 
     const [FormData, setFormData] = useState({
         date: format(new Date(), "dd.MM.yyyy HH:mm:ss"),
@@ -63,8 +70,7 @@ export default function HarajatModal({
     const set = (key, value) =>
         setFormData((prev) => ({ ...prev, [key]: value }));
 
-    const clean = (v) =>
-        parseFloat(String(v || "0").replace(/\s|,/g, "")) || 0;
+    const clean = (v) => toNumber(v);
 
     const fmt = (num) =>
         Math.round(Number(num || 0))
@@ -84,12 +90,16 @@ export default function HarajatModal({
     const jami_dollar =
         clean(FormData.perech_val) +
         clean(FormData.naqd_val);
-    const saveHarajatlar = (data) => {
-        localStorage.setItem("harajatlar", JSON.stringify(data));
-        setHarajatlar(data);
+    const saveHarajat = async (data) => {
+        await saveQueueItem(QUEUE_TYPES.HARAJATLAR, data);
+        const updated = await listQueueItems(QUEUE_TYPES.HARAJATLAR);
+        await setHarajatlar?.(updated);
+        return updated;
     };
 
     const handleSubmit = async () => {
+        if (saving) return;
+
         if (!FormData.operatsiya_code) {
             Swal.fire({
                 icon: "warning",
@@ -100,11 +110,11 @@ export default function HarajatModal({
         }
 
         try {
-            const oldData = JSON.parse(localStorage.getItem("harajatlar") || "[]");
-
+            setSaving(true);
             const newData = {
                 id: editData?.id || Date.now(),  // ✅ edit bo'lsa eski id, yangi bo'lsa timestamp
                 ...FormData,
+                izoh: canWriteNote ? FormData.izoh : "",
                 naqd_sum: clean(FormData.naqd_sum),
                 plastik_sum: clean(FormData.plastik_sum),
                 clic_sum: clean(FormData.clic_sum),
@@ -116,20 +126,9 @@ export default function HarajatModal({
                 kurs: clean(kurs)
             };
 
-            let updatedData = [];
-
-            if (editData?.id) {
+            const updatedHarajatlar = await saveHarajat(newData);
                 // ✅ EDIT: id mavjud bo'lsa yangilash
-                updatedData = oldData.map((item) =>
-                    item.id === editData.id ? newData : item
-                );
-            } else {
                 // ✅ ADD: id yo'q bo'lsa yangi qo'shish
-                updatedData = [...oldData, newData];
-            }
-
-            saveHarajatlar(updatedData);
-
             Swal.fire({
                 icon: "success",
                 title: editData?.id ? "Tahrirlandi!" : "Muvofaqiyatli!",
@@ -137,7 +136,7 @@ export default function HarajatModal({
                 showConfirmButton: false
             });
 
-            onClose();
+            onClose(updatedHarajatlar);
         } catch (err) {
             Swal.fire({
                 icon: "error",
@@ -145,6 +144,8 @@ export default function HarajatModal({
                 text: err.message,
                 confirmButtonColor: "#006CAC"
             });
+        } finally {
+            setSaving(false);
         }
     };
     const handleHarajatUpdate = (updated) => {
@@ -410,23 +411,25 @@ export default function HarajatModal({
                     </div>
 
                     {/* Izox */}
-                    <div className="input-group" style={{ width: "100%" }}>
-                        <label>Izox:</label>
-                        <textarea
-                            className="input tolov-textarea"
-                            value={FormData.izoh}
-                            onChange={(e) => set("izoh", e.target.value)}
-                            rows={3}
-                        />
-                    </div>
+                    {canWriteNote && (
+                        <div className="input-group" style={{ width: "100%" }}>
+                            <label>Izox:</label>
+                            <textarea
+                                className="input tolov-textarea"
+                                value={FormData.izoh}
+                                onChange={(e) => set("izoh", e.target.value)}
+                                rows={3}
+                            />
+                        </div>
+                    )}
 
                     {/* Buttons */}
                     <div className="btn-row" style={{ marginTop: "10px" }}>
-                        <button type="button" className="btn-cancel" onClick={onClose}>
+                        <button type="button" className="btn-cancel" onClick={onClose} disabled={saving}>
                             BEKOR QILISH
                         </button>
-                        <button type="button" className="btn-submit" onClick={handleSubmit}>
-                            SAQLASH
+                        <button type="button" className="btn-submit" onClick={handleSubmit} disabled={saving}>
+                            {saving ? "SAQLANMOQDA..." : "SAQLASH"}
                         </button>
                     </div>
                 </div>

@@ -1,56 +1,99 @@
-import { NavLink } from 'react-router';
 import './home.css'
 import './homeMedia.css'
-import Logo from '../../../images/logo.svg';
-import { useState, useRef, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import BuyurtmaModal from '../../componrnts/BuyurtmaModal/BuyurtmaModal';
 import Header from '../../header/header';
 import SyncButton from '../../componrnts/SyncButton/SyncButton';
-import CachedImage from '../../componrnts/SyncButton/CachedImage';
-import ProductList from '../../componrnts/ProductCard/ProductList';
 import { loadProducts } from '../../utils/storage';
-import MijozSelect from '../../componrnts/SelectMijoz/SelectMijoz';
 import KorzinkaModal from '../../componrnts/Korzinka/korzinka';
 import CartModal from '../../componrnts/Korzinka/Cart';
 import TolovModal from '../../componrnts/TolovModal/TolovModal';
 import HisobotModal from '../../componrnts/Hisobotlar/HisobotTypeSelect';
 import Swal from 'sweetalert2';
-import { apiPost } from '../../utils/api';
 import TolovPage from '../tolovlar/tolovlar';
 import QaytarishModal from '../../componrnts/BuyurtmaModal/qaytarish';
 import HarajatPage from '../tolovlar/Harajatlar';
+import SavdolarPage from '../tolovlar/Savdolar';
 import { getUser } from '../../leyout/login/auth';
 import Loader from '../../componrnts/loader/loader';
-const PAGE_SIZE = 20;
+import { listQueueItems, QUEUE_CHANGED_EVENT, QUEUE_TYPES } from '../../utils/offlineQueue';
+import { hasPermission } from '../../utils/permissions';
+import { uploadQueueBatches } from '../../utils/backendSync';
+import { getSavdoConfirmIds, getSavdoPayload, normalizeSavdoId, withSavdoItemId } from '../../utils/savdoIdentity';
+
+const queueCountValue = (value) => value ?? "";
+const positiveCount = (value) => Number(value || 0) > 0;
+
+const saveOrderHistory = (order) => {
+    const oldOrders = JSON.parse(localStorage.getItem("buyurtmalar") || "[]");
+    const exists = oldOrders.some(item => String(item.id) === String(order.id));
+
+    if (!exists) {
+        localStorage.setItem("buyurtmalar", JSON.stringify([...oldOrders, order]));
+    }
+};
 
 function Home() {
     const user = getUser()
     const [openBuyurtma, setOpenBuyurtma] = useState(false);
     const [OpenQaytarish, setOpenQaytarish] = useState(false);
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
-    const [Tolovlar, setTolovlar] = useState(() => {
-        return JSON.parse(localStorage.getItem("tolovlar") || "[]");
-    });
-    const [modals, setModals] = useState([]);
-    const [Harajatlar, setHarajatlar] = useState(() => {
-        return JSON.parse(localStorage.getItem("harajatlar") || "[]");
-    });
-    const reloadTolovlar = () => {
-        const savedTolovlar = JSON.parse(localStorage.getItem("tolovlar") || "[]");
-        setTolovlar(savedTolovlar);
-        const savedHarajatlar = JSON.parse(localStorage.getItem("harajatlar") || "[]");
-        setHarajatlar(savedHarajatlar);
-    };
+    const [tolovlarCount, setTolovlarCount] = useState(null);
+    const [harajatlarCount, setHarajatlarCount] = useState(null);
+    const [savdolarCount, setSavdolarCount] = useState(null);
+    const reloadTolovlar = useCallback(async () => {
+        try {
+            const [tolovlar, harajatlar, savdolar] = await Promise.all([
+                listQueueItems(QUEUE_TYPES.TOLOVLAR),
+                listQueueItems(QUEUE_TYPES.HARAJATLAR),
+                listQueueItems(QUEUE_TYPES.SAVDOLAR),
+            ]);
+            const tolovCount = tolovlar.length;
+            const harajatCount = harajatlar.length;
+            const savdoCount = savdolar.length;
+
+            setTolovlarCount(tolovCount);
+            setHarajatlarCount(harajatCount);
+            setSavdolarCount(savdoCount);
+            return { tolovCount, harajatCount, savdoCount, tolovlar, harajatlar, savdolar };
+        } catch (err) {
+            console.error("Yuborilmagan amallar sanog'ini yangilashda xato:", err);
+            return null;
+        }
+    }, []);
+    const refreshQueueCounts = useCallback(async () => {
+        await reloadTolovlar();
+        window.setTimeout(reloadTolovlar, 0);
+        window.setTimeout(reloadTolovlar, 150);
+    }, [reloadTolovlar]);
+
+    const handleTolovlarChange = useCallback(async (rows) => {
+        if (Array.isArray(rows)) setTolovlarCount(rows.length);
+        await refreshQueueCounts();
+    }, [refreshQueueCounts]);
+
+    const handleHarajatlarChange = useCallback(async (rows) => {
+        if (Array.isArray(rows)) setHarajatlarCount(rows.length);
+        await refreshQueueCounts();
+    }, [refreshQueueCounts]);
+
+    const handleSavdolarChange = useCallback(async (rows) => {
+        if (Array.isArray(rows)) setSavdolarCount(rows.length);
+        await refreshQueueCounts();
+    }, [refreshQueueCounts]);
     const CART_KEY = "buyurtma_cart";
     const Qaytarish_KEY = "qaytarish";
     const FormData_KEY = "formData";
     const isEmpty = Object.keys(FormData).length === 0;
-    const [products, setProducts] = useState([]);
+    const [, setProducts] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState("Yuklanmoqda...");
+    const [loadingProgress, setLoadingProgress] = useState({ current: 0, total: 0 });
     const [activeView, setActiveView] = useState("sotib"); // "sotib" | "cart"
     const [Korzinka, setKorzinka] = useState(false);
     const [TolovPageModal, setTolovPageModal] = useState(false);
     const [HarajatModal, setHarajatModal] = useState(false);
+    const [SavdolarModal, setSavdolarModal] = useState(false);
     const [Tolov, setTolov] = useState(false);
     const [Hissobot, setHissobot] = useState(false);
     useEffect(() => {
@@ -59,49 +102,137 @@ function Home() {
             setLoading(false);
         });
     }, []);
+    useEffect(() => {
+        reloadTolovlar();
+
+        const handleQueueChange = () => {
+            reloadTolovlar();
+        };
+        const handleVisibilityChange = () => {
+            if (!document.hidden) reloadTolovlar();
+        };
+
+        window.addEventListener(QUEUE_CHANGED_EVENT, handleQueueChange);
+        window.addEventListener("focus", handleQueueChange);
+        window.addEventListener("pageshow", handleQueueChange);
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        const intervalId = window.setInterval(handleQueueChange, 1000);
+
+        return () => {
+            window.removeEventListener(QUEUE_CHANGED_EVENT, handleQueueChange);
+            window.removeEventListener("focus", handleQueueChange);
+            window.removeEventListener("pageshow", handleQueueChange);
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.clearInterval(intervalId);
+        };
+    }, [reloadTolovlar]);
     // ✅ Sync tugaganda state yangilanadi
     const handleSyncComplete = (newProducts) => {
         setProducts([...newProducts]); // ← yangi array reference
     };
-    const handleTolovlar = async () => {
+    const handleUploadProgress = useCallback(({ stage, current, total }) => {
+        setLoadingMessage(stage || "Serverga yuborilmoqda...");
+        setLoadingProgress({ current, total });
+    }, []);
+
+    const startLoading = useCallback((message) => {
+        setLoadingMessage(message);
+        setLoadingProgress({ current: 0, total: 0 });
         setLoading(true);
+    }, []);
+
+    const stopLoading = useCallback(() => {
+        setLoading(false);
+        setLoadingMessage("Yuklanmoqda...");
+        setLoadingProgress({ current: 0, total: 0 });
+    }, []);
+
+    const sendTolovlarQueue = async () => {
+        const syncedCount = await uploadQueueBatches({
+            type: QUEUE_TYPES.TOLOVLAR,
+            endpoint: "tovuq/hs/tulov//mas_tulov/",
+            makePayload: (batch) => ({ tulovlar: batch }),
+            getConfirmedIds: (res) => (res?.id_lar || []).map(item => item.id),
+            onProgress: handleUploadProgress,
+        });
+
+        await reloadTolovlar();
+        return syncedCount;
+    };
+
+    const sendHarajatlarQueue = async () => {
+        const syncedCount = await uploadQueueBatches({
+            type: QUEUE_TYPES.HARAJATLAR,
+            endpoint: "tovuq/hs/kassa_chiqim/get_kassa_chiqim/",
+            makePayload: (batch) => ({ kassa_chiqim: batch }),
+            getConfirmedIds: (res) => (res?.text || []).map(item => item.ID),
+            onProgress: handleUploadProgress,
+        });
+
+        await reloadTolovlar();
+        return syncedCount;
+    };
+
+    const sendSavdolarQueue = async () => {
+        const syncedCount = await uploadQueueBatches({
+            type: QUEUE_TYPES.SAVDOLAR,
+            endpoint: "tovuq/hs/realizz/realizz",
+            makePayload: (batch) => {
+                const orders = batch.map(withSavdoItemId);
+
+                orders.forEach(order => {
+                    const payload = getSavdoPayload(order);
+                    const historyOrder = order?.data
+                        ? order
+                        : {
+                            id: order.id,
+                            itemId: order.itemId,
+                            sana: order.sana || payload.date || new Date().toLocaleString("uz-UZ"),
+                            created_at: order.created_at || new Date().toISOString(),
+                            data: payload,
+                            date: payload.date,
+                        };
+
+                    saveOrderHistory(historyOrder);
+                });
+
+                const payloads = orders.map(getSavdoPayload);
+                return { realiz: payloads };
+            },
+            getConfirmedIds: (res, batch) => {
+                const idsFromServer = [
+                    ...(res?.id_lar || []),
+                    ...(res?.text || []),
+                    ...(Array.isArray(res) ? res : []),
+                ].map(item => item?.itemId ?? item?.id ?? item?.ID ?? item).map(normalizeSavdoId).filter(Boolean);
+
+                return batch
+                    .filter(order => getSavdoConfirmIds(order).some(id => idsFromServer.includes(id)))
+                    .map(order => order.id);
+            },
+            removeWithoutIds: false,
+            onProgress: handleUploadProgress,
+        });
+
+        await reloadTolovlar();
+        return syncedCount;
+    };
+    const handleTolovlarQueue = async ({ showSuccess = true } = {}) => {
+        startLoading("To'lovlar serverga yuborilmoqda...");
         try {
-            const localTolovlar = JSON.parse(localStorage.getItem("tolovlar") || "[]");
+            const syncedCount = await sendTolovlarQueue();
 
-            // if (localTolovlar.length === 0) {
-            //     Swal.fire({
-            //         icon: "warning",
-            //         title: "To‘lovlar yo‘q!",
-            //         confirmButtonColor: "#006CAC"
-            //     });
-            //     return;
-            // }
+            if (showSuccess) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Yuborildi!",
+                    text: `${syncedCount} ta to'lov sinxron qilindi`,
+                    timer: 1800,
+                    showConfirmButton: false
+                });
+            }
 
-            const payload = {
-                tulovlar: localTolovlar
-            };
-
-            const res = await apiPost("tovuq/hs/tulov//mas_tulov/", payload);
-
-            const idsFromServer = (res?.id_lar || []).map(item =>
-                String(item.id).replace(/\s/g, "")
-            );
-
-            const filteredTolovlar = localTolovlar.filter(item =>
-                !idsFromServer.includes(String(item.id).replace(/\s/g, ""))
-            );
-
-            localStorage.setItem("tolovlar", JSON.stringify(filteredTolovlar));
-            setTolovlar(filteredTolovlar);
-
-            Swal.fire({
-                icon: "success",
-                title: "Yuborildi!",
-                text: `${idsFromServer.length} ta to‘lov sinxron qilindi`,
-                timer: 1800,
-                showConfirmButton: false
-            });
-
+            return syncedCount;
         } catch (err) {
             Swal.fire({
                 icon: "error",
@@ -109,51 +240,28 @@ function Home() {
                 text: err.message,
                 confirmButtonColor: "#006CAC"
             });
+            return 0;
         } finally {
-            setLoading(false); // 🔥 MUHIM
+            stopLoading();
         }
     };
-    const handleHarajatlar = async () => {
-        setLoading(true);
+
+    const handleHarajatlarQueue = async ({ showSuccess = true } = {}) => {
+        startLoading("Xarajatlar serverga yuborilmoqda...");
         try {
-            const localHarajatlar = JSON.parse(localStorage.getItem("harajatlar") || "[]");
+            const syncedCount = await sendHarajatlarQueue();
 
-            // if (localHarajatlar.length === 0) {
-            //     Swal.fire({
-            //         icon: "warning",
-            //         title: "To‘lovlar yo‘q!",
-            //         confirmButtonColor: "#006CAC"
-            //     });
-            //     return;
-            // }
+            if (showSuccess) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Yuborildi!",
+                    text: `${syncedCount} ta harajat sinxron qilindi`,
+                    timer: 1800,
+                    showConfirmButton: false
+                });
+            }
 
-            const payload = {
-                kassa_chiqim: localHarajatlar
-            };
-
-            const res = await apiPost("tovuq/hs/kassa_chiqim/get_kassa_chiqim/", payload);
-
-            // 🔥 BACKEND FORMATGA MOSLAB OLINDI
-            const idsFromServer = (res?.text || []).map(item =>
-                String(item.ID).replace(/\s/g, "")
-            );
-
-            // 🔥 LOCAL ID HAM STRINGGA O‘TKAZILADI
-            const filteredHarajatlar = localHarajatlar.filter(item =>
-                !idsFromServer.includes(String(item.id))
-            );
-
-            localStorage.setItem("harajatlar", JSON.stringify(filteredHarajatlar));
-            setHarajatlar(filteredHarajatlar);
-
-            Swal.fire({
-                icon: "success",
-                title: "Yuborildi!",
-                text: `${idsFromServer.length} ta to‘lov sinxron qilindi`,
-                timer: 1800,
-                showConfirmButton: false
-            });
-
+            return syncedCount;
         } catch (err) {
             Swal.fire({
                 icon: "error",
@@ -161,12 +269,42 @@ function Home() {
                 text: err.message,
                 confirmButtonColor: "#006CAC"
             });
+            return 0;
         } finally {
-            setLoading(false);
+            stopLoading();
         }
     };
-    const isAdmin = user?.rol === "1";
-    const canShow = (permission) => isAdmin || user?.[permission];
+
+    const handleSavdolarQueue = async ({ showSuccess = true } = {}) => {
+        startLoading("Savdolar serverga yuborilmoqda...");
+        try {
+            const syncedCount = await sendSavdolarQueue();
+
+            if (showSuccess) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Yuborildi!",
+                    text: `${syncedCount} ta savdo sinxron qilindi`,
+                    timer: 1800,
+                    showConfirmButton: false
+                });
+            }
+
+            return syncedCount;
+        } catch (err) {
+            Swal.fire({
+                icon: "error",
+                title: "Xato!",
+                text: err.message,
+                confirmButtonColor: "#006CAC"
+            });
+            return 0;
+        } finally {
+            stopLoading();
+        }
+    };
+
+    const canShow = (permission) => hasPermission(user, permission);
     const visibleButtons = [
         canShow("savdo"),
         canShow("tolov"),
@@ -182,39 +320,53 @@ function Home() {
         if (visibleButtons === 4) return "grid-2";
         return "grid-3"; // 5 va 6 ta uchun
     };
+    const queueCardsCount = [
+        canShow("tolov"),
+        canShow("savdo"),
+        canShow("harajat"),
+    ].filter(Boolean).length;
     return (
         <>
             <div className="home-page-wrapper">
                 <Header />
                 <div className="mobil-container">
-                    {(canShow("harajat") || canShow("tolov")) && (
-                        <div className="home-header">
-                            {canShow("harajat") && (
-                                <button
-                                    className="information"
-                                    style={{ width: "100%" }}
-                                    onClick={() => setHarajatModal(true)}
-                                >
-                                    <p className='counter'>{Harajatlar.length}</p>
-                                    <p className='counter-title'>Yuborilmagan xarajatlar</p>
-                                </button>
-                            )}
-
+                    {(canShow("savdo") || canShow("harajat") || canShow("tolov")) && (
+                        <div className={`home-header ${queueCardsCount >= 3 ? "many" : ""}`}>
                             {canShow("tolov") && (
                                 <button
                                     onClick={() => setTolovPageModal(true)}
                                     className="information"
-                                    style={{ width: "100%" }}
                                 >
-                                    <p className='counter'>{Tolovlar.length || 0}</p>
+                                    <p className='counter' data-i18n-skip="true">{queueCountValue(tolovlarCount)}</p>
                                     <p className='counter-title'>Yuborilmagan to&apos;lovlar</p>
                                 </button>
                             )}
+                            {canShow("savdo") && (
+                                <button
+                                    className="information"
+                                    onClick={() => setSavdolarModal(true)}
+                                >
+                                    <p className='counter' data-i18n-skip="true">{queueCountValue(savdolarCount)}</p>
+                                    <p className='counter-title'>Yuborilmagan savdolar</p>
+                                </button>
+                            )}
+
+                            {canShow("harajat") && (
+                                <button
+                                    className="information"
+                                    onClick={() => setHarajatModal(true)}
+                                >
+                                    <p className='counter' data-i18n-skip="true">{queueCountValue(harajatlarCount)}</p>
+                                    <p className='counter-title'>Yuborilmagan xarajatlar</p>
+                                </button>
+                            )}
+
+
                         </div>
                     )}
                 </div>
                 <div className="home-body"
-                    style={(canShow("harajat") || canShow("tolov")) ? {} : { marginTop: "10px" }}
+                    style={(canShow("savdo") || canShow("harajat") || canShow("tolov")) ? {} : { marginTop: "10px" }}
                 >
                     <div className="mobil-container">
                         <div className={`home-pages ${getGridClass()}`}>
@@ -225,9 +377,10 @@ function Home() {
                                         if (isEmpty) setOpenBuyurtma(true);
                                         else setKorzinka(true);
                                     }}
-                                    className="has-badge button"
-                                    data-badge="1"
-                                    style={user?.tolov == false ? { width: '100%' } : {}}
+                                    className={"button"}
+                                    // className={positiveCount(savdolarCount) ? "has-badge button" : "button"}
+                                    // data-badge={positiveCount(savdolarCount) ? savdolarCount : undefined}
+                                    style={!canShow("tolov") ? { width: '100%' } : {}}
 
                                 >
                                     <svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -246,7 +399,7 @@ function Home() {
                             {/* TOLOV */}
                             {canShow("tolov") && (
                                 <button className="button"
-                                    style={user?.savdo == false ? { width: '100%' } : {}}
+                                    style={!canShow("savdo") ? { width: '100%' } : {}}
                                     onClick={() => setTolov(true)}>
                                     <svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <g clipPath="url(#clip0_2001_61)">
@@ -266,7 +419,7 @@ function Home() {
                             {/* HISOBOT */}
                             {canShow("hisobot") && (
                                 <button className="button"
-                                    style={user?.qaytarish == false ? { width: '100%', } : {}}
+                                    style={!canShow("qaytarish") ? { width: '100%', } : {}}
 
                                     onClick={() => setHissobot(true)}>
                                     <svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -296,7 +449,7 @@ function Home() {
                                         localStorage.removeItem(Qaytarish_KEY);
                                         localStorage.removeItem(FormData_KEY);
                                     }}
-                                    style={user?.hisobot == false ? {
+                                    style={!canShow("hisobot") ? {
                                         width: '100%',
                                         // flexDirection:'row' ,justifyContent:"start" , gap:'10px'
                                     } : {}}
@@ -322,7 +475,7 @@ function Home() {
                                 onClick={async () => {
                                     const result = await Swal.fire({
                                         title: "Yuborishni hohlaysizmi?",
-                                        text: "To‘lovlar va harajatlar serverga yuboriladi",
+                                        text: "Savdolar, to'lovlar va harajatlar serverga yuboriladi",
                                         icon: "question",
                                         showCancelButton: true,
                                         confirmButtonText: "Ha",
@@ -332,10 +485,12 @@ function Home() {
                                     });
 
                                     if (result.isConfirmed) {
-                                        const localTolovlar = JSON.parse(localStorage.getItem("tolovlar") || "[]");
-                                        const localHarajatlar = JSON.parse(localStorage.getItem("harajatlar") || "[]");
+                                        const counts = await reloadTolovlar();
+                                        const tolovCount = counts?.tolovCount || 0;
+                                        const harajatCount = counts?.harajatCount || 0;
+                                        const savdoCount = counts?.savdoCount || 0;
 
-                                        if (localTolovlar.length === 0 || localHarajatlar.length === 0) {
+                                        if (savdoCount === 0 && tolovCount === 0 && harajatCount === 0) {
                                             Swal.fire({
                                                 icon: "warning",
                                                 title: "Yuboriladigan amallar yoq!",
@@ -343,8 +498,36 @@ function Home() {
                                             });
                                             return;
                                         }
-                                        await handleTolovlar();
-                                        await handleHarajatlar();
+
+                                        startLoading("Serverga yuborilmoqda...");
+                                        try {
+                                            const syncedSavdolar = savdoCount > 0
+                                                ? await sendSavdolarQueue()
+                                                : 0;
+                                            const syncedTolovlar = tolovCount > 0
+                                                ? await sendTolovlarQueue()
+                                                : 0;
+                                            const syncedHarajatlar = harajatCount > 0
+                                                ? await sendHarajatlarQueue()
+                                                : 0;
+
+                                            Swal.fire({
+                                                icon: "success",
+                                                title: "Yuborildi!",
+                                                text: `${syncedSavdolar} ta savdo, ${syncedTolovlar} ta to'lov, ${syncedHarajatlar} ta harajat sinxron qilindi`,
+                                                timer: 1800,
+                                                showConfirmButton: false
+                                            });
+                                        } catch (err) {
+                                            Swal.fire({
+                                                icon: "error",
+                                                title: "Xato!",
+                                                text: err.message,
+                                                confirmButtonColor: "#006CAC"
+                                            });
+                                        } finally {
+                                            stopLoading();
+                                        }
                                     }
                                 }}
                             >
@@ -368,25 +551,41 @@ function Home() {
                     </div>
                 </div>
             </div>
-            {loading && <Loader />}
+            {loading && (
+                <Loader
+                    message={loadingMessage}
+                    current={loadingProgress.current}
+                    total={loadingProgress.total}
+                />
+            )}
+            {SavdolarModal &&
+                <SavdolarPage
+                    onBack={() => {
+                        setSavdolarModal(false)
+                        refreshQueueCounts()
+                    }}
+                    onSend={handleSavdolarQueue}
+                    onQueueChange={handleSavdolarChange}
+                />
+            }
             {TolovPageModal &&
                 <TolovPage
                     onBack={() => {
                         setTolovPageModal(false)
-                        reloadTolovlar()
+                        refreshQueueCounts()
                     }}
-                    onSend={handleTolovlar}
-                    reloadTolovlar={reloadTolovlar}
+                    onSend={handleTolovlarQueue}
+                    onQueueChange={handleTolovlarChange}
                 />
             }
             {HarajatModal &&
                 <HarajatPage
                     onBack={() => {
                         setHarajatModal(false)
-                        reloadTolovlar()
+                        refreshQueueCounts()
                     }}
-                    onSend={handleHarajatlar}
-                    reloadTolovlar={reloadTolovlar}
+                    onSend={handleHarajatlarQueue}
+                    onQueueChange={handleHarajatlarChange}
                 />
             }
             {activeView === "sotib" && Korzinka &&
@@ -396,39 +595,64 @@ function Home() {
                         if (Object.keys(formData).length === 0) {
                             setKorzinka(false)
                             setOpenBuyurtma(false);
+                            refreshQueueCounts();
                         } else {
                             setKorzinka(false);
+                            refreshQueueCounts();
 
                         }
                     }}
-                    KorzinkaModal={() => setActiveView("cart")}
+                    KorzinkaModal={() => {
+                        setActiveView("cart");
+                        refreshQueueCounts();
+                    }}
                 />
             }
             {Tolov &&
                 <TolovModal
-                    onClose={() => setTolov(false)}
-                    setTolovlar={setTolovlar}
+                    onClose={(rows) => {
+                        setTolov(false);
+                        if (Array.isArray(rows)) setTolovlarCount(rows.length);
+                        refreshQueueCounts();
+                    }}
+                    setTolovlar={handleTolovlarChange}
                 />
             }
             {Hissobot &&
                 <HisobotModal
-                    onClose={() => setHissobot(false)}
+                    onClose={() => {
+                        setHissobot(false);
+                        refreshQueueCounts();
+                    }}
                 />
             }
             {activeView === "cart" && (
                 <CartModal
-                    onClose={() => setActiveView("sotib")}
+                    onClose={() => {
+                        setActiveView("sotib");
+                        refreshQueueCounts();
+                    }}
                     onExit={() => {
                         setActiveView("sotib")
                         setOpenBuyurtma(false)
+                        refreshQueueCounts();
 
                     }}
-                    KorzinkaModal={() => setActiveView("sotib")} // ← SOTIB OLISH bosilsa
+                    KorzinkaModal={() => {
+                        setActiveView("sotib");
+                        refreshQueueCounts();
+                    }} // ← SOTIB OLISH bosilsa
                 />
             )}
-            {openBuyurtma && <BuyurtmaModal onClose={() => setOpenBuyurtma(false)}
+            {openBuyurtma && <BuyurtmaModal onClose={() => {
+                setOpenBuyurtma(false);
+                refreshQueueCounts();
+            }}
             />}
-            {OpenQaytarish && <QaytarishModal onClose={() => setOpenQaytarish(false)}
+            {OpenQaytarish && <QaytarishModal onClose={() => {
+                setOpenQaytarish(false);
+                refreshQueueCounts();
+            }}
             />}
         </>);
 }

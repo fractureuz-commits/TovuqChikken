@@ -9,6 +9,7 @@
     cursor: pointer;
     transition: opacity 0.15s ease, transform 0.15s ease;
     width: 100%;
+    min-width: 0;
 }
 
 .tovar:active {
@@ -73,9 +74,12 @@
     font-size: 15px;
     font-weight: 700;
     color: #fff;
-    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+    line-height: 1.2;
 }
 
 .tovarTitles .volume {
@@ -90,6 +94,8 @@
     justify-content: flex-end;
     gap: 8px;
     margin-top: 4px;
+    flex-wrap: wrap;
+    min-width: 0;
 }
 
 .price {
@@ -104,4 +110,48 @@
     font-weight: 600;
     color: #ffd700;
     text-align: right;
+}
+
+@media (max-width: 430px) {
+    .tovar {
+        gap: 10px;
+        padding: 9px 10px 9px 9px;
+        border-radius: 12px;
+    }
+
+    .tovar-img {
+        width: 62px;
+        height: 62px;
+    }
+
+    .tovarTitles .title {
+        font-size: 14px;
+    }
+
+    .tovarTitles .volume,
+    .price,
+    .price-val {
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 360px) {
+    .tovar {
+        gap: 8px;
+        padding: 8px;
+    }
+
+    .tovar-img {
+        width: 52px;
+        height: 52px;
+        border-radius: 8px;
+    }
+
+    .tovarTitles .title {
+        font-size: 13px;
+    }
+
+    .tovar-narxlar {
+        justify-content: flex-start;
+    }
 }

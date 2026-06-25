@@ -3,8 +3,8 @@ import { useState } from "react";
 import "./mijozModal.css";
 import Modal from "../../componrnts/Modal/Modal";
 import SearchAndSelect from "../../componrnts/drop_serach/dropSearch";
-import { BaseUrl } from "../../baseUrl";
 import Swal from "sweetalert2";
+import { apiPostJson } from "../../utils/api";
 export default function MijozModal({ open, onClose, fetchMijoz }) {
     const [form, setForm] = useState({
         id: '',
@@ -47,42 +47,32 @@ export default function MijozModal({ open, onClose, fetchMijoz }) {
         onClose()
         fetchMijoz(); // Yangilash!
     };
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        fetch(`${BaseUrl}/mijoz/`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(form),
-        })
-            .then((response) => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then((data) => {
-                console.log('Response data:', data);
-                resetForm();
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Muvaffaqiyatli!',
-                    text: 'Mijoz saqlandi',
-                    confirmButtonText: 'OK',
-                    timer: 2000,
-                    timerProgressBar: true,
-                });
-            })
-            .catch((error) => {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Xatolik!',
-                    text: error.message,
-                    confirmButtonText: 'OK',
-                });
-                console.error('Xatolik yuz berdi:', error.message);
+        try {
+            const data = await apiPostJson("/mijoz/", form, {
+                auth: false,
+                timeoutMs: 60000,
             });
+            console.log('Response data:', data);
+            resetForm();
+            Swal.fire({
+                icon: 'success',
+                title: 'Muvaffaqiyatli!',
+                text: 'Mijoz saqlandi',
+                confirmButtonText: 'OK',
+                timer: 2000,
+                timerProgressBar: true,
+            });
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Xatolik!',
+                text: error.message,
+                confirmButtonText: 'OK',
+            });
+            console.error('Xatolik yuz berdi:', error.message);
+        }
     };
     return (
         <Modal open={open} onClose={onClose} title="Mijoz yaratish">

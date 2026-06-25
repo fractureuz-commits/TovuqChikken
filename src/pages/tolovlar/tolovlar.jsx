@@ -1,49 +1,48 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import "./tolov.css";
 import TolovModal from "../../componrnts/TolovModal/TolovModal";
 import Swal from "sweetalert2";
+import { listQueueItems, QUEUE_TYPES, removeQueueItem } from "../../utils/offlineQueue";
+import { getUser } from "../../leyout/login/auth";
+import { canViewNotes } from "../../utils/permissions";
+import { formatMoney, getPaymentDollarTotal, getPaymentSomTotal } from "../../utils/queueSummary";
 
-export default function TolovPage({ onBack, onSend, setTolovlar }) {
+export default function TolovPage({ onBack, onSend, onQueueChange }) {
+    const user = getUser();
+    const canSeeNotes = canViewNotes(user);
     const [sending, setSending] = useState(false);
-    const [deleteId, setDeleteId] = useState(null);
     const [editPayment, setEditPayment] = useState(null);
 
-    const [payments, setPayments] = useState(() => {
-        return JSON.parse(localStorage.getItem("tolovlar") || "[]");
-    });
+    const [payments, setPayments] = useState(null);
 
-    // Pul formatlash
-    const formatMoney = (num = 0, currency = "so'm") => {
-        return `${Number(num || 0).toLocaleString("ru-RU")} ${currency}`;
-    };
+    const reloadPayments = useCallback(async () => {
+        const data = await listQueueItems(QUEUE_TYPES.TOLOVLAR);
+        setPayments(data);
+        return data;
+    }, []);
 
-    // Har bir payment bo'yicha jami so'm
-    const getSomTotal = (p) => {
-        return (
-            Number(p.NaqdSum || 0) +
-            Number(p.PlastikSum || 0) +
-            Number(p.ClickSum || 0) +
-            Number(p.HisobSum || 0)
-        );
-    };
+    const syncAfterQueueChange = useCallback(async (nextRows) => {
+        const data = Array.isArray(nextRows) ? nextRows : await reloadPayments();
+        setPayments(data);
+        await onQueueChange?.(data);
+        return data;
+    }, [onQueueChange, reloadPayments]);
 
-    // Har bir payment bo'yicha jami valyuta ($)
-    const getDollarTotal = (p) => {
-        return (
-            Number(p.NaqdVal || 0) +
-            Number(p.PlastikVal || 0) +
-            Number(p.ClickVal || 0)
-        );
-    };
+    useEffect(() => {
+        reloadPayments();
+    }, [reloadPayments]);
+
+    const paymentRows = payments || [];
+    const paymentsLoaded = payments !== null;
 
     // Umumiy jami
     const totalSom = useMemo(
-        () => payments.reduce((sum, p) => sum + getSomTotal(p), 0),
-        [payments]
+        () => paymentRows.reduce((sum, p) => sum + getPaymentSomTotal(p), 0),
+        [paymentRows]
     );
     const totalDollar = useMemo(
-        () => payments.reduce((sum, p) => sum + getDollarTotal(p), 0),
-        [payments]
+        () => paymentRows.reduce((sum, p) => sum + getPaymentDollarTotal(p), 0),
+        [paymentRows]
     );
     // ── O'chirish ────────────────────────────────────────────────
     const handleDelete = (id) => {
@@ -56,13 +55,11 @@ export default function TolovPage({ onBack, onSend, setTolovlar }) {
             cancelButtonColor: "#3085d6",
             confirmButtonText: "Ha, o‘chirish",
             cancelButtonText: "Bekor qilish"
-        }).then((result) => {
+        }).then(async (result) => {
             if (result.isConfirmed) {
-                const updated = payments.filter((p) => p.id !== id);
-                setPayments(updated);
-                localStorage.setItem("tolovlar", JSON.stringify(updated));
-                if (setTolovlar) setTolovlar(updated);
-                setDeleteId(null);
+                await removeQueueItem(QUEUE_TYPES.TOLOVLAR, id);
+                const updated = await reloadPayments();
+                await onQueueChange?.(updated);
 
                 Swal.fire({
                     title: "O‘chirildi!",
@@ -78,18 +75,27 @@ export default function TolovPage({ onBack, onSend, setTolovlar }) {
     // ── Edit saqlash ─────────────────────────────────────────────
     // TolovModal ichida setTolovlar(newData) chaqiriladi —
     // bu yerda shunday interceptor qo'yamiz
-    const handleEditSave = (newData) => {
-        setPayments(newData);
-        if (setTolovlar) setTolovlar(newData);
+    const handleEditSave = async (newData) => {
+        await syncAfterQueueChange(newData);
         setEditPayment(null);
     };
 
     // ── Yuborish ─────────────────────────────────────────────────
-    const handleSend = () => {
+    const handleSend = async () => {
         setSending(true);
-        setTimeout(() => setSending(false), 1800);
-        onSend();
-        onBack();
+        try {
+            await onSend?.();
+            const updated = await reloadPayments();
+            await onQueueChange?.(updated);
+            onBack();
+        } finally {
+            setSending(false);
+        }
+    };
+
+    const handleBack = async () => {
+        await onQueueChange?.();
+        onBack?.();
     };
 
     return (
@@ -101,9 +107,7 @@ export default function TolovPage({ onBack, onSend, setTolovlar }) {
                         <div className="tolov-header">
                             <button
                                 className="tolov-back-btn"
-                                onClick={() => {
-                                    onBack()
-                                }}
+                                onClick={handleBack}
                                 aria-label="Orqaga"
                             >
                                 <span className="icon-arrow-left" />
@@ -118,13 +122,13 @@ export default function TolovPage({ onBack, onSend, setTolovlar }) {
                                 <div className="tolov-total-row">
                                     <span className="tolov-total-label">Jami summa so'mda:</span>
                                     <span className="tolov-total-value">
-                                        {formatMoney(totalSom, "so'm")}
+                                        {paymentsLoaded ? formatMoney(totalSom, "so'm") : ""}
                                     </span>
                                 </div>
                                 <div className="tolov-total-row">
                                     <span className="tolov-total-label">Jami summa dollarda:</span>
                                     <span className="tolov-total-value">
-                                        {formatMoney(totalDollar, "$")}
+                                        {paymentsLoaded ? formatMoney(totalDollar, "$") : ""}
                                     </span>
                                 </div>
                             </div>
@@ -133,16 +137,14 @@ export default function TolovPage({ onBack, onSend, setTolovlar }) {
 
                             {/* Payment List */}
                             <div className="tolov-list">
-                                {payments.length === 0 ? (
+                                {paymentsLoaded && paymentRows.length === 0 ? (
                                     <div className="tolov-empty">
                                         Hozircha to'lovlar mavjud emas
                                     </div>
                                 ) : (
-                                    payments.map((p) => {
-                                        const somTotal = getSomTotal(p);
-                                        const dollarTotal = getDollarTotal(p);
-                                        const isConfirming = deleteId === p.id;
-
+                                    paymentRows.map((p) => {
+                                        const somTotal = getPaymentSomTotal(p);
+                                        const dollarTotal = getPaymentDollarTotal(p);
                                         return (
                                             <div key={p.id} className="tolov-item">
 
@@ -167,7 +169,7 @@ export default function TolovPage({ onBack, onSend, setTolovlar }) {
                                                         {p.mijoz_name || "Noma'lum mijoz"}
                                                     </span>
                                                     <span className="tolov-item-subtitle">
-                                                        {p.izoh || "To'lov"}
+                                                        {canSeeNotes ? (p.izoh || "To'lov") : "To'lov"}
                                                     </span>
                                                     <span className="tolov-item-date">{p.date}</span>
                                                 </div>
@@ -175,11 +177,9 @@ export default function TolovPage({ onBack, onSend, setTolovlar }) {
                                                 {/* Summa + amallar */}
                                                 <div className="tolov-item-right">
                                                     <span className="tolov-item-amount">
-                                                        {dollarTotal > 0 ? (
-                                                            <>{formatMoney(dollarTotal, "$")}</>
-                                                        ) :
-                                                            (formatMoney(somTotal, "so'm"))
-                                                        }
+                                                        {somTotal > 0 && <span>{formatMoney(somTotal, "so'm")}</span>}
+                                                        {dollarTotal > 0 && <span>{formatMoney(dollarTotal, "$")}</span>}
+                                                        {somTotal === 0 && dollarTotal === 0 && <span>{formatMoney(0, "so'm")}</span>}
                                                     </span>
                                                     <div className="tolov-actions">
                                                         <button
@@ -187,13 +187,13 @@ export default function TolovPage({ onBack, onSend, setTolovlar }) {
                                                             onClick={() => setEditPayment(p)}
                                                             aria-label="Tahrirlash"
                                                         >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>                                                        </button>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-edit"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M7 7h-1a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-1" /><path d="M20.385 6.585a2.1 2.1 0 0 0 -2.97 -2.97l-8.415 8.385v3h3l8.385 -8.415" /><path d="M16 5l3 3" /></svg>                                                        </button>
                                                         <button
                                                             className="tolov-action-btn tolov-delete-btn"
                                                             onClick={() => handleDelete(p.id)}
                                                             aria-label="O'chirish"
                                                         >
-                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>                                                        </button>
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="icon icon-tabler icons-tabler-outline icon-tabler-trash"><path stroke="none" d="M0 0h24v24H0z" fill="none" /><path d="M4 7l16 0" /><path d="M10 11l0 6" /><path d="M14 11l0 6" /><path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" /><path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" /></svg>                                                        </button>
                                                     </div>
                                                 </div>
                                             </div>
@@ -206,7 +206,7 @@ export default function TolovPage({ onBack, onSend, setTolovlar }) {
                         <button
                             className="tolov-send-btn"
                             onClick={handleSend}
-                            disabled={sending || payments.length === 0}
+                            disabled={sending || !paymentsLoaded || paymentRows.length === 0}
                         >
                             {sending ? "YUBORILMOQDA..." : "YUBORISH"}
                         </button>
@@ -218,7 +218,12 @@ export default function TolovPage({ onBack, onSend, setTolovlar }) {
             {editPayment && (
                 <TolovModal
                     editData={editPayment}
-                    onClose={() => setEditPayment(null)}
+                    onClose={(rows) => {
+                        if (Array.isArray(rows)) {
+                            syncAfterQueueChange(rows);
+                        }
+                        setEditPayment(null);
+                    }}
                     setTolovlar={handleEditSave}
                     removeSyncedTolovlar={() => { }}
                 />

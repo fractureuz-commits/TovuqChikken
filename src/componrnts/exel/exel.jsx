@@ -1,10 +1,11 @@
-import React, { useState } from "react";
-import * as XLSX from "xlsx";
+import { useState } from "react";
+import writeXlsxFile from "write-excel-file";
 import Modal from "../modal/madal";
 import './exel.css'
-export default function UniversalExport({fetchHududfolder,fetchhudud_param, setSelect, setOpen, data, columnsitem, onClose }) {
+export default function UniversalExport({fetchHududfolder,fetchhudud_param, setSelect, setOpen, data, columnsitem }) {
     const [selectedCols, setSelectedCols] = useState([]);
     const [selectedRows, setSelectedRows] = useState([]);
+    const [exporting, setExporting] = useState(false);
 
     // Ustunni tanlash
     const toggleColumn = (key) => {
@@ -24,33 +25,52 @@ export default function UniversalExport({fetchHududfolder,fetchhudud_param, setS
         );
     };
 
+    const normalizeCellValue = (value) => {
+        if (value === null || value === undefined) return "";
+        if (value instanceof Date) return value;
+        if (typeof value === "object") return JSON.stringify(value);
+        return value;
+    };
+
     // Excelga export
-    const handleExport = () => {
+    const handleExport = async () => {
+        if (exporting) return;
+
         const exportCols = selectedCols.length > 0
             ? selectedCols
             : columnsitem.map(c => c.key);
+        const exportColumnItems = columnsitem.filter(col => exportCols.includes(col.key));
 
         const exportRows = selectedRows.length > 0
             ? data.filter(row => selectedRows.includes(row.id))
             : data;
 
-        const finalData = exportRows.map(row => {
-            const obj = {};
-            exportCols.forEach(col => {
-                // Agar col "name" bo'lsa va row.G_type === 1 bo'lsa → papka icon qo'shish
-                if (col === "name" && row.G_type === 1) {
-                    obj[col] = ` ${row[col]}`;
-                } else {
-                    obj[col] = row[col];
-                }
-            });
-            return obj;
-        });
+        const rows = [
+            exportColumnItems.map(col => ({
+                value: col.label || col.key,
+                fontWeight: "bold",
+            })),
+            ...exportRows.map(row => exportColumnItems.map(col => {
+                const value = col.key === "name" && row.G_type === 1
+                    ? `[Papka] ${row[col.key] || ""}`
+                    : row[col.key];
 
-        const ws = XLSX.utils.json_to_sheet(finalData);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
-        XLSX.writeFile(wb, "export.xlsx");
+                return { value: normalizeCellValue(value) };
+            })),
+        ];
+
+        try {
+            setExporting(true);
+            await writeXlsxFile(rows, {
+                fileName: "export.xlsx",
+                sheet: "Sheet1",
+            });
+        } catch (err) {
+            console.error("Excel export xatosi:", err);
+            window.alert("Excel fayl yaratishda xato yuz berdi");
+        } finally {
+            setExporting(false);
+        }
     };
 
 
@@ -115,7 +135,9 @@ export default function UniversalExport({fetchHududfolder,fetchhudud_param, setS
             <div className="modal-form">
                 <div className="buttons" style={{ marginTop: "15px", display: "flex", justifyContent: "center" }}>
                     <button className="button close" onClick={() => setOpen(false)} >Orqaga</button>
-                    <button className="button" onClick={handleExport} >Yuklash</button>
+                    <button className="button" onClick={handleExport} disabled={exporting}>
+                        {exporting ? "Yuklanmoqda..." : "Yuklash"}
+                    </button>
                 </div>
             </div>
 

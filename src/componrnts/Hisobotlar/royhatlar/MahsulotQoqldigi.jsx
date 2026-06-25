@@ -8,6 +8,7 @@ import TovarSelect from "../../SelectMijoz/TovarSelect";
 import Swal from "sweetalert2";
 import { apiPost } from "../../../utils/api";
 import HtmlViewer from "../../htmlviewer/htmlviewer";
+import { useBackHandler } from "../../../utils/backButtonStack";
 export default function MahsulotQoldigiRoyhatiModal({ onClose }) {
     const [selected, setSelected] = useState(1);
     const [kontragent, setKontragent] = useState([]);
@@ -21,6 +22,8 @@ export default function MahsulotQoldigiRoyhatiModal({ onClose }) {
     const [openSelectTovar, setOpenSelectTovar] = useState(false);
     const [openSelectMahsulotGroup, setopenSelectMahsulotGroup] = useState(false);
     const user = getUser();
+    useBackHandler(onClose);
+
     const [MahsulotQoldigiFormData, setMahsulotQoldigiFormData] = useState({
         repost: 4,
         date_2: format(new Date(), "yyyy-MM-dd"),

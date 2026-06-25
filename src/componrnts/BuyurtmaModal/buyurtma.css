@@ -11,6 +11,7 @@
     left: 0;
     width: 100%;
     backdrop-filter: blur(5px);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 
 }
 
@@ -20,10 +21,13 @@
     border-radius: 16px;
     padding: 10px;
     width: 95%;
+    max-width: 520px;
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
     overflow-y: auto;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.13);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-
+    -webkit-overflow-scrolling: touch;
+   
     /* scrollbar yashirish */
     scrollbar-width: none;
     /* Firefox */
@@ -47,6 +51,14 @@
     margin-bottom: 20px;
     margin-top: 0;
     gap: 10px;
+    min-width: 0;
+    line-height: 1.15;
+}
+
+.modal-title span,
+.modal-title p {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 /* ===== FORM ===== */
@@ -286,4 +298,150 @@ form {
 
 .btn-submit:hover {
     background: #142d55;
+}
+
+.overlay>.app-safe {
+    height: 100dvh !important;
+    min-height: 100dvh;
+    overflow: hidden;
+}
+
+.overlay>.app-safe>.modal {
+    height: 100% !important;
+    width: 100% !important;
+    max-width: none;
+    max-height: none;
+    border-radius: 0 !important;
+    display: flex;
+    flex-direction: column;
+}
+
+.overlay>.modal[style*="100vh"],
+.overlay>.modal[style*="95vh"] {
+    height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    width: 100% !important;
+    border-radius: 0 !important;
+}
+
+@media (max-width: 430px) {
+ 
+
+    .modal {
+        width: min(96vw, 420px);
+        padding: 10px;
+        border-radius: 12px;
+    }
+
+    .modal-title {
+        font-size: 20px;
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+
+    .modal-title svg {
+        width: 38px;
+        height: 38px;
+        flex-shrink: 0;
+    }
+
+    form {
+        gap: 10px;
+    }
+
+    .input {
+        min-height: 40px;
+        padding: 9px 10px;
+        font-size: 16px;
+    }
+
+    .debt-value-black,
+    .debt-value-green {
+        font-size: 17px;
+    }
+
+    .checkbox-row,
+    .narx-grid {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+    }
+
+    .checkbox-label {
+        font-size: 13px;
+    }
+
+    .btn-row {
+        gap: 8px;
+    }
+
+    .btn-cancel,
+    .btn-submit {
+        min-height: 42px;
+        padding: 10px 6px;
+        font-size: 12px;
+        letter-spacing: 0;
+    }
+
+    .tolov-row {
+        min-width: 0;
+    }
+}
+
+@media (max-width: 360px) {
+    .modal {
+        width: 100vw;
+        padding: 8px;
+        border-radius: 0;
+    }
+
+    .modal-title {
+        font-size: 18px;
+        margin-bottom: 10px;
+    }
+
+    .modal-title svg {
+        width: 34px;
+        height: 34px;
+    }
+
+    .input-group label {
+        font-size: 12px;
+    }
+
+    .input {
+        padding: 8px;
+    }
+
+    .btn-row {
+        flex-direction: column;
+    }
+
+    .btn-cancel,
+    .btn-submit {
+        width: 100%;
+    }
+
+    .tolov-row {
+        flex-direction: column;
+    }
+
+    .tolov-row>.input-group {
+        width: 100% !important;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 500px) {
+    .modal {
+        max-height: calc(100dvh - 8px);
+    }
+
+    .modal-title {
+        font-size: 18px;
+        margin-bottom: 8px;
+    }
+
+    form {
+        gap: 8px;
+    }
 }

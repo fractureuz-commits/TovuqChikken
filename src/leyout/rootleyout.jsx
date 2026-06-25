@@ -4,6 +4,7 @@ import { Outlet } from 'react-router';
 import Swal from "sweetalert2";
 import MobilHeader from '../header/MobilHeader';
 import { App as CapApp } from '@capacitor/app';
+import { runLatestBackHandler } from '../utils/backButtonStack';
 
 function Rootleyout() {
   const [slidemini, setSlidemini] = useState(true);
@@ -13,8 +14,9 @@ function Rootleyout() {
     if (!isNative) return;
 
     let backHandler;
-    CapApp.addListener('backButton', () => {
-      navigate(-1);
+    CapApp.addListener('backButton', async () => {
+      const handled = await runLatestBackHandler();
+      if (!handled) navigate(-1);
     }).then(h => {
       backHandler = h;
     });
@@ -22,7 +24,7 @@ function Rootleyout() {
     return () => {
       backHandler?.remove();
     };
-  }, []);
+  }, [navigate]);
   // // Slidebar state
   // useEffect(() => {
   //   const saved = localStorage.getItem('slideMini');
@@ -41,6 +43,10 @@ function Rootleyout() {
 
       const method = args[1]?.method?.toUpperCase() || "GET";
       const response = await originalFetch(...args);
+
+      if (response.status !== 401 && response.status !== 403) {
+        return response;
+      }
 
       let data;
       try {

@@ -6,14 +6,21 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "android": "vite build && npx cap sync android && npx cap open android"
+    "android": "vite build && npx cap sync android && npx cap open android",
+    "android:sync": "vite build && npx cap sync android",
+    "android:debug": "vite build && npx cap sync android && cd android && gradlew.bat assembleDebug",
+    "android:release": "vite build && npx cap sync android && cd android && gradlew.bat assembleRelease",
+    "preview": "vite preview --host 0.0.0.0",
+    "ios:sync": "vite build && npx cap sync ios",
+    "ios:open": "npx cap open ios"
   },
   "dependencies": {
-    "@capacitor/android": "^8.2.0",
-    "@capacitor/app": "^8.0.1",
-    "@capacitor/cli": "^8.1.0",
-    "@capacitor/core": "^8.2.0",
+    "@capacitor/android": "^8.4.1",
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/cli": "^8.4.1",
+    "@capacitor/core": "^8.4.1",
     "@capacitor/filesystem": "^8.1.2",
+    "@capacitor/ios": "^8.4.1",
     "@capacitor/network": "^8.0.1",
     "@capacitor/preferences": "^8.0.1",
     "@capacitor/status-bar": "^8.0.2",
@@ -33,7 +40,7 @@
     "react-zoom-pan-pinch": "^3.7.0",
     "styled-components": "^6.4.0",
     "sweetalert2": "^11.26.3",
-    "xlsx": "^0.18.5"
+    "write-excel-file": "^4.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",

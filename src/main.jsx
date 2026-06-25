@@ -1,6 +1,23 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
+import { setupDomTranslator } from './utils/i18n'
+
+if (import.meta.env.DEV && 'serviceWorker' in navigator) {
+  window.addEventListener('load', async () => {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(registrations.map((registration) => registration.unregister()))
+
+      if ('caches' in window) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map((key) => caches.delete(key)))
+      }
+    } catch (err) {
+      console.warn('Service worker cleanup failed:', err)
+    }
+  })
+}
 
 /* =========================
    DESKTOP ZOOM BLOCK
@@ -50,5 +67,7 @@ document.addEventListener('touchmove', function (e) {
 document.addEventListener('gesturestart', function (e) {
   e.preventDefault()
 })
+
+setupDomTranslator()
 
 createRoot(document.getElementById('root')).render(<App />)

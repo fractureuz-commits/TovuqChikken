@@ -3,19 +3,52 @@
 
 <head>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/images/logomini.svg" />
-  <meta name="theme-color" content="#1a2b4a" />
+  <link rel="icon" type="image/png" href="/logo192.png" />
+  <meta name="theme-color" content="#006CAC" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-  <meta name="apple-mobile-web-app-title" content="Imsoft" />
+  <meta name="apple-mobile-web-app-title" content="Tovuq" />
   <link rel="apple-touch-icon" href="/logo192.png" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>Imsoft ERP</title>
+  <title>Tovuq</title>
 </head>
 
 <body>
   <div id="root"></div>
-  <script type="module" src="/src/main.jsx"></script>
+  <script>
+    (function () {
+      var resetKey = "tovuq-dev-cache-reset-20260623-1";
+      var isDevServer = location.port === "5174" || location.hostname === "localhost" || location.hostname === "127.0.0.1";
+
+      if (!isDevServer || sessionStorage.getItem(resetKey)) return;
+
+      sessionStorage.setItem(resetKey, "1");
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations()
+          .then(function (registrations) {
+            return Promise.all(registrations.map(function (registration) {
+              return registration.unregister();
+            }));
+          })
+          .then(function () {
+            if (!("caches" in window)) return;
+            return caches.keys().then(function (keys) {
+              return Promise.all(keys.map(function (key) {
+                return caches.delete(key);
+              }));
+            });
+          })
+          .then(function () {
+            location.reload();
+          })
+          .catch(function () {
+            location.reload();
+          });
+      }
+    })();
+  </script>
+  <script type="module" src="/src/main.jsx?v=20260623-1"></script>
 </body>
 
 </html>

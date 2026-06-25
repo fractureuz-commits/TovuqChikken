@@ -19,13 +19,52 @@ const FILES = {
 // RAM cache
 const imageMemoryCache = {};
 
+const normalizeImageData = (value) => {
+    if (typeof value !== "string") return null;
+
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+
+    const lower = trimmed.toLowerCase();
+    const looksLikeMissingFile =
+        lower.includes("fayl topilmadi") ||
+        lower.includes("file not found") ||
+        /^[a-z]:[\\/]/i.test(trimmed) ||
+        /^\\\\/.test(trimmed) ||
+        /^\/[^/]/.test(trimmed) ||
+        /\.(png|jpe?g|webp|gif|bmp|svg)(\?.*)?$/i.test(trimmed);
+
+    if (looksLikeMissingFile) return null;
+
+    const raw = trimmed.includes(",") ? trimmed.split(",").pop() : trimmed;
+    const compact = raw.replace(/\s|\n|\r/g, "").trim();
+
+    if (!compact || compact.length < 10) return null;
+    if (!/^[A-Za-z0-9+/_-]+={0,2}$/.test(compact)) return null;
+
+    let normalized = compact.replace(/-/g, "+").replace(/_/g, "/");
+    const padding = normalized.length % 4;
+
+    if (padding === 1) return null;
+    if (padding) normalized += "=".repeat(4 - padding);
+
+    return normalized;
+};
+
 // Sync to'xtatish
 let abortSync = false;
 export const cancelSync = () => { abortSync = true; };
+export const resetSyncCancel = () => { abortSync = false; };
+export const isSyncCancelled = () => abortSync;
 
 // Internet tekshirish
 export const checkInternet = async () => {
-    return true;
+    try {
+        await apiFetch("kurs", { timeoutMs: 6000, retries: 0 });
+        return true;
+    } catch {
+        return false;
+    }
 };
 
 // ✅ Universal saqlash (rasm yo'q JSON lar uchun)
@@ -67,9 +106,8 @@ export const loadData = async (key) => {
 
 const saveImage = async (code, base64) => {
     try {
-        let clean = base64.includes(",") ? base64.split(",")[1] : base64;
-        clean = clean.replace(/\s|\n|\r/g, "").trim();
-        if (!clean || clean.length < 10) return null;
+        const clean = normalizeImageData(base64);
+        if (!clean) return null;
 
         await Filesystem.mkdir({
             path: CACHE_DIR,
@@ -130,16 +168,6 @@ export const syncAndSave = async (apiData, onProgress) => {
         return [];
     }
 
-    try {
-        await Filesystem.rmdir({
-            path: CACHE_DIR,
-            directory: Directory.Data,
-            recursive: true,
-        });
-    } catch {
-        // Eski cache papkasi bo'lmasligi mumkin.
-    }
-
     Object.keys(imageMemoryCache).forEach(k => delete imageMemoryCache[k]);
 
     const total = apiData.length;
@@ -168,9 +196,7 @@ export const syncAndSave = async (apiData, onProgress) => {
                 let imagePath = null;
 
                 try {
-                    imagePath = item.image
-                        ? await saveImage(item.code, item.image)
-                        : null;
+                    imagePath = await saveImage(item.code, item.image);
                 } catch (e) {
                     console.error("❌ Rasm xato:", item.code, e.message);
                     failed.push(item.code);
@@ -191,6 +217,10 @@ export const syncAndSave = async (apiData, onProgress) => {
         if (onProgress) {
             onProgress(Math.min(i + BATCH_SIZE, total), total);
         }
+    }
+
+    if (abortSync) {
+        return products;
     }
 
     if (products.length === 0) {
@@ -289,6 +319,11 @@ export const syncAndSaveTovar = async (apiData, onProgress) => {
     const BATCH_SIZE = 10;
 
     for (let i = 0; i < total; i += BATCH_SIZE) {
+        if (abortSync) {
+            console.log("⛔ Tovar sync to'xtatildi:", tovars.length, "ta saqlandi");
+            break;
+        }
+
         const batch = apiData.slice(i, i + BATCH_SIZE);
 
         const results = await Promise.all(
@@ -300,9 +335,7 @@ export const syncAndSaveTovar = async (apiData, onProgress) => {
 
                 let imagePath = null;
                 try {
-                    imagePath = item.image && !item.image.includes("Fayl topilmadi")
-                        ? await saveImage(item.code, item.image)
-                        : null;
+                    imagePath = await saveImage(item.code, item.image);
                 } catch (e) {
                     console.error("❌ Tovar rasm xato:", item.code, e.message);
                     failed.push(item.code);
@@ -339,6 +372,10 @@ export const syncAndSaveTovar = async (apiData, onProgress) => {
         }
     }
 
+    if (abortSync) {
+        return tovars;
+    }
+
     if (tovars.length === 0) {
         console.warn("⚠️ Tovar saqlanmadi!");
         return [];
@@ -352,16 +389,19 @@ export const syncAndSaveTovar = async (apiData, onProgress) => {
     return tovars;
 };
 
+export const saveKurs = (result) => {
+    const kurs = {
+        kurs: result?.text_repost ?? result?.kurs ?? result ?? 1,
+    };
+
+    localStorage.setItem("valyuta_kurs", JSON.stringify(kurs));
+    return kurs;
+};
+
 export const syncKurs = async () => {
     try {
         const result = await apiFetch("kurs");
-        console.log("📦 Kurs raw:", result);
-
-        const kurs = {
-            kurs: result.text_repost,
-        };
-
-        localStorage.setItem("valyuta_kurs", JSON.stringify(kurs));
+        const kurs = saveKurs(result);
         console.log("✅ Kurs saqlandi:", kurs);
         return kurs;
 

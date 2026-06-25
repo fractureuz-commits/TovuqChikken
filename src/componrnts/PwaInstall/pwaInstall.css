@@ -1,0 +1,54 @@
+.pwa-install {
+    position: fixed;
+    right: calc(12px + env(safe-area-inset-right));
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    max-width: calc(100% - 24px);
+}
+
+.pwa-install__button {
+    min-height: 42px;
+    max-width: 210px;
+    padding: 0 14px;
+    border-radius: 8px;
+    background: #123a9b;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.15;
+    box-shadow: 0 8px 24px rgba(18, 58, 155, 0.28);
+}
+
+.pwa-install__close {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: rgba(17, 24, 39, 0.86);
+    color: #ffffff;
+    font-size: 16px;
+    line-height: 1;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.18);
+}
+
+@media (max-width: 360px) {
+    .pwa-install {
+        right: calc(8px + env(safe-area-inset-right));
+        bottom: calc(10px + env(safe-area-inset-bottom));
+    }
+
+    .pwa-install__button {
+        min-height: 38px;
+        max-width: 174px;
+        padding: 0 10px;
+        font-size: 12px;
+    }
+
+    .pwa-install__close {
+        width: 30px;
+        height: 30px;
+        font-size: 14px;
+    }
+}
