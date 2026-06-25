@@ -114,6 +114,7 @@ const requireArrayData = (item) => {
 };
 
 export const downloadBackendData = async ({ onProgress } = {}) => {
+    const totalStart = now();
     resetSyncCancel();
     progress(onProgress, { stage: "Ma'lumotlar backenddan olinmoqda..." });
     const downloadOptions = { timeoutMs: 0, retries: 2, retryDelayMs: 1000 };
@@ -205,6 +206,11 @@ export const downloadBackendData = async ({ onProgress } = {}) => {
     saveKurs(endpoints.kurs.data);
 
     const saveDurationMs = Math.round(now() - saveStart);
+    const totalDurationMs = Math.round(now() - totalStart);
+    console.info("Frontend sync vaqtlari:", {
+        saveDurationMs,
+        totalDurationMs,
+    });
 
     progress(onProgress, {
         stage: "Yuklash yakunlandi",
@@ -226,6 +232,7 @@ export const downloadBackendData = async ({ onProgress } = {}) => {
         },
         issues: [],
         saveDurationMs,
+        totalDurationMs,
         timings: endpointResults.map(item => ({
             endpoint: item.endpoint,
             label: item.label,
