@@ -1,50 +1,41 @@
-import { useState } from "react";
-import "./buyurtma.css";
-import MijozSelect from "../SelectMijoz/SelectMijoz";
+import { useEffect, useState } from "react";
+import MijozSelect from "../../componrnts/SelectMijoz/SelectMijoz";
 import Swal from "sweetalert2";
-import QrModal from "../QrModal/qrModal";
-import MijozaddModal from "./MijozAdd";
-import KorzinkaModal from "../Korzinka/korzinka";
-import CartModal from "../Korzinka/Cart";
+import QrModal from "../../componrnts/QrModal/qrModal";
+import MijozaddModal from "../../componrnts/BuyurtmaModal/MijozAdd";
+import KorzinkaModal from "../sotuv/MahsulotGuruhlari";
+import CartModal from "../sotuv/Savat";
 import { formatNarx } from "../../utils/narx";
+import { format } from "date-fns";
 import { getUser } from "../../leyout/login/auth";
 import { canEditPriceType, canViewDebt, canViewPrice, getAllowedPriceTypes, getDefaultPriceType } from "../../utils/permissions";
 import { useBackHandler } from "../../utils/backButtonStack";
-export default function BuyurtmaModal({ onClose, }) {
-    const user = getUser()
+export default function QaytarishModal({ onClose, }) {
+    const user = getUser(); 
     const canSeeDebt = canViewDebt(user);
     const canSeePrice = canViewPrice(user);
     const canChangePriceType = canEditPriceType(user);
     const allowedPriceTypes = getAllowedPriceTypes(user);
     const defaultNarxTuri = getDefaultPriceType(user, 1);
-    const [currency, setCurrency] = useState("som");
     const [ShtrixModal, setShtrixModal] = useState(false);
     const [Korzinka, setKorzinka] = useState(false);
-    const [selectedNarx, setSelectedNarx] = useState();
     const [shtrixData, setshtrixData] = useState([]);
     const [openMijozadd, setopenMijozadd] = useState(false);
     const [kontragent, setKontragent] = useState([]);
-    const [error, seterror] = useState([]);
     const [activeView, setActiveView] = useState("sotib"); // "sotib" | "cart"
     const [FormData, setFormData] = useState({
-        code: "",
-        name: "",
-        tel_1: "",
-        tel_2: "",
-        hudud_code: "",
-        hudud_name: "",
-        dostav_code: "",
-        dostav_name: "",
-        manzil: "",
-        lat: "",
-        lang: "",
-
-        // qo‘shimcha sening form uchun kerak fieldlar
-        vid_valyuta: "",
+        kontragent: '',
+        kontragent_id: '',
+        hudud: '',
+        hudud_id: '',
+        vid_valyuta: '',
         dt_kt_sum: 0,
         dt_kt_val: 0,
+        tel_1: '',
         narh_turi: defaultNarxTuri,
-        valyuta_turi: "1"
+        valyuta_turi: "1",
+        date_1: format(new Date(), "yyyy-MM-dd"),
+        date_2: format(new Date(), "yyyy-MM-dd"),
     });
     const [openSelectMijoz, setOpenSelectMijoz] = useState(false);
     useBackHandler(onClose);
@@ -78,8 +69,40 @@ export default function BuyurtmaModal({ onClose, }) {
         <>
             <div className="overlay">
                 <div className="modal">
-                    <div className="modal-title" style={{ justifyContent: 'center' }}>Buyurtma berish</div>
+                    <div className="modal-title" style={{ justifyContent: 'center' }}>Qaytarish</div>
                     <form autoComplete="off" noValidate>
+                        <div className="tolov-row">
+                            <div className="input-group" style={{ width: '48%' }}>
+                                <label>Data 1:</label>
+                                <input
+                                    type="date"
+                                    className="input tolov-blue-input"
+                                    style={{ textAlign: "center" }}
+                                    value={FormData.date_1}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            date_1: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+                            <div className="input-group" style={{ width: '48%' }}>
+                                <label>Data 2:</label>
+                                <input
+                                    type="date"
+                                    className="input tolov-blue-input"
+                                    style={{ textAlign: "center" }}
+                                    value={FormData.date_2}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            date_2: e.target.value,
+                                        }))
+                                    }
+                                />
+                            </div>
+                        </div>
                         {/* Mijoz nomi */}
                         <div className="input-group add" style={{ width: '100%' }}>
                             <label>Mijoz nomi</label>
@@ -87,7 +110,7 @@ export default function BuyurtmaModal({ onClose, }) {
                                 <input
                                     readOnly
                                     type="text"
-                                    name="tovuq-kontragent-display"
+                                    name="tovuq-return-kontragent-display"
                                     autoComplete="off"
                                     autoCorrect="off"
                                     autoCapitalize="off"
@@ -114,7 +137,7 @@ export default function BuyurtmaModal({ onClose, }) {
                             <input
                                 readOnly
                                 type="text"
-                                name="tovuq-phone-display"
+                                name="tovuq-return-phone-display"
                                 autoComplete="off"
                                 autoCorrect="off"
                                 autoCapitalize="off"
@@ -134,7 +157,7 @@ export default function BuyurtmaModal({ onClose, }) {
                             <input
                                 readOnly
                                 type="text"
-                                name="tovuq-region-display"
+                                name="tovuq-return-region-display"
                                 autoComplete="off"
                                 autoCorrect="off"
                                 autoCapitalize="off"
@@ -147,7 +170,6 @@ export default function BuyurtmaModal({ onClose, }) {
                                 placeholder=""
                             />
                         </div>
-
                         {(canSeeDebt || canSeePrice) && (
                             <>
                                 {/* Qarzdorlik */}
@@ -192,11 +214,6 @@ export default function BuyurtmaModal({ onClose, }) {
                                             ))}
                                         </div>
                                         <div className="divider" />
-                                    </>
-                                )}
-
-                                {(canSeePrice && canChangePriceType) && (
-                                    <>
                                         <div className="narx-grid" style={{ width: '100%' }}>
                                             {allowedPriceTypes.map((n) => (
                                                 <label className="checkbox-label" key={n}>
@@ -220,6 +237,7 @@ export default function BuyurtmaModal({ onClose, }) {
                                 )}
                             </>
                         )}
+
 
                         {/* Buttons */}
                         <div className="btn-row" style={{ width: '100%' }}>
@@ -249,7 +267,6 @@ export default function BuyurtmaModal({ onClose, }) {
                     onKontragentUpdate={handleKontragentUpdate}
                     kontragent={kontragent}
                     setKontragent={setKontragent}
-                    setFormData={setFormData}
                 />}
             {ShtrixModal &&
                 <QrModal handleModal={() => setShtrixModal((prev) => !prev)}
@@ -264,15 +281,16 @@ export default function BuyurtmaModal({ onClose, }) {
                     setKontragent={setKontragent}
                     KorzinkaModal={() => setActiveView("cart")} // ← SOTIB OLISH bosilsa
                     FormData={FormData}
-                    qaytarish={false}
+                    qaytarish={true}
                 />
             }
             {activeView === "cart" && (
                 <CartModal
-                    qaytarish={false}
                     onExit={onClose}
                     onClose={() => setActiveView('sotib')}
                     KorzinkaModal={() => setActiveView("sotib")} // ← SOTIB OLISH bosilsa
+                    qaytarish={true}
+
                 />
             )}
         </>

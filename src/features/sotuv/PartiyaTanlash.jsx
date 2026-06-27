@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import "./partiya.css";
+import "../../componrnts/Korzinka/partiya.css";
 import { getNarx, formatNarx } from "../../utils/narx";
 import ProductQoshish from "./ProductQoshish";
 import { getUser } from "../../leyout/login/auth";
@@ -90,7 +90,7 @@ export default function PartiyaSelect({ onClose, ProductData, allClose }) {
                                 return (
                                     <div className="partya-card" key={index} onClick={() => handleSubmit(item)}>
                                         <div className="partya-no">
-                                            <span className="no-label">No</span>
+                                            {/* <span className="no-label">No</span> */}
                                             <span className="no-value">{index + 1}</span>
                                         </div>
 

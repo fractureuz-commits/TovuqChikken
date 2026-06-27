@@ -134,8 +134,8 @@ function QrModal({ setProductadd, onScan, onClose, setshtrixData, handleModal, s
                         <div className="qr-item-info">
                             <span className="qr-item-text">{item.text}</span>
                         </div>
-                        <button className="qr-row-delete" onClick={() => removeItem(item.id)}>
-                            x
+                        <button className="qr-row-delete" onClick={() => removeItem(item.id)} aria-label="O'chirish">
+                            {"\u00d7"}
                         </button>
                     </div>
                 ))}

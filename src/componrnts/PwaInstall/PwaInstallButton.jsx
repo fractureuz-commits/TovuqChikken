@@ -153,7 +153,7 @@ export default function PwaInstallButton({
                 {label}
             </button>
             <button className="pwa-install__close" type="button" onClick={hideButton} aria-label="Yopish">
-                x
+                {"\u00d7"}
             </button>
         </div>
     );

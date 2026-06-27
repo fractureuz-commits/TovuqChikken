@@ -1,17 +1,18 @@
 import './home.css'
 import './homeMedia.css'
 import { useCallback, useEffect, useState } from "react";
-import BuyurtmaModal from '../../componrnts/BuyurtmaModal/BuyurtmaModal';
+import BuyurtmaModal from '../../features/sotuv/Buyurtma';
 import Header from '../../header/header';
 import SyncButton from '../../componrnts/SyncButton/SyncButton';
 import { loadProducts } from '../../utils/storage';
-import KorzinkaModal from '../../componrnts/Korzinka/korzinka';
-import CartModal from '../../componrnts/Korzinka/Cart';
+import KorzinkaModal from '../../features/sotuv/MahsulotGuruhlari';
+import CartModal from '../../features/sotuv/Savat';
 import TolovModal from '../../componrnts/TolovModal/TolovModal';
 import HisobotModal from '../../componrnts/Hisobotlar/HisobotTypeSelect';
 import Swal from 'sweetalert2';
 import TolovPage from '../tolovlar/tolovlar';
-import QaytarishModal from '../../componrnts/BuyurtmaModal/qaytarish';
+import QaytarishModal from '../../features/qaytarish/Buyurtma';
+import MahsulotKirimi from '../../features/mahsulotKirimi/MahsulotKirimi';
 import HarajatPage from '../tolovlar/Harajatlar';
 import SavdolarPage from '../tolovlar/Savdolar';
 import { getUser } from '../../leyout/login/auth';
@@ -22,8 +23,6 @@ import { uploadQueueBatches } from '../../utils/backendSync';
 import { getSavdoConfirmIds, getSavdoPayload, normalizeSavdoId, withSavdoItemId } from '../../utils/savdoIdentity';
 
 const queueCountValue = (value) => value ?? "";
-const positiveCount = (value) => Number(value || 0) > 0;
-
 const saveOrderHistory = (order) => {
     const oldOrders = JSON.parse(localStorage.getItem("buyurtmalar") || "[]");
     const exists = oldOrders.some(item => String(item.id) === String(order.id));
@@ -37,6 +36,7 @@ function Home() {
     const user = getUser()
     const [openBuyurtma, setOpenBuyurtma] = useState(false);
     const [OpenQaytarish, setOpenQaytarish] = useState(false);
+    const [openMahsulotKirimi, setOpenMahsulotKirimi] = useState(false);
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
     const [tolovlarCount, setTolovlarCount] = useState(null);
     const [harajatlarCount, setHarajatlarCount] = useState(null);
@@ -310,6 +310,7 @@ function Home() {
         canShow("tolov"),
         canShow("hisobot"),
         canShow("qaytarish"),
+        true, // Mahsulot kirimi vaqtincha hamma uchun
         true, // Yuborish doim bor
         true, // SyncButton doim bor
     ].filter(Boolean).length;
@@ -438,6 +439,21 @@ function Home() {
                                     <p>Xisobot</p>
                                 </button>
                             )}
+                            <button
+                                className="button"
+                                onClick={() => setOpenMahsulotKirimi(true)}
+                                style={!canShow("hisobot") ? {
+                                    width: '100%',
+                                    // flexDirection:'row' ,justifyContent:"start" , gap:'10px'
+                                } : {}}
+                            >
+                                <svg width="84" height="84" viewBox="0 0 84 84" fill="none" aria-hidden="true">
+                                    <path d="M14 31.5L42 17.5L70 31.5V66.5H14V31.5Z" stroke="white" strokeWidth="6" strokeLinejoin="round" />
+                                    <path d="M28 42H56V66.5H28V42Z" stroke="white" strokeWidth="6" strokeLinejoin="round" />
+                                    <path d="M42 7V31M32 21L42 31L52 21" stroke="white" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
+                                </svg>
+                                <p>Mahsulot kirimi</p>
+                            </button>
 
                             {/* QAYTARISH */}
                             {canShow("qaytarish") && (
@@ -449,10 +465,7 @@ function Home() {
                                         localStorage.removeItem(Qaytarish_KEY);
                                         localStorage.removeItem(FormData_KEY);
                                     }}
-                                    style={!canShow("hisobot") ? {
-                                        width: '100%',
-                                        // flexDirection:'row' ,justifyContent:"start" , gap:'10px'
-                                    } : {}}
+
                                 >
                                     <svg width="84" height="84" viewBox="0 0 84 84" fill="none" xmlns="http://www.w3.org/2000/svg">
                                         <g clipPath="url(#clip0_2001_97)">
@@ -468,6 +481,8 @@ function Home() {
                                     <p>Qaytarish</p>
                                 </button>
                             )}
+
+                            {/* MAHSULOT KIRIMI — vaqtincha hamma uchun ochiq */}
 
                             {/* YUBORISH */}
                             <button
@@ -654,6 +669,9 @@ function Home() {
                 refreshQueueCounts();
             }}
             />}
+            {openMahsulotKirimi && (
+                <MahsulotKirimi onClose={() => setOpenMahsulotKirimi(false)} />
+            )}
         </>);
 }
 

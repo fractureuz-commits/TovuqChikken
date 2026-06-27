@@ -12,7 +12,7 @@ const MapView = ({setMapLocation, lat, lng }) => {
     >
       <div style={{ width: "100%", height: "700px" }}>
         <iframe
-          title="google-map"
+          title="Google xarita"
           width="100%"
           height="100%"
           style={{ border: 0 }}

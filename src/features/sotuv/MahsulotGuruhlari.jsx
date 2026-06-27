@@ -1,32 +1,30 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import "./korzinka.css";
-import { loadProducts, loadImage } from "../../utils/storage";
-import QrModal from "../QrModal/qrModal";
+import "../../componrnts/Korzinka/korzinka.css";
+import { loadProducts } from "../../utils/storage";
+import ProductImage from "../../componrnts/ProductImage/ProductImage";
+import QrModal from "../../componrnts/QrModal/qrModal";
 import ProductQoshish from "./ProductQoshish";
-import TovarModal from "./product";
+import KirimProductQoshish from "../mahsulotKirimi/ProductQoshish";
+import TovarModal from "./Mahsulotlar";
 import Swal from "sweetalert2";
-import ModalHeader from "../BuyurtmaModal/ModalHeader";
+import ModalHeader from "../../componrnts/BuyurtmaModal/ModalHeader";
 import { useBackHandler } from "../../utils/backButtonStack";
 
 // ═══ ProductCard ═══
-function ProductCard({ item, search, highlightText, onClick, KorzinkaModal }) {
-    const [imgSrc, setImgSrc] = useState(null);
-    const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
-    useEffect(() => {
-        if (item.i) loadImage(item.i).then(src => setImgSrc(src));
-    }, [item.i]);
-
+function ProductCard({ item, search, highlightText, onClick }) {
     return (
         <div className="product" onClick={() => onClick?.()}>
-            {imgSrc
-                ? <img src={imgSrc} alt={item.n} className="product-image" />
-                : <div className="product-image product-placeholder" />
-            }
+            <ProductImage
+                imagePath={item.i}
+                productCode={item.c}
+                alt={item.n}
+                className="product-image"
+            />
             <p>{highlightText(item.n, search)}</p>
         </div>
     );
 }
-export default function KorzinkaModal({qaytarish,  onClose, handleModal, KorzinkaModal, allClose }) {
+export default function KorzinkaModal({qaytarish, kirim = false, handleModal, KorzinkaModal, allClose }) {
     const [search, setSearch] = useState('');
     const [ProductGroup, setProductGroup] = useState([]);
     const [ShtrixModal, setShtrixModal] = useState(false);
@@ -36,10 +34,10 @@ export default function KorzinkaModal({qaytarish,  onClose, handleModal, Korzink
     const [Productadd, setProductadd] = useState(false);
     const [ProductGroupLoading, setProductGroupLoading] = useState(true);
     const [ProductGroupError, setProductGroupError] = useState(null);
-    const CART_KEY = "buyurtma_cart";
+    const CART_KEY = kirim ? "mahsulot_kirimi_cart" : "buyurtma_cart";
     const Qaytarish_KEY = "qaytarish";
-    const FormData_KEY = "formData";
-    const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
+    const FormData_KEY = kirim ? "mahsulot_kirimi_form" : "formData";
+    const FormData = JSON.parse(localStorage.getItem(FormData_KEY) || "{}");
     const Buyurtma_cart = JSON.parse(localStorage.getItem("buyurtma_cart") || "{}");
     const handleBackClose = useCallback(async () => {
         const cartData = localStorage.getItem(CART_KEY);
@@ -68,7 +66,7 @@ export default function KorzinkaModal({qaytarish,  onClose, handleModal, Korzink
         }
 
         handleModal();
-    }, [handleModal]);
+    }, [CART_KEY, FormData_KEY, handleModal]);
 
     useBackHandler(handleBackClose);
 
@@ -113,6 +111,7 @@ export default function KorzinkaModal({qaytarish,  onClose, handleModal, Korzink
                     <ModalHeader
                         activeTab="sotib"
                         qaytarish={qaytarish}
+                        kirim={kirim}
                         onSotib={() => { }}
                         onKoriznka={() => KorzinkaModal?.()}
                         onSkaner={() => setShtrixModal(prev => !prev)}
@@ -209,16 +208,18 @@ export default function KorzinkaModal({qaytarish,  onClose, handleModal, Korzink
                     onSkaner={() => setShtrixModal(prev => !prev)}
                     KorzinkaModal={KorzinkaModal}
                     qaytarish={qaytarish}
+                    kirim={kirim}
                 />
             }
 
-            {Productadd &&
-                <ProductQoshish
+            {Productadd && (() => {
+                const ActiveProductQoshish = kirim ? KirimProductQoshish : ProductQoshish;
+                return <ActiveProductQoshish
                     item={ProductData}
                     onClose={() => setProductadd(false)}
                     FormData={FormData}
-                />
-            }
+                />;
+            })()}
         </>
     );
 }

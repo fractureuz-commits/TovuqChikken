@@ -1,11 +1,10 @@
 import "./MijozSelect.css";
 import { useState, useEffect, useMemo } from "react";
-import { apiFetch } from "../../utils/api";
 import { loadKontragent } from "../../utils/storage";
 import { apiPost } from "../../utils/api";
 import { useBackHandler } from "../../utils/backButtonStack";
     
-export default function MijozSelect({TD, onClose,FormData, setFormData, setKontragent, kontragent }) {
+export default function MijozSelect({TD, title = "Mijozlar ro'yxati", onClose, setFormData, setKontragent, kontragent }) {
     const [search, setSearch] = useState('');
     const [kontragentLoading, setKontragentLoading] = useState(true);
     const [kontragentError, setKontragentError] = useState(null);
@@ -22,7 +21,7 @@ export default function MijozSelect({TD, onClose,FormData, setFormData, setKontr
             })
             .catch(err => setKontragentError(err.message))
             .finally(() => setKontragentLoading(false));
-    }, []);
+    }, [setKontragent]);
     const filtered = useMemo(() => {
         if (!search.trim()) return kontragent; // ✅ search yo'q → paginated visible
         const tokens = search.toLowerCase().trim().split(/\s+/);
@@ -97,7 +96,7 @@ export default function MijozSelect({TD, onClose,FormData, setFormData, setKontr
                             </clipPath>
                         </defs>
                     </svg>
-                    <p>Mijozlar royxati</p>
+                    <p>{title}</p>
                 </div>
                 <div className="search">
                     <input
@@ -120,6 +119,8 @@ export default function MijozSelect({TD, onClose,FormData, setFormData, setKontr
                     </svg>
                 </div>
                 <div className="selects">
+                    {kontragentLoading && <p style={{ padding: 20, textAlign: "center" }}>Yuklanmoqda...</p>}
+                    {kontragentError && <p style={{ padding: 20, color: "red" }}>{kontragentError}</p>}
                     {filtered.map((item, index) => (
                         <div className="select" key={item.code}
                             onClick={() => {

@@ -1,26 +1,24 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { loadTovar, loadImage } from "../../utils/storage";
+import { loadTovar } from "../../utils/storage";
+import ProductImage from "../../componrnts/ProductImage/ProductImage";
 import { apiPost } from "../../utils/api";
-import QrModal from "../QrModal/qrModal";
+import QrModal from "../../componrnts/QrModal/qrModal";
 import ProductQoshish from "./ProductQoshish";
-import "./tovar.css";
+import KirimProductQoshish from "../mahsulotKirimi/ProductQoshish";
+import "../../componrnts/Korzinka/tovar.css";
 import Swal from "sweetalert2";
-import PartiyaSelect from "./PartiyiyaSelect";
-import ModalHeader from "../BuyurtmaModal/ModalHeader";
+import PartiyaSelect from "./PartiyaTanlash";
+import ModalHeader from "../../componrnts/BuyurtmaModal/ModalHeader";
 import { formatNarx, getNarx } from "../../utils/narx";
 import { format } from "date-fns";
 import { getUser } from "../../leyout/login/auth";
-import QaytarishSelect from "./QaytarishPartiya";
+import QaytarishSelect from "../qaytarish/PartiyaTanlash";
 import { canViewPrice } from "../../utils/permissions";
 import { useBackHandler } from "../../utils/backButtonStack";
 
 export function Tovar({ item, search, highlightText, onClick }) {
-    const [imgSrc, setImgSrc] = useState(null);
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
     const { narx: currentNarx, isVal } = getNarx(item, FormData); // ✅
-    useEffect(() => {
-        if (item?.i) loadImage(item.i).then(src => setImgSrc(src));
-    }, [item?.i]);
     const user = getUser()
     const canSeePrice = canViewPrice(user);
 
@@ -31,10 +29,7 @@ export function Tovar({ item, search, highlightText, onClick }) {
             <div className="tovar" onClick={() => onClick?.(item)}>
 
                 <div className="tovar-img">
-                    {imgSrc
-                        ? <img src={imgSrc} alt={name} />
-                        : <div className="tovar-img-placeholder" />
-                    }
+                    <ProductImage imagePath={item?.i} productCode={item?.code} alt={name} />
                 </div>
                 <div className="tovarTitles">
                     <div className="title">
@@ -59,7 +54,7 @@ export function Tovar({ item, search, highlightText, onClick }) {
 }
 
 // ═══ TOVAR MODAL ═══
-export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytarish }) {
+export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytarish, kirim = false }) {
     const [search, setSearch] = useState('');
     const [ProductGroup, setProductGroup] = useState([]);
     const [ShtrixModal, setShtrixModal] = useState(false);
@@ -118,6 +113,12 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
     const handleSubmit = async (code) => {
         const selectedItem = filtered.find(item => item.code === code);
         if (!selectedItem) return;
+
+        if (kirim) {
+            setProductData(selectedItem);
+            setProductadd(true);
+            return;
+        }
 
         try {
             const body = {
@@ -211,6 +212,7 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
                         activeTab="sotib"
                         onSotib={() => { }}
                         qaytarish={qaytarish}
+                        kirim={kirim}
                         onKoriznka={() => KorzinkaModal?.()}
                         onSkaner={() => setShtrixModal(prev => !prev)}
                     />
@@ -301,13 +303,14 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
                 />
             }
 
-            {Productadd &&
-                <ProductQoshish
+            {Productadd && (() => {
+                const ActiveProductQoshish = kirim ? KirimProductQoshish : ProductQoshish;
+                return <ActiveProductQoshish
                     item={ProductData}
                     onClose={() => setProductadd(false)}
                     FormData={FormData}
-                />
-            }
+                />;
+            })()}
         </>
     );
 }

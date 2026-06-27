@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title id="title">Mahsulot rasmi</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff7ed"/>
+      <stop offset="1" stop-color="#ffedd5"/>
+    </linearGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f59e0b"/>
+      <stop offset="1" stop-color="#ea580c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="72" fill="url(#bg)"/>
+  <path d="M112 180 256 104l144 76-144 76-144-76Z" fill="#fdba74"/>
+  <path d="m112 180 144 76v160l-144-76V180Z" fill="#fb923c"/>
+  <path d="m400 180-144 76v160l144-76V180Z" fill="url(#box)"/>
+  <path d="m210 128 144 76" fill="none" stroke="#fff7ed" stroke-width="20" stroke-linecap="round" opacity=".9"/>
+  <path d="M216 318h80M256 278v80" fill="none" stroke="#fff" stroke-width="22" stroke-linecap="round"/>
+</svg>

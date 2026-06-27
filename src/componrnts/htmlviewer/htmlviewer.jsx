@@ -43,7 +43,7 @@ export default function HtmlViewer({ HTMLdata, setHTMLdataModal , title}) {
                 }} onClick={() => setHTMLdataModal(false)}>✖ Yopish</button>
             </div>
 
-            {/* Pinch zoom area */}
+            {/* HTML content area */}
             <div
                 onClick={(e) => e.stopPropagation()}
                 style={{
@@ -55,11 +55,11 @@ export default function HtmlViewer({ HTMLdata, setHTMLdataModal , title}) {
             >
                 <TransformWrapper
                     initialScale={1}
-                    minScale={0.5}
-                    maxScale={4}
-                    doubleClick={{ disabled: false }}
-                    pinch={{ step: 5 }}
-                    wheel={{ disabled: false }}
+                    minScale={1}
+                    maxScale={1}
+                    doubleClick={{ disabled: true }}
+                    pinch={{ disabled: true }}
+                    wheel={{ disabled: true }}
                     panning={{ disabled: false }}
                     limitToBounds={false}
                     centerOnInit={false}

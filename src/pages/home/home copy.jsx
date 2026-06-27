@@ -2,7 +2,7 @@ import { NavLink } from 'react-router';
 import './home.css'
 import Logo from '../../../images/logo.svg';
 import { useState } from 'react';
-import BuyurtmaModal from '../../componrnts/BuyurtmaModal/BuyurtmaModal';
+import BuyurtmaModal from '../../features/sotuv/Buyurtma';
 function Home() {
     const [open, setOpen] = useState(false);
     return (

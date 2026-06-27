@@ -19,54 +19,53 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
   })
 }
 
-/* =========================
-   DESKTOP ZOOM BLOCK
-========================= */
+const LOCKED_VIEWPORT_CONTENT = 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'
 
-// Ctrl + Scroll
-window.addEventListener('wheel', function (e) {
-  if (e.ctrlKey) {
-    e.preventDefault()
+function lockViewportScale() {
+  const viewport = document.querySelector('meta[name="viewport"]')
+
+  if (viewport && viewport.getAttribute('content') !== LOCKED_VIEWPORT_CONTENT) {
+    viewport.setAttribute('content', LOCKED_VIEWPORT_CONTENT)
+  }
+}
+
+lockViewportScale()
+window.addEventListener('pageshow', lockViewportScale)
+window.addEventListener('orientationchange', lockViewportScale)
+window.visualViewport?.addEventListener('resize', lockViewportScale)
+
+const preventZoom = (event) => event.preventDefault()
+const zoomKeys = ['+', '-', '=', '_', '0']
+
+window.addEventListener('wheel', (event) => {
+  if (event.ctrlKey || event.metaKey) {
+    event.preventDefault()
   }
 }, { passive: false })
 
-// Ctrl + / -
-window.addEventListener('keydown', function (e) {
-  if (
-    (e.ctrlKey && ['+', '-', '=', '_'].includes(e.key)) ||
-    e.key === 'F11'
-  ) {
-    e.preventDefault()
+window.addEventListener('keydown', (event) => {
+  if ((event.ctrlKey || event.metaKey) && zoomKeys.includes(event.key)) {
+    event.preventDefault()
   }
-})
+}, { capture: true })
 
+document.addEventListener('dblclick', preventZoom, { passive: false })
 
-/* =========================
-   MOBILE PINCH BLOCK
-========================= */
-
-let lastTouchEnd = 0
-
-// // Double tap zoom block
-// document.addEventListener('touchend', function (e) {
-//   const now = new Date().getTime()
-//   if (now - lastTouchEnd <= 300) {
-//     e.preventDefault()
-//   }
-//   lastTouchEnd = now
-// }, false)
-
-// Pinch zoom block
-document.addEventListener('touchmove', function (e) {
-  if (e.touches.length > 1) {
-    e.preventDefault()
+document.addEventListener('touchstart', (event) => {
+  if (event.touches.length > 1) {
+    event.preventDefault()
   }
 }, { passive: false })
 
-// iOS gesture block
-document.addEventListener('gesturestart', function (e) {
-  e.preventDefault()
-})
+document.addEventListener('touchmove', (event) => {
+  if (event.touches.length > 1) {
+    event.preventDefault()
+  }
+}, { passive: false })
+
+for (const gestureEventName of ['gesturestart', 'gesturechange', 'gestureend']) {
+  document.addEventListener(gestureEventName, preventZoom, { passive: false })
+}
 
 setupDomTranslator()
 

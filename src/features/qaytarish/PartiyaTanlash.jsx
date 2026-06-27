@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { getNarx, formatNarx, parseNarx } from "../../utils/narx";
-import ProductQoshish from "./ProductQoshish";
-import QaytaribOlish from "./QaytaribOlish";
+import ProductQoshish from "../sotuv/ProductQoshish";
+import QaytaribOlish from "./ProductQoshish";
 import { getUser } from "../../leyout/login/auth";
 import { canViewPrice } from "../../utils/permissions";
 import { useBackHandler } from "../../utils/backButtonStack";
@@ -140,9 +140,9 @@ export default function QaytarishSelect({ onClose, ProductData, allClose }) {
                                             )}
 
                                             <div className="partya-row">
-                                                <span className="partya-label">Soni</span>
+                                                <span className="partya-label">Miqdor</span>
                                                 <span className="partya-value">
-                                                    {item.soni || 0}
+                                                    {item.soni || 0} kg
                                                 </span>
                                             </div>
                                         </div>

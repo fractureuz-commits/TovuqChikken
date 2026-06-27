@@ -1,4 +1,4 @@
-export default function ModalHeader({qaytarish, activeTab, onSotib, onKoriznka, onSkaner ,allClose}) {
+export default function ModalHeader({qaytarish, kirim, activeTab, onSotib, onKoriznka, onSkaner}) {
     return (
         <div className="modal-header">
             {/* SOTIB OLISH */}
@@ -15,7 +15,7 @@ export default function ModalHeader({qaytarish, activeTab, onSotib, onKoriznka, 
                     </g>
                     <defs><clipPath id="clip0_2001_453"><rect width="50" height="60" fill="white"/></clipPath></defs>
                 </svg>
-                <p>{qaytarish ? 'Qaytarish' : 'SAVDO'}</p>
+                <p>{qaytarish ? 'Qaytarish' : kirim ? 'KIRIM' : 'SAVDO'}</p>
             </button>
 
             {/* KORIZNKA */}

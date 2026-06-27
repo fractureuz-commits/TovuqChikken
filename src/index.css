@@ -10,6 +10,7 @@
   font-family: "Montserrat", sans-serif;
   font-optical-sizing: auto;
   -ms-touch-action: manipulation;
+  touch-action: pan-x pan-y;
   -webkit-user-select: none;
   /* Chrome, Safari */
   -moz-user-select: none;
@@ -22,13 +23,15 @@
 
 html,
 body {
-  touch-action: manipulation;
+  touch-action: pan-x pan-y;
   width: 100%;
   overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html {
-  touch-action: manipulation;
+  touch-action: pan-x pan-y;
   height: -webkit-fill-available;
 
 }
@@ -378,6 +381,14 @@ button:focus {
 
 button:active {
   transform: none;
+}
+
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea {
+    font-size: max(16px, 1em);
+  }
 }
 
 @supports not (height: 100dvh) {

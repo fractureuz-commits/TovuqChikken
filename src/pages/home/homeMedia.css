@@ -109,6 +109,20 @@ html, body, #root {
     box-sizing: border-box;
 }
 
+.home-body .home-pages.grid-3 .button {
+    width: 49%;
+}
+
+.home-body .home-pages.grid-3 .button > svg {
+    width: 54px;
+    height: 54px;
+}
+
+.home-body .home-pages.grid-3 .button p {
+    margin: 4px 2px;
+    text-align: center;
+}
+
 /* 320–374 */
 @media (max-width: 374px) {
     .home-body { padding: 6px 10px; padding-bottom: calc(6px + var(--safe-bottom)); }
@@ -116,6 +130,7 @@ html, body, #root {
     .home-body .home-pages .button p         { font-size: 12px; }
     .home-body .home-pages .button button    { width: 58px; height: 58px; }
     .home-body .home-pages .button button svg{ width: 42px; height: 42px; }
+    .home-body .home-pages.grid-3 .button > svg{ width: 38px; height: 38px; }
 }
 
 /* 375–413 */

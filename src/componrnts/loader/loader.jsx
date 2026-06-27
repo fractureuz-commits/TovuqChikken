@@ -9,7 +9,7 @@ const Loader = ({ message = "Yuklanmoqda...", current = 0, total = 0 }) => {
   return (
     <StyledWrapper>
       <div className="full">
-        <div className="loader-panel" data-i18n-skip="true">
+        <div className="loader-panel">
           <div className="spinner">
             <div className="spinner-blade" />
             <div className="spinner-blade" />

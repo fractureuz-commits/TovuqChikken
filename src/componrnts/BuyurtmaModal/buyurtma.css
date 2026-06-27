@@ -307,7 +307,6 @@ form {
 }
 
 .overlay>.app-safe>.modal {
-    height: 100% !important;
     width: 100% !important;
     max-width: none;
     max-height: none;

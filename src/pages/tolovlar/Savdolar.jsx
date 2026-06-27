@@ -146,9 +146,9 @@ export default function SavdolarPage({ onBack, onSend, onQueueChange }) {
                                                     <path d="M18 20a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" fill="white" />
                                                 </svg>
                                             </div>
-
+                                        
                                             <div className="tolov-item-info">
-                                                <span className="tolov-item-title">{getOrderTitle(order)}</span>
+                                                <span className="tolov-item-title">{order.name}</span>
                                                 <span className="tolov-item-subtitle">
                                                     {items.length} ta mahsulot
                                                 </span>

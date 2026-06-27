@@ -251,6 +251,72 @@
     opacity: 0.85;
 }
 
+/* Mahsulot kirimi: sotuv strukturasi, alohida yumshoq rang */
+.kirim-product-add .kd-image-wrap {
+    background: linear-gradient(145deg, #f59e0b, #ea580c);
+}
+
+.kirim-product-add .kd-name,
+.kirim-product-add .kd-counter-input {
+    color: #c2410c;
+}
+
+.kirim-product-add .kd-narx-input {
+    border-color: #fed7aa;
+    background: #fffaf5;
+}
+
+.kirim-product-add .kd-buyurtma-btn {
+    background: linear-gradient(135deg, #f59e0b, #ea580c);
+    box-shadow: 0 8px 18px rgba(234, 88, 12, 0.22);
+}
+
+.kirim-product-add .kd-counter-btn circle,
+.kirim-product-add .kd-counter-btn path {
+    stroke: #ea580c;
+}
+
+.kirim-currency-switch {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.kirim-currency-switch button {
+    min-height: 48px;
+    border: 1.5px solid #fed7aa;
+    border-radius: 13px;
+    background: #fff7ed;
+    color: #9a3412;
+    font-size: 14px;
+    font-weight: 800;
+    transition: transform .15s ease, background .15s ease, color .15s ease;
+}
+
+.kirim-currency-switch button.active {
+    border-color: #ea580c;
+    background: #ea580c;
+    color: #fff;
+    box-shadow: 0 5px 12px rgba(234, 88, 12, .22);
+}
+
+.kirim-currency-switch button:active {
+    transform: scale(.97);
+}
+
+.kirim-date-input {
+    width: 100%;
+    text-align: center;
+    font-weight: 700;
+    color: #9a3412;
+}
+
+.kirim-quantity-label {
+    margin: 0;
+    text-align: center;
+    color: #9a3412;
+}
+
 @media (max-width: 430px) {
     .kd-image-wrap {
         height: clamp(170px, 32dvh, 270px);

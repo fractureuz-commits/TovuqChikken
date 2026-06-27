@@ -1,25 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import "./cart.css";
-import QrModal from "../QrModal/qrModal";
+import "../../componrnts/Korzinka/cart.css";
+import QrModal from "../../componrnts/QrModal/qrModal";
 import ProductQoshish from "./ProductQoshish";
-import TovarModal from "./product";
+import KirimProductQoshish from "../mahsulotKirimi/ProductQoshish";
+import TovarModal from "./Mahsulotlar";
 import Swal from "sweetalert2";
 import { apiPost } from "../../utils/api";
-import ModalHeader from "../BuyurtmaModal/ModalHeader";
+import ModalHeader from "../../componrnts/BuyurtmaModal/ModalHeader";
 import { getUser } from "../../leyout/login/auth";
 import { format } from "date-fns";
 import { useBackHandler } from "../../utils/backButtonStack";
 import { QUEUE_TYPES, saveQueueItem } from "../../utils/offlineQueue";
 import { getCartItemTotal } from "../../utils/queueSummary";
 import { makeSavdoItemId } from "../../utils/savdoIdentity";
+import { saveKirimHistory } from "../mahsulotKirimi/storage";
 
-export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }) {
+export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaModal, onClose, }) {
 
     const [search, setSearch] = useState('');
     const [cart, setCart] = useState(null);
     const [sending, setSending] = useState(false);
-    const CART_KEY = qaytarish ? "qaytarish" : "buyurtma_cart"; const FormData_KEY = "formData";
-    const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
+    const CART_KEY = qaytarish ? "qaytarish" : kirim ? "mahsulot_kirimi_cart" : "buyurtma_cart";
+    const FormData_KEY = kirim ? "mahsulot_kirimi_form" : "formData";
+    const FormData = JSON.parse(localStorage.getItem(FormData_KEY) || "{}");
     const [ShtrixModal, setShtrixModal] = useState(false);
     const [shtrixData, setshtrixData] = useState([]);
     const [ProductData, setProductData] = useState(null);
@@ -90,6 +93,16 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
             0
         );
     }, [cart?.tovarlar]);
+    const kirimTotals = useMemo(() => {
+        return cartItems.reduce((totals, item) => {
+            if (String(item.valyuta_turi) === "2") {
+                totals.val += parseFloat(item.Summa) || 0;
+            } else {
+                totals.sum += parseFloat(item.Summa) || 0;
+            }
+            return totals;
+        }, { sum: 0, val: 0 });
+    }, [cartItems]);
 
     const itemsWithTotals = useMemo(() => {
         return cartItems.map(item => ({
@@ -134,8 +147,10 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
         if (items.length === 0) return;
 
         const confirm = await Swal.fire({
-            title: "Savdoni saqlash",
-            text: `${items.length} ta mahsulot yuborilmagan savdolarga qo'shiladi`,
+            title: kirim ? "Mahsulot kirimini saqlash" : "Savdoni saqlash",
+            text: kirim
+                ? `${items.length} ta mahsulot kirimga saqlanadi`
+                : `${items.length} ta mahsulot yuborilmagan savdolarga qo'shiladi`,
             icon: "question",
             showCancelButton: true,
             confirmButtonText: "Saqlash",
@@ -148,7 +163,9 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
         setSending(true);
 
         try {
-            const itemId = makeSavdoItemId();
+            const itemId = kirim
+                ? (globalThis.crypto?.randomUUID?.() || `kirim_${Date.now()}`)
+                : makeSavdoItemId();
             const newOrder = {
                 id: itemId,
                 itemId,
@@ -163,17 +180,33 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
                 },
             };
 
-            await saveQueueItem(QUEUE_TYPES.SAVDOLAR, newOrder);
+            if (kirim) {
+                saveKirimHistory({
+                    id: itemId,
+                    itemId,
+                    date: newOrder.data.date,
+                    taminotchi_code: FormData?.kontragent_id || "",
+                    taminotchi_name: FormData?.kontragent || "",
+                    user_code: user?.code || "",
+                    tovarlar: itemsWithTotals,
+                    created_at: newOrder.created_at,
+                    status: "local",
+                });
+            } else {
+                await saveQueueItem(QUEUE_TYPES.SAVDOLAR, newOrder);
+            }
 
             localStorage.removeItem(CART_KEY);
             localStorage.removeItem(FormData_KEY);
 
             setCart({ tovarlar: [] });
-            onExit();
+            onExit?.();
             Swal.fire({
                 icon: "success",
                 title: "Saqlandi!",
-                text: "Savdo yuborilmagan savdolarga qo'shildi",
+                text: kirim
+                    ? "Mahsulot kirimi saqlandi"
+                    : "Savdo yuborilmagan savdolarga qo'shildi",
                 confirmButtonColor: "#006CAC",
                 timer: 500,
                 showConfirmButton: false,
@@ -254,6 +287,8 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
                         activeTab="koriznka"
                         onSotib={() => KorzinkaModal?.()}
                         onKoriznka={() => { }}
+                        qaytarish={qaytarish}
+                        kirim={kirim}
                         onSkaner={() => setShtrixModal(prev => !prev)}
                     />
 
@@ -284,7 +319,7 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
                                     />
                                 </svg>
                             </button>
-                            <span>{qaytarish ? 'Qaytarish' : 'Savatcha'}</span>
+                            <span>{qaytarish ? 'Qaytarish' : kirim ? 'Kirim savati' : 'Savatcha'}</span>
                             <span style={{ width: 32 }} />
                         </div>
                         {/* search */}
@@ -304,7 +339,15 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
                                     </span>
 
                                     <span className="cart-total-value">
-                                        {totalSum.toLocaleString("uz-UZ")} {cart?.vid_val === '1' ? "So'm" : "$"}
+                                        {kirim
+                                            ? (
+                                                <>
+                                                    {kirimTotals.sum.toLocaleString("uz-UZ")} So&apos;m
+                                                    {kirimTotals.val > 0 && ` · ${kirimTotals.val.toLocaleString("uz-UZ")} $`}
+                                                </>
+                                            )
+                                            : `${totalSum.toLocaleString("uz-UZ")} ${cart?.vid_val === '1' ? "So'm" : "$"}`
+                                        }
                                     </span>
                                 </div>
                             </>
@@ -332,12 +375,16 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
                                             </div>
 
                                             <div className="cart-item-sub">
-                                                Soni: {item.soni}
+                                                Miqdor: {item.soni}
                                             </div>
                                             {(user?.rol === "1" || user?.narx_korish) && (
                                                 <>
                                                     <div className="cart-item-narx">
-                                                        {Number(item.Summa).toLocaleString("uz-UZ")} {cart?.vid_val === '1' ? "So'm" : "$"}
+                                                        {Number(item.Summa).toLocaleString("uz-UZ")} {
+                                                            kirim
+                                                                ? (String(item.valyuta_turi) === "2" ? "$" : "So'm")
+                                                                : (cart?.vid_val === '1' ? "So'm" : "$")
+                                                        }
                                                     </div>
                                                 </>
                                             )}
@@ -381,13 +428,14 @@ export default function CartModal({ onExit, qaytarish, KorzinkaModal, onClose, }
                     setProductadd={setProductadd}
                 />
             }
-            {Productadd &&
-                <ProductQoshish
+            {Productadd && (() => {
+                const ActiveProductQoshish = kirim ? KirimProductQoshish : ProductQoshish;
+                return <ActiveProductQoshish
                     item={ProductData}
                     onClose={() => setProductadd(false)}
                     FormData={FormData}
-                />
-            }
+                />;
+            })()}
         </>
     );
 }

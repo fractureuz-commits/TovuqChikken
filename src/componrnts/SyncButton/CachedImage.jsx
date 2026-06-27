@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import { DEFAULT_PRODUCT_IMAGE } from "../ProductImage/ProductImage";
 
 const CachedImage = ({ id, width = 100, height = 100 }) => {
     const [src, setSrc] = useState(null);
@@ -13,13 +14,18 @@ const CachedImage = ({ id, width = 100, height = 100 }) => {
         .catch(() => setSrc(null));
     }, [id]);
 
-    if (!src) return (
-        <div style={{ width, height, background: "#eee", borderRadius: 6 }} />
-    );
-
     return (
-        <img src={src} width={width} height={height}
-            style={{ objectFit: "cover", borderRadius: 6 }} />
+        <img
+            src={src || DEFAULT_PRODUCT_IMAGE}
+            width={width}
+            height={height}
+            alt="Mahsulot"
+            style={{ objectFit: "cover", borderRadius: 6 }}
+            onError={(event) => {
+                event.currentTarget.onerror = null;
+                event.currentTarget.src = DEFAULT_PRODUCT_IMAGE;
+            }}
+        />
     );
 };
 
