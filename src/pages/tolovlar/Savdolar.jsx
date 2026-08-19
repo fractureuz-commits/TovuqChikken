@@ -6,8 +6,11 @@ import {
     formatMoney,
     getOrderDollarTotal,
     getOrderItems,
+    getOrderQuantityTotal,
     getOrderSomTotal,
 } from "../../utils/queueSummary";
+import { getUser } from "../../leyout/login/auth";
+import { canViewPrice } from "../../utils/permissions";
 
 const getOrderData = (order) => order?.data || order || {};
 
@@ -24,6 +27,7 @@ const getOrderDate = (order) => {
 export default function SavdolarPage({ onBack, onSend, onQueueChange }) {
     const [sending, setSending] = useState(false);
     const [orders, setOrders] = useState(null);
+    const canSeePrice = canViewPrice(getUser());
 
     const reloadOrders = useCallback(async () => {
         const data = await listQueueItems(QUEUE_TYPES.SAVDOLAR);
@@ -45,6 +49,11 @@ export default function SavdolarPage({ onBack, onSend, onQueueChange }) {
 
     const totalDollar = useMemo(
         () => orderRows.reduce((sum, order) => sum + getOrderDollarTotal(order), 0),
+        [orderRows]
+    );
+
+    const totalQuantity = useMemo(
+        () => orderRows.reduce((sum, order) => sum + getOrderQuantityTotal(order), 0),
         [orderRows]
     );
 
@@ -78,10 +87,13 @@ export default function SavdolarPage({ onBack, onSend, onQueueChange }) {
     const handleSend = async () => {
         setSending(true);
         try {
-            await onSend?.();
+            const syncedCount = await onSend?.();
             const updated = await reloadOrders();
             await onQueueChange?.(updated);
-            onBack?.();
+
+            if (syncedCount) {
+                onBack?.();
+            }
         } finally {
             setSending(false);
         }
@@ -109,18 +121,29 @@ export default function SavdolarPage({ onBack, onSend, onQueueChange }) {
 
                     <div className="tolov-body">
                         <div className="tolov-totals">
-                            <div className="tolov-total-row">
-                                <span className="tolov-total-label">Jami summa so'mda:</span>
-                                <span className="tolov-total-value">
-                                    {ordersLoaded ? formatMoney(totalSom, "so'm") : ""}
-                                </span>
-                            </div>
-                            <div className="tolov-total-row">
-                                <span className="tolov-total-label">Jami summa dollarda:</span>
-                                <span className="tolov-total-value">
-                                    {ordersLoaded ? formatMoney(totalDollar, "$") : ""}
-                                </span>
-                            </div>
+                            {canSeePrice ? (
+                                <>
+                                    <div className="tolov-total-row">
+                                        <span className="tolov-total-label">Jami summa so'mda:</span>
+                                        <span className="tolov-total-value">
+                                            {ordersLoaded ? formatMoney(totalSom, "so'm") : ""}
+                                        </span>
+                                    </div>
+                                    <div className="tolov-total-row">
+                                        <span className="tolov-total-label">Jami summa dollarda:</span>
+                                        <span className="tolov-total-value">
+                                            {ordersLoaded ? formatMoney(totalDollar, "$") : ""}
+                                        </span>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="tolov-total-row">
+                                    <span className="tolov-total-label">Jami miqdor:</span>
+                                    <span className="tolov-total-value">
+                                        {ordersLoaded ? `${totalQuantity.toLocaleString("ru-RU")} kg` : ""}
+                                    </span>
+                                </div>
+                            )}
                         </div>
 
                         <div className="tolov-divider" />
@@ -135,6 +158,7 @@ export default function SavdolarPage({ onBack, onSend, onQueueChange }) {
                                     const items = getOrderItems(order);
                                     const somTotal = getOrderSomTotal(order);
                                     const dollarTotal = getOrderDollarTotal(order);
+                                    const quantityTotal = getOrderQuantityTotal(order);
 
                                     return (
                                         <div key={order.id} className="tolov-item">
@@ -157,9 +181,15 @@ export default function SavdolarPage({ onBack, onSend, onQueueChange }) {
 
                                             <div className="tolov-item-right">
                                                 <span className="tolov-item-amount">
-                                                    {somTotal > 0 && <span>{formatMoney(somTotal, "so'm")}</span>}
-                                                    {dollarTotal > 0 && <span>{formatMoney(dollarTotal, "$")}</span>}
-                                                    {somTotal === 0 && dollarTotal === 0 && <span>{formatMoney(0, "so'm")}</span>}
+                                                    {canSeePrice ? (
+                                                        <>
+                                                            {somTotal > 0 && <span>{formatMoney(somTotal, "so'm")}</span>}
+                                                            {dollarTotal > 0 && <span>{formatMoney(dollarTotal, "$")}</span>}
+                                                            {somTotal === 0 && dollarTotal === 0 && <span>{formatMoney(0, "so'm")}</span>}
+                                                        </>
+                                                    ) : (
+                                                        <span>{quantityTotal.toLocaleString("ru-RU")} kg</span>
+                                                    )}
                                                 </span>
                                                 <div className="tolov-actions">
                                                     <button

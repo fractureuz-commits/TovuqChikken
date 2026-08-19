@@ -238,6 +238,7 @@ export default function CartModal({ onExit, qaytarish, kirim = false, boshQoldiq
                     date: cart?.date || format(new Date(), "dd.MM.yyyy HH:mm:ss"),
                     invoys_code: FormData?.invoys_code || "",
                     invoys_number: FormData?.invoys_number || "",
+                    bosh_qoldiq: "1",
                     tovarlar: itemsWithTotals,
                 };
 

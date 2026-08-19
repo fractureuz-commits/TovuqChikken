@@ -224,3 +224,8 @@ export const getOrderSomTotal = (order = {}) => {
 export const getOrderDollarTotal = (order = {}) => {
     return isOrderDollar(order) ? getOrderTotal(order) : 0;
 };
+
+export const getOrderQuantityTotal = (order = {}) => {
+    const items = getOrderItems(order);
+    return items.reduce((sum, item) => sum + firstNumber(item, ["soni", "qty", "quantity", "count"]), 0);
+};
