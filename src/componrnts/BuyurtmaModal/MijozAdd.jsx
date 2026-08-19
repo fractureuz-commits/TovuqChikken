@@ -8,7 +8,7 @@ import { getUser } from "../../leyout/login/auth";
 import { canViewNotes } from "../../utils/permissions";
 import { useBackHandler } from "../../utils/backButtonStack";
 
-export default function MijozaddModal({ onClose, onKontragentUpdate, setKontragent, setFormData }) {
+export default function MijozaddModal({ onClose, onKontragentUpdate, setKontragent, setFormData, onCreated, kirim = false }) {
     const user = getUser();
     const canWriteNote = canViewNotes(user);
     useBackHandler(onClose);
@@ -21,7 +21,8 @@ export default function MijozaddModal({ onClose, onKontragentUpdate, setKontrage
         dostav_code: 2,
         manzil: "",
         lat: "",
-        lang: ""
+        lang: "",
+        typ: kirim ? "2" : "1"
     });
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -34,10 +35,14 @@ export default function MijozaddModal({ onClose, onKontragentUpdate, setKontrage
                 // ✅ Fildan o'qib yangi elementni qo'shamiz
                 const existing = await loadKontragent() || [];
                 const updated = [...existing, result];
-                setFormData((prev) => ({
-                    ...prev,
-                    ...result
-                }));
+                if (onCreated) {
+                    onCreated(result);
+                } else {
+                    setFormData((prev) => ({
+                        ...prev,
+                        ...result
+                    }));
+                }
                 // ✅ Filega saqlaymiz (kontragent.json)
                 await saveKontragent(updated);
                 console.log("💾 kontragent.json yangilandi:", updated.length, "ta");
@@ -79,7 +84,7 @@ export default function MijozaddModal({ onClose, onKontragentUpdate, setKontrage
         <>
             <div className="overlay">
                 <div className="modal">
-                    <div className="modal-title">Yangi mijoz qo’shish</div>
+                    <div className="modal-title">{kirim ? "Yangi ta'minotchi qo’shish" : "Yangi mijoz qo’shish"}</div>
                     <form onSubmit={handleSubmit}>
                         {/* Mijoz nomi */}
                         <div className="input-group add" style={{ width: '100%' }}>
@@ -127,6 +132,37 @@ export default function MijozaddModal({ onClose, onKontragentUpdate, setKontrage
                                 placeholder=""
                             />
                         </div>
+
+                        {/* Turi */}
+                        <div className="checkbox-row" style={{ width: '100%', justifyContent: 'flex-start', gap: '24px' }}>
+                            <label className="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked={FormDataMijoz.typ === "1"}
+                                    onChange={() => setFormDataMijoz(prev => ({ ...prev, typ: "1" }))}
+                                />
+                                <span className="checkbox-custom">
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                        <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </span>
+                                Mijoz
+                            </label>
+                            <label className="checkbox-label">
+                                <input
+                                    type="checkbox"
+                                    checked={FormDataMijoz.typ === "2"}
+                                    onChange={() => setFormDataMijoz(prev => ({ ...prev, typ: "2" }))}
+                                />
+                                <span className="checkbox-custom">
+                                    <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                                        <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </span>
+                                Yuk beruvchi
+                            </label>
+                        </div>
+                        <div className="divider" />
 
                         {/* Location */}
                         <div className="input-group add" style={{ width: '100%' }}>

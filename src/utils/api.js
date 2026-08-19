@@ -18,6 +18,9 @@ export const API = {
     Xodim: "/tovuq/hs/xodim/get_xodim",
     Region: "/tovuq/hs/region/get_region",
     Harajat: "/tovuq/hs/harajat/get_harajat",
+    brands: "/tovuq/hs/brand/get_brand",
+    olchov: "/tovuq/hs/olchov/get_olchov",
+    invoys: "/tovuq/hs/invoys/get_invoys/",
 };
 
 export const buildUrl = (path) => {

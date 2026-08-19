@@ -4,6 +4,8 @@ import { getUser } from "./auth";
 import Header from "../../header/header";
 import { LANGUAGE_OPTIONS, useLanguage } from "../../utils/i18n";
 import PwaInstallButton from "../../componrnts/PwaInstall/PwaInstallButton";
+import { useAppUpdate } from "../../utils/useAppUpdate";
+import { CURRENT_VERSION } from "../../utils/appUpdate";
 
 const LogoutIcon = () => (
   <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22">
@@ -20,6 +22,13 @@ const LanguageIcon = () => (
   </svg>
 );
 
+const UpdateIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" width="22" height="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+    <path d="M21 3v6h-6" />
+  </svg>
+);
+
 const InstallIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" width="22" height="22" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 3v11" />
@@ -32,14 +41,21 @@ export default function ProfilePage() {
   const user = getUser()
   const { language, setLanguage } = useLanguage();
   const [activeItem, setActiveItem] = useState(null);
+  const { checkForUpdate, loader: updateLoader } = useAppUpdate();
 
   const menuItems = [
     // { id: "password", icon: <LockIcon />, label: "Парол ўзгартириш" },
     // { id: "about",    icon: <InfoIcon />, label: "Дастур ҳақида" },
+    { id: "update", icon: <UpdateIcon />, label: "Yangilanishni tekshirish" },
     { id: "logout", icon: <LogoutIcon />, label: "Dasturdan chiqish" },
   ];
   const handleMenuClick = (id) => {
     setActiveItem(id);
+
+    if (id === "update") {
+      checkForUpdate({ silent: false });
+      return;
+    }
 
     if (id === "logout") {
       localStorage.removeItem("current_user");
@@ -48,6 +64,7 @@ export default function ProfilePage() {
   };
   return (
     <div className="phone-frame">
+      {updateLoader}
       <Header />
 
       <div className="profile-page">
@@ -101,6 +118,7 @@ export default function ProfilePage() {
             </div>
           ))}
         </div>
+        <p className="app-version">Versiya: {CURRENT_VERSION}</p>
       </div>
     </div>
   );

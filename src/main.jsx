@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { setupDomTranslator } from './utils/i18n'
+import { initPwaUpdate } from './utils/pwaUpdate'
 
 if (import.meta.env.DEV && 'serviceWorker' in navigator) {
   window.addEventListener('load', async () => {
@@ -17,6 +18,8 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
       console.warn('Service worker cleanup failed:', err)
     }
   })
+} else if (import.meta.env.PROD) {
+  initPwaUpdate()
 }
 
 const LOCKED_VIEWPORT_CONTENT = 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover'

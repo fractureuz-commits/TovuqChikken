@@ -6,7 +6,7 @@ import { format } from "date-fns";
 import { loadKurs } from "../../utils/storage";
 import { getUser } from "../../leyout/login/auth";
 import { listQueueItems, QUEUE_TYPES, saveQueueItem } from "../../utils/offlineQueue";
-import { canViewDebt, canViewNotes } from "../../utils/permissions";
+import { canViewDebt, canViewNotes, sanitizeDebtFields } from "../../utils/permissions";
 import { toNumber } from "../../utils/queueSummary";
 import { useBackHandler } from "../../utils/backButtonStack";
 
@@ -196,7 +196,7 @@ export default function TolovModal({ editData, onClose, setTolovlar }) {
 
         try {
             setSaving(true);
-            const payload = {
+            const payload = sanitizeDebtFields({
                 id: editData ? editData.id : Date.now(),
                 date: editData ? editData.date : FormData.date,
                 created_at: editData ? editData.created_at : new Date().toISOString(),
@@ -226,7 +226,7 @@ export default function TolovModal({ editData, onClose, setTolovlar }) {
                     clean(FormData.plastik_val),
 
                 izoh: canWriteNote ? FormData.izox : "",
-            };
+            }, user, "dt_kt_sum", "dt_kt_val");
 
             const updatedTolovlar = await saveTolov(payload);
 

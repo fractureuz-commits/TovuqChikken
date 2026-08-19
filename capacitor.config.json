@@ -1,6 +1,6 @@
 {
   "appId": "com.Boller.app",
-  "appName": "Tovuq",
+  "appName": "MSI",
   "webDir": "dist",
   "android": {
     "allowMixedContent": true

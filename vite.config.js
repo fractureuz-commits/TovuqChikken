@@ -4,6 +4,10 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 import { VitePWA } from 'vite-plugin-pwa'
 import http from 'node:http'
 import https from 'node:https'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
+
+const pkg = JSON.parse(readFileSync(fileURLToPath(new URL('./package.json', import.meta.url)), 'utf-8'))
 
 const RUNTIME_API_PREFIX = '/runtime-api/'
 
@@ -72,21 +76,25 @@ const runtimeApiProxy = () => ({
 })
 
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   plugins: [
     react(),
     basicSsl(),
     runtimeApiProxy(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
+      injectRegister: false,
       workbox: {
         clientsClaim: true,
         skipWaiting: true,
         cleanupOutdatedCaches: true,
       },
       manifest: {
-        name: 'Tovuq',
-        short_name: 'Tovuq',
-        description: 'Tovuq savdo va ombor ilovasi',
+        name: 'MSI',
+        short_name: 'MSI',
+        description: 'MSI savdo va ombor ilovasi',
         theme_color: '#006CAC',
         background_color: '#ffffff',
         display: 'standalone',

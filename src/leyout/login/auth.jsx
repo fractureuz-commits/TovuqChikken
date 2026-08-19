@@ -40,9 +40,23 @@ export const checkPin = async (pin) => {
     return true;
 };
 
+// Har chaqirilganda yangi obyekt qaytarsa, uni useCallback/useMemo/useEffect
+// dependency sifatida ishlatgan komponentlar cheksiz qayta render bo'lib ketadi.
+// Shu sabab natija keshlanadi va faqat localStorage o'zgarganda qayta o'qiladi.
+let cachedUserRaw;
+let cachedUser = null;
+
 export const getUser = () => {
     const data = localStorage.getItem("current_user");
-    return data ? JSON.parse(data) : null;
+    if (data === cachedUserRaw) return cachedUser;
+
+    cachedUserRaw = data;
+    try {
+        cachedUser = data ? JSON.parse(data) : null;
+    } catch {
+        cachedUser = null;
+    }
+    return cachedUser;
 };
 
 export const logout = () => {

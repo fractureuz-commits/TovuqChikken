@@ -100,7 +100,7 @@ export default function MahsulotGroupSelect({ onClose, FormData, setFormData, se
                 </div>
                 <div className="selects">
                     {filtered.map((item, index) => (
-                        <div className="select" key={item.code}
+                        <div className="select" key={item.c}
                             onClick={() => {
                                 setFormData(prev => ({
                                     ...prev,

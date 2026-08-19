@@ -315,6 +315,7 @@ export const syncAndSave = async (apiData, onProgress) => {
 
 // ✅ Qisqa yozuv (avvalgi kod bilan muvofiqligi uchun)
 export const loadProducts = () => loadData("products");
+export const saveProducts = (data) => saveData("products", data);
 export const loadKontragent = () => loadData("kontragent");
 export const saveKontragent = (data) => saveData("kontragent", data);
 export const loadTovar = () => loadData("Tovar");

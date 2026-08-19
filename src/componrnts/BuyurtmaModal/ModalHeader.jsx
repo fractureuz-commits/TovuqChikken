@@ -1,58 +1,140 @@
-export default function ModalHeader({qaytarish, kirim, activeTab, onSotib, onKoriznka, onSkaner}) {
+export default function ModalHeader({qaytarish, kirim, boshQoldiq, activeTab, onSotib, onKoriznka, onSkaner, onMahsulotYaratish}) {
+
     return (
+
         <div className="modal-header">
+
             {/* SOTIB OLISH */}
+
             <button
+
                 className={`header-button ${activeTab === "sotib" ? "active" : ""}`}
+
                 onClick={onSotib}
+
             >
+
                 <svg width="50" height="60" viewBox="0 0 50 60" fill="none">
+
                     <g clipPath="url(#clip0_2001_453)">
+
                         <path d="M23.25 52.5H13.435C11.6435 52.4999 9.9112 51.8586 8.55158 50.692C7.19195 49.5254 6.29481 47.9107 6.0225 46.14L2.885 25.76C2.77542 25.0475 2.82122 24.3196 3.01927 23.6265C3.21731 22.9333 3.5629 22.2911 4.03237 21.744C4.50183 21.1969 5.08405 20.7578 5.73911 20.4568C6.39417 20.1557 7.10658 19.9999 7.8275 20H36.175C36.8959 19.9999 37.6083 20.1557 38.2634 20.4568C38.9185 20.7578 39.5007 21.1969 39.9701 21.744C40.4396 22.2911 40.7852 22.9333 40.9832 23.6265C41.1813 24.3196 41.2271 25.0475 41.1175 25.76L40.46 30.03" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+
                         <path d="M32 47.5H47" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+
                         <path d="M39.5 40V55" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+
                         <path d="M14.5 27.5V15C14.5 13.0109 15.2902 11.1032 16.6967 9.6967C18.1032 8.29018 20.0109 7.5 22 7.5C23.9891 7.5 25.8968 8.29018 27.3033 9.6967C28.7098 11.1032 29.5 13.0109 29.5 15V27.5" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+
                     </g>
+
                     <defs><clipPath id="clip0_2001_453"><rect width="50" height="60" fill="white"/></clipPath></defs>
+
                 </svg>
-                <p>{qaytarish ? 'Qaytarish' : kirim ? 'KIRIM' : 'SAVDO'}</p>
+
+                <p>{qaytarish ? 'Qaytarish' : boshQoldiq ? 'QOLDIQ' : kirim ? 'KIRIM' : 'SAVDO'}</p>
+
             </button>
+
+
 
             {/* KORIZNKA */}
+
             <button
+
                 className={`header-button ${activeTab === "koriznka" ? "active" : ""}`}
+
                 onClick={onKoriznka}
+
             >
+
                 <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+
                     <g clipPath="url(#clip0_2001_461)">
+
                         <path d="M19 5C19.6123 5.00008 20.2033 5.22489 20.6609 5.63179C21.1185 6.03869 21.4109 6.59937 21.4825 7.2075L21.5 7.5V10.17L54.1775 12.5075C54.8198 12.553 55.4198 12.8446 55.8524 13.3215C56.2851 13.7984 56.5171 14.4238 56.5 15.0675L56.475 15.3525L53.975 32.8525C53.8972 33.4005 53.6397 33.9072 53.2429 34.2932C52.8461 34.6791 52.3325 34.9224 51.7825 34.985L51.5 35H21.5V40H46.5C47.9646 40.0001 49.3971 40.429 50.6208 41.2338C51.8445 42.0386 52.8057 43.184 53.3859 44.5288C53.9662 45.8736 54.1399 47.3588 53.8858 48.8012C53.6318 50.2436 52.9609 51.58 51.9561 52.6455C50.9513 53.7111 49.6565 54.4591 48.2314 54.7973C46.8064 55.1355 45.3136 55.0491 43.9371 54.5487C42.5606 54.0483 41.3608 53.1558 40.4857 51.9814C39.6105 50.807 39.0984 49.4021 39.0125 47.94L39 47.5L39.0125 47.06C39.055 46.34 39.1975 45.65 39.4275 45H26.0725C26.4293 46.0121 26.5648 47.089 26.4697 48.1579C26.3747 49.2269 26.0514 50.263 25.5216 51.1962C24.9918 52.1295 24.2679 52.9382 23.3988 53.5677C22.5297 54.1972 21.5356 54.6329 20.4837 54.8453C19.4317 55.0577 18.3465 55.0419 17.3012 54.799C16.2559 54.556 15.2749 54.0915 14.4245 53.437C13.5741 52.7824 12.8741 51.9529 12.3717 51.0046C11.8694 50.0563 11.5764 49.0113 11.5125 47.94L11.5 47.5L11.5125 47.06C11.599 45.5861 12.1183 44.1704 13.0055 42.9902C13.8926 41.81 15.1082 40.9177 16.5 40.425V10H14C13.3877 9.99992 12.7967 9.77511 12.3391 9.36821C11.8815 8.96131 11.5891 8.40063 11.5175 7.7925L11.5 7.5C11.5001 6.88767 11.7249 6.29666 12.1318 5.83907C12.5387 5.38148 13.0994 5.08914 13.7075 5.0175L14 5H19ZM19 45C18.337 45 17.7011 45.2634 17.2322 45.7322C16.7634 46.2011 16.5 46.837 16.5 47.5C16.5 48.163 16.7634 48.7989 17.2322 49.2678C17.7011 49.7366 18.337 50 19 50C19.663 50 20.2989 49.7366 20.7678 49.2678C21.2366 48.7989 21.5 48.163 21.5 47.5C21.5 46.837 21.2366 46.2011 20.7678 45.7322C20.2989 45.2634 19.663 45 19 45ZM46.5 45C45.837 45 45.2011 45.2634 44.7322 45.7322C44.2634 46.2011 44 46.837 44 47.5C44 48.163 44.2634 48.7989 44.7322 49.2678C45.2011 49.7366 45.837 50 46.5 50C47.163 50 47.7989 49.7366 48.2678 49.2678C48.7366 48.7989 49 48.163 49 47.5C49 46.837 48.7366 46.2011 48.2678 45.7322C47.7989 45.2634 47.163 45 46.5 45Z" fill="white"/>
+
                     </g>
+
                     <defs><clipPath id="clip0_2001_461"><rect width="60" height="60" fill="white"/></clipPath></defs>
+
                 </svg>
+
                 <p>SAVATCHA</p>
+
             </button>
 
-            {/* SKANER */}
-            {!qaytarish &&
+
+
+            {/* SKANER - faqat savdo uchun */}
+
+            {!qaytarish && !kirim &&
+
             <button
+
                 className={`header-button ${activeTab === "skaner" ? "active" : ""}`}
+
                 onClick={onSkaner}
+
             >
+
                 <svg width="55" height="55" viewBox="0 0 61 62" fill="none">
+
                     <g clipPath="url(#clip0_2063_2)">
+
                         <path d="M2.83325 14.2085V10.7502C2.83325 8.91575 3.56197 7.15647 4.8591 5.85934C6.15622 4.56221 7.9155 3.8335 9.74992 3.8335H16.6666" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+
                         <path d="M2.83325 48.7915V52.2498C2.83325 54.0843 3.56197 55.8435 4.8591 57.1407C6.15622 58.4378 7.9155 59.1665 9.74992 59.1665H16.6666" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+
                         <path d="M44.3333 3.8335H51.2499C53.0843 3.8335 54.8436 4.56221 56.1407 5.85934C57.4379 7.15647 58.1666 8.91575 58.1666 10.7502V14.2085" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+
                         <path d="M44.3333 59.1665H51.2499C53.0843 59.1665 54.8436 58.4378 56.1407 57.1407C57.4379 55.8435 58.1666 54.0843 58.1666 52.2498V48.7915" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+
                         <path d="M6.29175 31.5H54.7084" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+
                     </g>
+
                     <defs><clipPath id="clip0_2063_2"><rect width="61" height="62" fill="white"/></clipPath></defs>
+
                 </svg>
+
                 <p>Skaner</p>
+
             </button>
 
             }
+
+            {/* MAHSULOT YARATISH - faqat kirim uchun */}
+
+            {kirim && onSkaner &&
+
+            <button
+
+                className={`header-button ${activeTab === "mahsulot-yaratish" ? "active" : ""}`}
+
+                onClick={onSkaner}
+
+            >
+
+                <svg width="55" height="55" viewBox="0 0 61 62" fill="none">
+
+                    <circle cx="30.5" cy="31" r="25" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+
+                    <path d="M30.5 21V41M20.5 31H40.5" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round"/>
+
+                </svg>
+
+                <p>Yaratish</p>
+
+            </button>
+
+            }
+
             
+
         </div>
+
     );
+
 }
+

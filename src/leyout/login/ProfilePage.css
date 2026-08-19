@@ -82,6 +82,13 @@
   border-bottom: 1px solid #dde3e8;
 }
 
+.app-version {
+  text-align: center;
+  color: #9aa5b1;
+  font-size: 12px;
+  margin: 16px 0 0;
+}
+
 .language-section {
   background: #fff;
   border-top: 1px solid #dde3e8;

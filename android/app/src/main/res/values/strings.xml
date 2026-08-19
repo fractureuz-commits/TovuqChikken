@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Tovuq</string>
-    <string name="title_activity_main">Tovuq</string>
+    <string name="app_name">MSI</string>
+    <string name="title_activity_main">MSI</string>
     <string name="package_name">com.Boller.app</string>
     <string name="custom_url_scheme">com.Boller.app</string>
 </resources>

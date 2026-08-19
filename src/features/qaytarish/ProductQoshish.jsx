@@ -5,18 +5,18 @@ import ProductImage from "../../componrnts/ProductImage/ProductImage";
 import { formatNarx, parseNarx } from "../../utils/narx";
 import { format } from "date-fns";
 import { getUser } from "../../leyout/login/auth";
-import { canViewPrice } from "../../utils/permissions";
+import { canViewPrice, sanitizeDebtFields } from "../../utils/permissions";
 import { useBackHandler } from "../../utils/backButtonStack";
 
 export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) {
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(false);
-    const currentNarx = parseNarx(item?.narh);
-    const isVal = item?.narh_turi;
-    const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
     const user = getUser();
     const canSeePrice = canViewPrice(user);
+    const currentNarx = canSeePrice ? parseNarx(item?.narh) : 0;
+    const isVal = item?.narh_turi;
+    const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
     useBackHandler(onClose);
 
     const jami = formatNarx(currentNarx * quantity); // ← formatNarx import dan
@@ -77,7 +77,7 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
             let existing = JSON.parse(localStorage.getItem("qaytarish"));
 
             if (!existing || typeof existing !== "object" || !existing.tovarlar) {
-                existing = {
+                existing = sanitizeDebtFields({
                     date: date,
                     mijoz_code: FormData?.kontragent_id,
                     ost_sum: FormData.dt_kt_sum,
@@ -86,7 +86,7 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
                     narh_turi: FormData?.narh_turi,
                     user_code: user?.code,
                     tovarlar: [],
-                };
+                }, user);
             }
 
             const alreadyIndex = existing.tovarlar.findIndex(
@@ -111,12 +111,14 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
                 existing.tovarlar[alreadyIndex].narh = toNumber(currentNarx);
                 existing.tovarlar[alreadyIndex].Summa = toNumber(currentNarx) * newQty;
 
-                existing.tovarlar[alreadyIndex].kirim_narh_sum = toNumber(item?.kirim_narh_sum);
-                existing.tovarlar[alreadyIndex].kirim_narh_val = toNumber(item?.kirim_narh_val);
-                existing.tovarlar[alreadyIndex].kirim_summa_sum =
-                    toNumber(item?.kirim_narh_sum) * newQty;
-                existing.tovarlar[alreadyIndex].kirim_summa_val =
-                    toNumber(item?.kirim_narh_val) * newQty;
+                existing.tovarlar[alreadyIndex].kirim_narh_sum = canSeePrice ? toNumber(item?.kirim_narh_sum) : 0;
+                existing.tovarlar[alreadyIndex].kirim_narh_val = canSeePrice ? toNumber(item?.kirim_narh_val) : 0;
+                existing.tovarlar[alreadyIndex].kirim_summa_sum = canSeePrice
+                    ? toNumber(item?.kirim_narh_sum) * newQty
+                    : 0;
+                existing.tovarlar[alreadyIndex].kirim_summa_val = canSeePrice
+                    ? toNumber(item?.kirim_narh_val) * newQty
+                    : 0;
 
                 existing.tovarlar[alreadyIndex].term = onlyDate(item?.term);
                 existing.tovarlar[alreadyIndex].date_invoys = onlyDate(item?.date_invoys);
@@ -138,21 +140,21 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
                     group_tovar_name: item?.group_tovar_name,
                     hajm: item?.hajm,
                     name: item?.name,
-                    narh_sum1: item?.narh_sum1,
-                    narh_sum2: item?.narh_sum2,
-                    narh_sum3: item?.narh_sum3,
-                    narh_sum4: item?.narh_sum4,
-                    narh_val1: item?.narh_val1,
-                    narh_val2: item?.narh_val2,
-                    narh_val3: item?.narh_val3,
-                    narh_val4: item?.narh_val4,
+                    narh_sum1: canSeePrice ? item?.narh_sum1 : 0,
+                    narh_sum2: canSeePrice ? item?.narh_sum2 : 0,
+                    narh_sum3: canSeePrice ? item?.narh_sum3 : 0,
+                    narh_sum4: canSeePrice ? item?.narh_sum4 : 0,
+                    narh_val1: canSeePrice ? item?.narh_val1 : 0,
+                    narh_val2: canSeePrice ? item?.narh_val2 : 0,
+                    narh_val3: canSeePrice ? item?.narh_val3 : 0,
+                    narh_val4: canSeePrice ? item?.narh_val4 : 0,
                     ul_bir: item?.ul_bir,
                     valyuta_turi: item?.valyuta_turi,
                     term: onlyDate(item?.term),
-                    kirim_narh_sum: toNumber(item?.kirim_narh_sum),
-                    kirim_narh_val: toNumber(item?.kirim_narh_val),
-                    kirim_summa_sum: toNumber(item?.kirim_narh_sum) * toNumber(quantity),
-                    kirim_summa_val: toNumber(item?.kirim_narh_val) * toNumber(quantity),
+                    kirim_narh_sum: canSeePrice ? toNumber(item?.kirim_narh_sum) : 0,
+                    kirim_narh_val: canSeePrice ? toNumber(item?.kirim_narh_val) : 0,
+                    kirim_summa_sum: canSeePrice ? toNumber(item?.kirim_narh_sum) * toNumber(quantity) : 0,
+                    kirim_summa_val: canSeePrice ? toNumber(item?.kirim_narh_val) * toNumber(quantity) : 0,
                 });
             }
 

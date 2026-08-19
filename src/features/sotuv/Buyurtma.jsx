@@ -113,26 +113,6 @@ export default function BuyurtmaModal({ onClose, kirim = false }) {
                             </div>
                         </div>
 
-                        {/* Telefon raqami */}
-                        <div className="input-group" style={{ width: '100%' }}>
-                            <label>Telefon raqami</label>
-                            <input
-                                readOnly
-                                type="text"
-                                name="tovuq-phone-display"
-                                autoComplete="off"
-                                autoCorrect="off"
-                                autoCapitalize="off"
-                                spellCheck={false}
-                                inputMode="none"
-                                tabIndex={-1}
-                                onFocus={blurReadonlyInputOnWeb}
-                                value={FormData.tel_1}
-                                className="input"
-                                placeholder=""
-                            />
-                        </div>
-
                         {/* Hudud nomi */}
                         <div className="input-group" style={{ width: '100%' }}>
                             <label>Hudud nomi</label>
@@ -241,6 +221,7 @@ export default function BuyurtmaModal({ onClose, kirim = false }) {
             {openSelectMijoz &&
                 <MijozSelect
                     TD={!kirim}
+                    kirim={kirim}
                     title={kirim ? "Ta'minotchilar ro'yxati" : "Mijozlar ro'yxati"}
                     setOpenSelectMijoz={setOpenSelectMijoz}
                     onClose={() => setOpenSelectMijoz(false)}

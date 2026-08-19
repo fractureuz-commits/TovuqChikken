@@ -1,7 +1,7 @@
 {
   "name": "lazer_kassa",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,8 @@
     "android:release": "vite build && npx cap sync android && cd android && gradlew.bat assembleRelease",
     "preview": "vite preview --host 0.0.0.0",
     "ios:sync": "vite build && npx cap sync ios",
-    "ios:open": "npx cap open ios"
+    "ios:open": "npx cap open ios",
+    "release": "node scripts/release.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.1",

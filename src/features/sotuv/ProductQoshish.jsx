@@ -5,7 +5,7 @@ import ProductImage from "../../componrnts/ProductImage/ProductImage";
 import { getNarx, formatNarx, parseNarx } from "../../utils/narx";
 import { format, parse } from "date-fns";
 import { getUser } from "../../leyout/login/auth";
-import { canViewPrice } from "../../utils/permissions";
+import { canViewPrice, sanitizeDebtFields } from "../../utils/permissions";
 import { toNumber } from "../../utils/queueSummary";
 import { useBackHandler } from "../../utils/backButtonStack";
 
@@ -16,30 +16,26 @@ const toDateInputValue = (value) => {
     return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
 };
 
+// Yaroqlilik muddati majburiy emas - kiritilmasa 1C ga "0" yuboriladi
 const toDisplayDate = (value) => value
     ? value.split("-").reverse().join(".")
-    : "";
+    : "0";
 
-export default function ProductQoshish({ onClose, item, handlePartiya, kirim = false }) {
-    const FORM_KEY = kirim ? "mahsulot_kirimi_form" : "formData";
-    const CART_KEY = kirim ? "mahsulot_kirimi_cart" : "buyurtma_cart";
+export default function ProductQoshish({ onClose, item, handlePartiya, kirim = false, boshQoldiq = false }) {
+    const FORM_KEY = boshQoldiq ? "bosh_qoldiq_form" : kirim ? "mahsulot_kirimi_form" : "formData";
+    const CART_KEY = boshQoldiq ? "bosh_qoldiq_cart" : kirim ? "mahsulot_kirimi_cart" : "buyurtma_cart";
     const FormData = JSON.parse(localStorage.getItem(FORM_KEY) || "{}");
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(false);
     const { narx: sotuvNarxi, isVal: sotuvIsVal } = getNarx(item, FormData);
-    const [kirimValyuta, setKirimValyuta] = useState(
-        String(FormData?.valyuta_turi || "1")
-    );
-    const [kirimNarxi, setKirimNarxi] = useState(() => {
-        const field = String(FormData?.valyuta_turi) === "2" ? "kirim_narh_val" : "kirim_narh_sum";
-        return item?.[field] || "";
-    });
+    const kirimValyuta = "1"; // Kirimda valyuta tanlash yo'q — doim so'mda
+    const [kirimNarxi, setKirimNarxi] = useState(() => item?.kirim_narh_sum || "");
     const [yaroqlilik, setYaroqlilik] = useState(() => toDateInputValue(item?.term));
     const isVal = kirim ? kirimValyuta === "2" : sotuvIsVal;
-    const currentNarx = kirim ? parseNarx(kirimNarxi) : sotuvNarxi;
-    const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
     const user = getUser();
     const canSeePrice = canViewPrice(user);
+    const currentNarx = canSeePrice ? (kirim ? parseNarx(kirimNarxi) : sotuvNarxi) : 0;
+    const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
     useBackHandler(onClose);
 
     const jami = formatNarx(currentNarx * quantity); // ← formatNarx import dan
@@ -56,11 +52,9 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
         const tovarlar = cart?.tovarlar || [];
         const inCart = tovarlar.find(i => i.itemId === itemId);
 
-        const qoldiq = Number(
-            String(item?.qoldiq || 0).replace(/\s/g, "")
-        );
+        const qoldiq = toNumber(item?.qoldiq);
 
-        const already = Number(inCart?.soni || 0);
+        const already = toNumber(inCart?.soni);
 
         return kirim ? qoldiq : qoldiq - already;
     }, [CART_KEY, item?.date_invoys, item?.code, item?.term, item?.qoldiq, kirim]);
@@ -86,20 +80,11 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
     const handleBuyurtma = async () => {
         if (quantity <= 0) return;
 
-        if (kirim && currentNarx <= 0) {
+        if (kirim && canSeePrice && currentNarx <= 0) {
             Swal.fire({
                 icon: "warning",
                 title: "Kirim narxini kiriting!",
                 confirmButtonColor: "#006CAC",
-            });
-            return;
-        }
-
-        if (kirim && !yaroqlilik) {
-            Swal.fire({
-                icon: "warning",
-                title: "Yaroqlilik muddatini kiriting!",
-                confirmButtonColor: "#d97706",
             });
             return;
         }
@@ -118,16 +103,12 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
 
         try {
             const itemId = kirim ? String(item?.code) : `${item?.date_invoys}_${item?.code}`;
-            const maxQoldiq = Number(
-                String(item?.qoldiq || 0)
-                    .replace(/\s/g, "")
-                    .replace(",", ".")
-            );
+            const maxQoldiq = toNumber(item?.qoldiq);
 
             let existing = JSON.parse(localStorage.getItem(CART_KEY));
 
             if (!existing || typeof existing !== "object" || !existing.tovarlar) {
-                existing = {
+                existing = sanitizeDebtFields({
                     date: date,
                     mijoz_code: FormData?.kontragent_id,
                     mijoz_name: FormData?.kontragent,
@@ -137,7 +118,7 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                     narh_turi: FormData?.narh_turi,
                     user_code: user?.code,
                     tovarlar: [],
-                };
+                }, user);
             }
 
             const alreadyIndex = existing.tovarlar.findIndex(
@@ -186,14 +167,14 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                     group_tovar_name: item.group_tovar_name,
                     hajm: item.hajm,
                     name: item.name,
-                    narh_sum1: item.narh_sum1,
-                    narh_sum2: item.narh_sum2,
-                    narh_sum3: item.narh_sum3,
-                    narh_sum4: item.narh_sum4,
-                    narh_val1: item.narh_val1,
-                    narh_val2: item.narh_val2,
-                    narh_val3: item.narh_val3,
-                    narh_val4: item.narh_val4,
+                    narh_sum1: canSeePrice ? item.narh_sum1 : 0,
+                    narh_sum2: canSeePrice ? item.narh_sum2 : 0,
+                    narh_sum3: canSeePrice ? item.narh_sum3 : 0,
+                    narh_sum4: canSeePrice ? item.narh_sum4 : 0,
+                    narh_val1: canSeePrice ? item.narh_val1 : 0,
+                    narh_val2: canSeePrice ? item.narh_val2 : 0,
+                    narh_val3: canSeePrice ? item.narh_val3 : 0,
+                    narh_val4: canSeePrice ? item.narh_val4 : 0,
                     ul_bir: item.ul_bir,
                     valyuta_turi: kirim ? kirimValyuta : item.valyuta_turi,
                     term: kirim ? toDisplayDate(yaroqlilik) : item.term,
@@ -242,7 +223,7 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                         <div className="kd-content">
                             <h2 className="kd-name">{item?.name}</h2>
 
-                            {(canSeePrice || kirim) && (
+                            {canSeePrice && (
                                 <>
                                     <div className="kd-section">
                                         <label className="kd-label">{kirim ? "Kirim narxi:" : "Mahsulot narxi:"}</label>
@@ -266,27 +247,8 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                             )}
 
                             {kirim && (
-                                <div className="kirim-currency-switch" role="group" aria-label="Valyuta turi">
-                                    <button
-                                        type="button"
-                                        className={kirimValyuta === "1" ? "active" : ""}
-                                        onClick={() => setKirimValyuta("1")}
-                                    >
-                                        SO'M
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className={kirimValyuta === "2" ? "active" : ""}
-                                        onClick={() => setKirimValyuta("2")}
-                                    >
-                                        VALYUTA ($)
-                                    </button>
-                                </div>
-                            )}
-
-                            {kirim && (
                                 <div className="kd-section">
-                                    <label className="kd-label">Yaroqlilik muddati:</label>
+                                    <label className="kd-label">Yaroqlilik muddati (ixtiyoriy):</label>
                                     <div className="kd-narx-input">
                                         <input
                                             type="date"
@@ -355,7 +317,7 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                                 </button>
                             </div>
 
-                            {(canSeePrice || kirim) && (
+                            {canSeePrice && (
                                 <>
                                     <div className="kd-jami">
                                         <span className="kd-jami-label">Jami summa:</span>

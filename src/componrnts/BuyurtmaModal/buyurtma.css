@@ -22,7 +22,7 @@
     padding: 10px;
     width: 95%;
     max-width: 520px;
-    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 16px);
+    max-height: 100%;
     overflow-y: auto;
     box-shadow: 0 8px 40px rgba(0, 0, 0, 0.13);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -300,25 +300,43 @@ form {
     background: #142d55;
 }
 
+/* ===== TO'LIQ EKRANLI MODALLAR - BIR XIL BALANDLIK =====
+   Safe-area faqat bitta joyda (.overlay padding) hisobga olinadi.
+   Ichkarida hamma narsa 100% bilan o'lchanadi, shuning uchun
+   100vh / 100dvh farqi va qo'sh padding muammosi yo'q. */
 .overlay>.app-safe {
-    height: 100dvh !important;
-    min-height: 100dvh;
+    height: 100% !important;
+    min-height: 0;
+    max-height: 100%;
+    padding: 0;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 }
 
 .overlay>.app-safe>.modal {
     width: 100% !important;
     max-width: none;
-    max-height: none;
+    max-height: 100%;
+    min-height: 0;
     border-radius: 0 !important;
     display: flex;
     flex-direction: column;
 }
 
+/* Inline `height: 100vh` bergan modallar konteynerni to'liq egallaydi */
+.overlay>.app-safe>.modal[style*="100vh"],
+.overlay>.app-safe>.modal[style*="100dvh"] {
+    height: auto !important;
+    flex: 1 1 auto;
+}
+
 .overlay>.modal[style*="100vh"],
 .overlay>.modal[style*="95vh"] {
-    height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
-    max-height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom)) !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0;
     width: 100% !important;
     border-radius: 0 !important;
 }
@@ -432,7 +450,7 @@ form {
 
 @media (orientation: landscape) and (max-height: 500px) {
     .modal {
-        max-height: calc(100dvh - 8px);
+        max-height: 100%;
     }
 
     .modal-title {
@@ -443,4 +461,166 @@ form {
     form {
         gap: 8px;
     }
+}
+
+/* ===== SAVDO RED THEME ===== */
+.savdo-modal {
+    border: 2px solid #dc2626;
+}
+
+.savdo-title {
+    color: #dc2626;
+}
+
+.savdo-btn-add {
+    background: #dc2626;
+}
+
+.savdo-btn-add:hover {
+    background: #b91c1c;
+}
+
+.savdo-btn-refresh {
+    background: #dc2626;
+}
+
+.savdo-btn-refresh:hover {
+    background: #b91c1c;
+}
+
+.savdo-checkbox-custom {
+    border-color: #dc2626;
+}
+
+.savdo-checkbox-custom svg {
+    stroke: white;
+}
+
+.savdo-btn-cancel {
+    border-color: #dc2626;
+    color: #dc2626;
+}
+
+.savdo-btn-cancel:hover {
+    background: #fef2f2;
+}
+
+.savdo-btn-submit {
+    background: #dc2626;
+}
+
+.savdo-btn-submit:hover {
+    background: #b91c1c;
+}
+
+/* ===== QAYTARISH GREEN THEME ===== */
+.qaytarish-modal {
+    border: 2px solid #059669;
+}
+
+.qaytarish-title {
+    color: #059669;
+}
+
+.qaytarish-btn-add {
+    background: #059669;
+}
+
+.qaytarish-btn-add:hover {
+    background: #047857;
+}
+
+.qaytarish-btn-refresh {
+    background: #059669;
+}
+
+.qaytarish-btn-refresh:hover {
+    background: #047857;
+}
+
+.qaytarish-checkbox-custom {
+    border-color: #059669;
+}
+
+.qaytarish-checkbox-custom svg {
+    stroke: white;
+}
+
+.qaytarish-btn-cancel {
+    border-color: #059669;
+    color: #059669;
+}
+
+.qaytarish-btn-cancel:hover {
+    background: #ecfdf5;
+}
+
+.qaytarish-btn-submit {
+    background: #059669;
+}
+
+.qaytarish-btn-submit:hover {
+    background: #047857;
+}
+
+.qaytarish-blue-input {
+    border-color: #059669;
+}
+
+/* ===== KIRIM ORANGE THEME ===== */
+.kirim-modal {
+    border: 2px solid #d97706;
+}
+
+.kirim-title {
+    color: #d97706;
+}
+
+.kirim-plus-btn {
+    background: #d97706;
+}
+
+.kirim-plus-btn:hover {
+    background: #b45309;
+}
+
+.kirim-btn-add {
+    background: #d97706;
+}
+
+.kirim-btn-add:hover {
+    background: #b45309;
+}
+
+.kirim-btn-refresh {
+    background: #d97706;
+}
+
+.kirim-btn-refresh:hover {
+    background: #b45309;
+}
+
+.kirim-checkbox-custom {
+    border-color: #d97706;
+}
+
+.kirim-checkbox-custom svg {
+    stroke: white;
+}
+
+.kirim-btn-cancel {
+    border-color: #d97706;
+    color: #d97706;
+}
+
+.kirim-btn-cancel:hover {
+    background: #fffbeb;
+}
+
+.kirim-btn-submit {
+    background: #d97706;
+}
+
+.kirim-btn-submit:hover {
+    background: #b45309;
 }

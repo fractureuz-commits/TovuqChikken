@@ -8,6 +8,7 @@ import KirimProductQoshish from "../mahsulotKirimi/ProductQoshish";
 import TovarModal from "./Mahsulotlar";
 import Swal from "sweetalert2";
 import ModalHeader from "../../componrnts/BuyurtmaModal/ModalHeader";
+import MahsulotYaratishModal from "../mahsulotKirimi/MahsulotYaratishModal";
 import { useBackHandler } from "../../utils/backButtonStack";
 
 // ═══ ProductCard ═══
@@ -24,19 +25,20 @@ function ProductCard({ item, search, highlightText, onClick }) {
         </div>
     );
 }
-export default function KorzinkaModal({qaytarish, kirim = false, handleModal, KorzinkaModal, allClose }) {
+export default function KorzinkaModal({qaytarish, kirim = false, boshQoldiq = false, handleModal, KorzinkaModal, allClose }) {
     const [search, setSearch] = useState('');
     const [ProductGroup, setProductGroup] = useState([]);
     const [ShtrixModal, setShtrixModal] = useState(false);
+    const [openMahsulotYaratish, setOpenMahsulotYaratish] = useState(false);
     const [Products, setProducts] = useState(null); // ← null = yopiq, string = groupCode
     const [shtrixData, setshtrixData] = useState([]);
     const [ProductData, setProductData] = useState(null);
     const [Productadd, setProductadd] = useState(false);
     const [ProductGroupLoading, setProductGroupLoading] = useState(true);
     const [ProductGroupError, setProductGroupError] = useState(null);
-    const CART_KEY = kirim ? "mahsulot_kirimi_cart" : "buyurtma_cart";
+    const CART_KEY = boshQoldiq ? "bosh_qoldiq_cart" : kirim ? "mahsulot_kirimi_cart" : "buyurtma_cart";
     const Qaytarish_KEY = "qaytarish";
-    const FormData_KEY = kirim ? "mahsulot_kirimi_form" : "formData";
+    const FormData_KEY = boshQoldiq ? "bosh_qoldiq_form" : kirim ? "mahsulot_kirimi_form" : "formData";
     const FormData = JSON.parse(localStorage.getItem(FormData_KEY) || "{}");
     const Buyurtma_cart = JSON.parse(localStorage.getItem("buyurtma_cart") || "{}");
     const handleBackClose = useCallback(async () => {
@@ -106,15 +108,15 @@ export default function KorzinkaModal({qaytarish, kirim = false, handleModal, Ko
     return (
         <>
             <div className="overlay" style={{ flexDirection: 'column' }}>
-                <div className="app-safe" style={{ height: '100vh', width: '100%', borderRadius: "0px",  }}>
-
+                <div className="app-safe">
                     <ModalHeader
                         activeTab="sotib"
                         qaytarish={qaytarish}
                         kirim={kirim}
+                        boshQoldiq={boshQoldiq}
                         onSotib={() => { }}
                         onKoriznka={() => KorzinkaModal?.()}
-                        onSkaner={() => setShtrixModal(prev => !prev)}
+                        onSkaner={() => kirim ? setOpenMahsulotYaratish(true) : setShtrixModal(prev => !prev)}
                     />
                     <div className="modal" style={{ height: '100vh', width: '100%', borderRadius: "0px",  }}>
                         <div className="modal-title" style={{
@@ -205,10 +207,11 @@ export default function KorzinkaModal({qaytarish, kirim = false, handleModal, Ko
                     onKoriznka={handleModal}
                     FormData={FormData}
                     allClose={allClose}
-                    onSkaner={() => setShtrixModal(prev => !prev)}
+                    onSkaner={() => kirim ? setOpenMahsulotYaratish(true) : setShtrixModal(prev => !prev)}
                     KorzinkaModal={KorzinkaModal}
                     qaytarish={qaytarish}
                     kirim={kirim}
+                    boshQoldiq={boshQoldiq}
                 />
             }
 
@@ -218,8 +221,19 @@ export default function KorzinkaModal({qaytarish, kirim = false, handleModal, Ko
                     item={ProductData}
                     onClose={() => setProductadd(false)}
                     FormData={FormData}
+                    boshQoldiq={boshQoldiq}
                 />;
             })()}
+            {openMahsulotYaratish && (
+                <MahsulotYaratishModal
+                    onClose={() => setOpenMahsulotYaratish(false)}
+                    onCreated={(product) => {
+                        setOpenMahsulotYaratish(false);
+                        setProductData(product);
+                        setProductadd(true);
+                    }}
+                />
+            )}
         </>
     );
 }

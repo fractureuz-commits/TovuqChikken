@@ -9,6 +9,7 @@ import "../../componrnts/Korzinka/tovar.css";
 import Swal from "sweetalert2";
 import PartiyaSelect from "./PartiyaTanlash";
 import ModalHeader from "../../componrnts/BuyurtmaModal/ModalHeader";
+import MahsulotYaratishModal from "../mahsulotKirimi/MahsulotYaratishModal";
 import { formatNarx, getNarx } from "../../utils/narx";
 import { format } from "date-fns";
 import { getUser } from "../../leyout/login/auth";
@@ -54,10 +55,11 @@ export function Tovar({ item, search, highlightText, onClick }) {
 }
 
 // ═══ TOVAR MODAL ═══
-export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytarish, kirim = false }) {
+export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytarish, kirim = false, boshQoldiq = false }) {
     const [search, setSearch] = useState('');
     const [ProductGroup, setProductGroup] = useState([]);
     const [ShtrixModal, setShtrixModal] = useState(false);
+    const [openMahsulotYaratish, setOpenMahsulotYaratish] = useState(false);
     const [shtrixData, setshtrixData] = useState([]);
     const [ProductData, setProductData] = useState(null);
     const [Productadd, setProductadd] = useState(false);
@@ -213,8 +215,9 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
                         onSotib={() => { }}
                         qaytarish={qaytarish}
                         kirim={kirim}
+                        boshQoldiq={boshQoldiq}
                         onKoriznka={() => KorzinkaModal?.()}
-                        onSkaner={() => setShtrixModal(prev => !prev)}
+                        onSkaner={() => kirim ? setOpenMahsulotYaratish(true) : setShtrixModal(prev => !prev)}
                     />
                     <div className="modal" style={{ height: '100vh', width: '100%', borderRadius: "0px", }}>
                         {/* ✅ Orqaga + title */}
@@ -309,8 +312,19 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
                     item={ProductData}
                     onClose={() => setProductadd(false)}
                     FormData={FormData}
+                    boshQoldiq={boshQoldiq}
                 />;
             })()}
+            {openMahsulotYaratish && (
+                <MahsulotYaratishModal
+                    onClose={() => setOpenMahsulotYaratish(false)}
+                    onCreated={(product) => {
+                        setOpenMahsulotYaratish(false);
+                        setProductData(product);
+                        setProductadd(true);
+                    }}
+                />
+            )}
         </>
     );
 }

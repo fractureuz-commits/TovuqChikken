@@ -7,33 +7,36 @@ import TovarModal from "./Mahsulotlar";
 import Swal from "sweetalert2";
 import { apiPost } from "../../utils/api";
 import ModalHeader from "../../componrnts/BuyurtmaModal/ModalHeader";
+import MahsulotYaratishModal from "../mahsulotKirimi/MahsulotYaratishModal";
 import { getUser } from "../../leyout/login/auth";
 import { format } from "date-fns";
 import { useBackHandler } from "../../utils/backButtonStack";
 import { QUEUE_TYPES, saveQueueItem } from "../../utils/offlineQueue";
 import { getCartItemTotal } from "../../utils/queueSummary";
 import { makeSavdoItemId } from "../../utils/savdoIdentity";
-import { saveKirimHistory } from "../mahsulotKirimi/storage";
+import { canViewPrice, sanitizeDebtFields, sanitizePriceItem } from "../../utils/permissions";
 
-export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaModal, onClose, }) {
+export default function CartModal({ onExit, qaytarish, kirim = false, boshQoldiq = false, KorzinkaModal, onClose, }) {
 
     const [search, setSearch] = useState('');
     const [cart, setCart] = useState(null);
     const [sending, setSending] = useState(false);
-    const CART_KEY = qaytarish ? "qaytarish" : kirim ? "mahsulot_kirimi_cart" : "buyurtma_cart";
-    const FormData_KEY = kirim ? "mahsulot_kirimi_form" : "formData";
+    const CART_KEY = qaytarish ? "qaytarish" : boshQoldiq ? "bosh_qoldiq_cart" : kirim ? "mahsulot_kirimi_cart" : "buyurtma_cart";
+    const FormData_KEY = boshQoldiq ? "bosh_qoldiq_form" : kirim ? "mahsulot_kirimi_form" : "formData";
     const FormData = JSON.parse(localStorage.getItem(FormData_KEY) || "{}");
     const [ShtrixModal, setShtrixModal] = useState(false);
+    const [openMahsulotYaratish, setOpenMahsulotYaratish] = useState(false);
     const [shtrixData, setshtrixData] = useState([]);
     const [ProductData, setProductData] = useState(null);
     const [Productadd, setProductadd] = useState(false);
     const user = getUser();
+    const canSeePrice = canViewPrice(user);
     useBackHandler(onClose);
 
     const loadCart = useCallback(() => {
         try {
             const data = JSON.parse(localStorage.getItem(CART_KEY) || "{}");
-            const cartData = {
+            const cartData = sanitizeDebtFields({
                 date: data?.date || '',
                 mijoz_code: FormData?.kontragent_id,
                 ost_sum: FormData?.dt_kt_sum,
@@ -42,12 +45,12 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
                 narh_turi: FormData?.narh_turi,
                 user_code: user?.code,
                 tovarlar: Array.isArray(data?.tovarlar) ? data.tovarlar : [],
-            };
+            }, user);
 
             setCart(cartData);
 
         } catch {
-            setCart({
+            setCart(sanitizeDebtFields({
                 date: format(new Date(), "dd.MM.yyyy HH:mm:ss"),
                 mijoz_code: FormData?.kontragent_id,
                 ost_sum: FormData?.dt_kt_sum,
@@ -55,7 +58,7 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
                 vid_val: FormData?.valyuta_turi,
                 narh_turi: FormData?.narh_turi,
                 tovarlar: [],
-            });
+            }, user));
         }
     }, [
         CART_KEY,
@@ -64,7 +67,7 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
         FormData?.kontragent_id,
         FormData?.narh_turi,
         FormData?.valyuta_turi,
-        user?.code,
+        user,
     ]);
     useEffect(() => {
         loadCart();
@@ -105,11 +108,13 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
     }, [cartItems]);
 
     const itemsWithTotals = useMemo(() => {
-        return cartItems.map(item => ({
+        return cartItems.map(item => sanitizePriceItem({
             ...item,
+            // Yaroqlilik muddati kiritilmagan bo'lsa 1C ga "0" ketadi
+            term: (kirim || boshQoldiq) ? (item.term || "0") : item.term,
             Summa: getCartItemTotal(item),
-        }));
-    }, [cartItems]);
+        }, user));
+    }, [cartItems, user, kirim, boshQoldiq]);
 
     // delete
     const handleDelete = (itemId) => {
@@ -146,14 +151,78 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
 
         if (items.length === 0) return;
 
+        if (boshQoldiq) {
+            const { value: izoh, isConfirmed } = await Swal.fire({
+                title: "Boshlang'ich qoldiqni yuborish",
+                html: `<p style="margin:0 0 10px">${items.length} ta mahsulot boshlang'ich qoldiq sifatida yuboriladi</p>`,
+                input: "textarea",
+                inputPlaceholder: "Izoh (ixtiyoriy)...",
+                showCancelButton: true,
+                confirmButtonText: "Yuborish",
+                cancelButtonText: "Bekor",
+                confirmButtonColor: "#006CAC",
+            });
+
+            if (!isConfirmed) return;
+
+            setSending(true);
+
+            try {
+                const payload = {
+                    date: format(new Date(), "dd.MM.yyyy HH:mm:ss"),
+                    user_code: user?.code || "",
+                    mijoz_code: "0",
+                    ost_sum: "0",
+                    ost_val: "0",
+                    invoys_code: "0",
+                    bosh_qoldiq: 2,
+                    izoh: izoh || "",
+                    tovarlar: itemsWithTotals.map(item => ({
+                        term: item.term || "0",
+                        tovar_code: item.tovar_code,
+                        soni: item.soni,
+                        narh: item.narh,
+                        Summa: item.Summa,
+                    })),
+                };
+
+                await apiPost("tovuq/hs/postup/get_postup/", payload);
+
+                localStorage.removeItem(CART_KEY);
+                localStorage.removeItem(FormData_KEY);
+
+                setCart({ tovarlar: [] });
+                onExit?.();
+                Swal.fire({
+                    icon: "success",
+                    title: "Yuborildi!",
+                    text: "Boshlang'ich qoldiq yuborildi",
+                    confirmButtonColor: "#006CAC",
+                    timer: 1500,
+                    showConfirmButton: false,
+                });
+            } catch (err) {
+                Swal.fire({
+                    icon: "error",
+                    title: "Xato!",
+                    text: err.message,
+                    confirmButtonColor: "#006CAC",
+                });
+            } finally {
+                setSending(false);
+            }
+
+            return;
+        }
+
         const confirm = await Swal.fire({
-            title: kirim ? "Mahsulot kirimini saqlash" : "Savdoni saqlash",
+            title: kirim ? "Mahsulot kirimini yuborish" : "Savdoni saqlash",
             text: kirim
-                ? `${items.length} ta mahsulot kirimga saqlanadi`
+                ? `${items.length} ta mahsulot kirim sifatida yuboriladi`
                 : `${items.length} ta mahsulot yuborilmagan savdolarga qo'shiladi`,
             icon: "question",
             showCancelButton: true,
-            confirmButtonText: "Saqlash",
+            confirmButtonText: kirim ? "Yuborish" : "Saqlash",
             cancelButtonText: "Bekor",
             confirmButtonColor: "#006CAC",
         });
@@ -163,36 +232,31 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
         setSending(true);
 
         try {
-            const itemId = kirim
-                ? (globalThis.crypto?.randomUUID?.() || `kirim_${Date.now()}`)
-                : makeSavdoItemId();
-            const newOrder = {
-                id: itemId,
-                itemId,
-                name: FormData?.kontragent || cart?.mijoz_code || "Noma'lum mijoz",
-                sana: new Date().toLocaleString("uz-UZ"),
-                created_at: new Date().toISOString(),
-                data: {
-                    ...cart,
-                    itemId,
-                    date: cart?.date || format(new Date(), "dd.MM.yyyy HH:mm:ss"),
-                    tovarlar: itemsWithTotals,
-                },
-            };
-
             if (kirim) {
-                saveKirimHistory({
+                const postupPayload = {
+                    ...cart,
+                    date: cart?.date || format(new Date(), "dd.MM.yyyy HH:mm:ss"),
+                    invoys_code: FormData?.invoys_code || "",
+                    invoys_number: FormData?.invoys_number || "",
+                    tovarlar: itemsWithTotals,
+                };
+
+                await apiPost("tovuq/hs/postup/get_postup/", postupPayload);
+            } else {
+                const itemId = makeSavdoItemId();
+                const newOrder = {
                     id: itemId,
                     itemId,
-                    date: newOrder.data.date,
-                    taminotchi_code: FormData?.kontragent_id || "",
-                    taminotchi_name: FormData?.kontragent || "",
-                    user_code: user?.code || "",
-                    tovarlar: itemsWithTotals,
-                    created_at: newOrder.created_at,
-                    status: "local",
-                });
-            } else {
+                    name: FormData?.kontragent || cart?.mijoz_code || "Noma'lum mijoz",
+                    sana: new Date().toLocaleString("uz-UZ"),
+                    created_at: new Date().toISOString(),
+                    data: {
+                        ...cart,
+                        itemId,
+                        date: cart?.date || format(new Date(), "dd.MM.yyyy HH:mm:ss"),
+                        tovarlar: itemsWithTotals,
+                    },
+                };
                 await saveQueueItem(QUEUE_TYPES.SAVDOLAR, newOrder);
             }
 
@@ -203,12 +267,12 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
             onExit?.();
             Swal.fire({
                 icon: "success",
-                title: "Saqlandi!",
+                title: kirim ? "Yuborildi!" : "Saqlandi!",
                 text: kirim
-                    ? "Mahsulot kirimi saqlandi"
+                    ? "Mahsulot kirimi yuborildi"
                     : "Savdo yuborilmagan savdolarga qo'shildi",
                 confirmButtonColor: "#006CAC",
-                timer: 500,
+                timer: kirim ? 1500 : 500,
                 showConfirmButton: false,
             });
 
@@ -227,11 +291,11 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
         const items = cartItems;
         if (items.length === 0) return;
 
-        const cleanedItems = items.map(item => ({
+        const cleanedItems = items.map(item => sanitizePriceItem({
             ...item,
 
             term: item.term ? item.term.split(" ")[0] : "",
-        }));
+        }, user));
 
         const newData = {
             ...cart,
@@ -289,7 +353,8 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
                         onKoriznka={() => { }}
                         qaytarish={qaytarish}
                         kirim={kirim}
-                        onSkaner={() => setShtrixModal(prev => !prev)}
+                        boshQoldiq={boshQoldiq}
+                        onSkaner={() => kirim ? setOpenMahsulotYaratish(true) : setShtrixModal(prev => !prev)}
                     />
 
                     <div className="modal cart-modal"
@@ -319,7 +384,7 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
                                     />
                                 </svg>
                             </button>
-                            <span>{qaytarish ? 'Qaytarish' : kirim ? 'Kirim savati' : 'Savatcha'}</span>
+                            <span>{qaytarish ? 'Qaytarish' : boshQoldiq ? "Qoldiq savati" : kirim ? 'Kirim savati' : 'Savatcha'}</span>
                             <span style={{ width: 32 }} />
                         </div>
                         {/* search */}
@@ -331,7 +396,7 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
                                 onChange={(e) => setSearch(e.target.value)}
                             />
                         </div>
-                        {(user?.rol === "1" || user?.narx_korish) && (
+                        {canSeePrice && (
                             <>
                                 <div className="cart-total">
                                     <span className="cart-total-label">
@@ -377,7 +442,7 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
                                             <div className="cart-item-sub">
                                                 Miqdor: {item.soni}
                                             </div>
-                                            {(user?.rol === "1" || user?.narx_korish) && (
+                                            {canSeePrice && (
                                                 <>
                                                     <div className="cart-item-narx">
                                                         {Number(item.Summa).toLocaleString("uz-UZ")} {
@@ -434,8 +499,19 @@ export default function CartModal({ onExit, qaytarish, kirim = false, KorzinkaMo
                     item={ProductData}
                     onClose={() => setProductadd(false)}
                     FormData={FormData}
+                    boshQoldiq={boshQoldiq}
                 />;
             })()}
+            {openMahsulotYaratish && (
+                <MahsulotYaratishModal
+                    onClose={() => setOpenMahsulotYaratish(false)}
+                    onCreated={(product) => {
+                        setOpenMahsulotYaratish(false);
+                        setProductData(product);
+                        setProductadd(true);
+                    }}
+                />
+            )}
         </>
     );
 }

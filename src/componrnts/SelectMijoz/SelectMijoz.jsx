@@ -4,7 +4,7 @@ import { loadKontragent } from "../../utils/storage";
 import { apiPost } from "../../utils/api";
 import { useBackHandler } from "../../utils/backButtonStack";
     
-export default function MijozSelect({TD, title = "Mijozlar ro'yxati", onClose, setFormData, setKontragent, kontragent }) {
+export default function MijozSelect({TD, title = "Mijozlar ro'yxati", onClose, setFormData, setKontragent, kontragent, onMijozSelect, kirim = false}) {
     const [search, setSearch] = useState('');
     const [kontragentLoading, setKontragentLoading] = useState(true);
     const [kontragentError, setKontragentError] = useState(null);
@@ -22,10 +22,17 @@ export default function MijozSelect({TD, title = "Mijozlar ro'yxati", onClose, s
             .catch(err => setKontragentError(err.message))
             .finally(() => setKontragentLoading(false));
     }, [setKontragent]);
-    const filtered = useMemo(() => {
-        if (!search.trim()) return kontragent; // ✅ search yo'q → paginated visible
-        const tokens = search.toLowerCase().trim().split(/\s+/);
+    // typ: "1" = Mijoz, "2" = Yuk beruvchi. Eski/typsiz yozuvlar Mijoz deb hisoblanadi.
+    const kontragentByTyp = useMemo(() => {
         return kontragent.filter((doc) => {
+            const typ = String(doc?.typ ?? "1");
+            return kirim ? typ === "2" : typ === "1";
+        });
+    }, [kontragent, kirim]);
+    const filtered = useMemo(() => {
+        if (!search.trim()) return kontragentByTyp; // ✅ search yo'q → paginated visible
+        const tokens = search.toLowerCase().trim().split(/\s+/);
+        return kontragentByTyp.filter((doc) => {
             const haystack = [
                 doc.name,
                 doc.tel_1,
@@ -39,7 +46,7 @@ export default function MijozSelect({TD, title = "Mijozlar ro'yxati", onClose, s
                 .toLowerCase();
             return tokens.every((token) => haystack.includes(token));
         });
-    }, [search, kontragent]);
+    }, [search, kontragentByTyp]);
     const highlightText = (text, search) => {
         if (!search?.trim() || typeof text !== "string") return text;
 
@@ -125,6 +132,16 @@ export default function MijozSelect({TD, title = "Mijozlar ro'yxati", onClose, s
                         <div className="select" key={item.code}
                             onClick={() => {
                                 if(TD !== false) handleSubmit(item.code)
+                                const selectedMijoz = {
+                                    name: item.name,
+                                    code: item.code,
+                                    tel_1: item.tel_1,
+                                    hudud_name: item.hudud_name,
+                                    hudud_id: item.hudud_id || '',
+                                    hudud_code: item.hudud_code,
+                                    dt_kt_sum: item.dt_kt_sum || 0,
+                                    dt_kt_val: item.dt_kt_val || 0,
+                                };
                                 setFormData(prev => ({
                                     ...prev,
                                     kontragent: item.name,
@@ -136,6 +153,9 @@ export default function MijozSelect({TD, title = "Mijozlar ro'yxati", onClose, s
                                     Hudud_name: item.hudud_name,
                                     Mijoz_code: item.code,
                                 }));
+                                if (onMijozSelect) {
+                                    onMijozSelect(selectedMijoz);
+                                }
                                 onClose()
                             }}
                         >

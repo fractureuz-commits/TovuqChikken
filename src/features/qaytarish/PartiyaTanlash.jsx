@@ -106,7 +106,7 @@ export default function QaytarishSelect({ onClose, ProductData, allClose }) {
                                         onClick={() => handleSubmit(item)}
                                     >
                                         <div className="partya-no">
-                                            <span className="no-label">No</span>
+                                            <span className="no-label">№</span>
                                             <span className="no-value">{index + 1}</span>
                                         </div>
 
