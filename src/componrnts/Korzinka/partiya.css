@@ -85,6 +85,20 @@
     transform: scale(0.99);
 }
 
+/* Qoldig'i tugagan partiya (yuborilmagan savdolar hisobga olingan holda) */
+.partya-card--empty {
+    background: #9aa5ad;
+    opacity: 0.75;
+}
+
+/* Band qilingan miqdor qatori */
+.partya-row.partya-band .partya-label,
+.partya-row.partya-band .partya-value {
+    color: #ffe1c2;
+    font-size: 12px;
+    text-align: right;
+}
+
 .partya-no {
     width: 58px;
     min-width: 58px;

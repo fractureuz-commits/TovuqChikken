@@ -28,6 +28,7 @@ import { getSavdoConfirmIds, getSavdoPayload, normalizeSavdoId, withSavdoItemId 
 import { isSyncOverdue, markFullSyncDone } from '../../utils/syncSchedule';
 import MajburiySync from '../../componrnts/MajburiySync/MajburiySync';
 import TileGrid from './TileGrid';
+import { SAVDO_SEND_ENDPOINT, saveOrderHistory } from '../../utils/savdoHistory';
 import {
     BoshQoldiqIcon,
     HarajatIcon,
@@ -42,14 +43,6 @@ import {
 } from './homeIcons';
 
 const queueCountValue = (value) => value ?? "";
-const saveOrderHistory = (order) => {
-    const oldOrders = JSON.parse(localStorage.getItem("buyurtmalar") || "[]");
-    const exists = oldOrders.some(item => String(item.id) === String(order.id));
-
-    if (!exists) {
-        localStorage.setItem("buyurtmalar", JSON.stringify([...oldOrders, order]));
-    }
-};
 
 function Home() {
     const user = getUser()
@@ -227,7 +220,7 @@ function Home() {
     const sendSavdolarQueue = async () => {
         const syncedCount = await uploadQueueBatches({
             type: QUEUE_TYPES.SAVDOLAR,
-            endpoint: "tovuq/hs/realizz/realizz",
+            endpoint: SAVDO_SEND_ENDPOINT,
             makePayload: (batch) => {
                 const orders = batch.map(withSavdoItemId);
 

@@ -8,6 +8,18 @@ import { getUser } from "../../leyout/login/auth";
 import { canViewPrice, sanitizeDebtFields } from "../../utils/permissions";
 import { toNumber } from "../../utils/queueSummary";
 import { useBackHandler } from "../../utils/backButtonStack";
+import QuantityInput from "../../componrnts/QuantityInput/QuantityInput";
+import { formatQty, parseQty, selectAllOnFocus } from "../../utils/quantity";
+import { getCartKey, getFormKey, readCart, writeCart } from "../../utils/cart";
+import {
+    findCartIndex,
+    getCartQty,
+    getReservedMap,
+    getReservedQty,
+    makeCartItemId,
+    normalizeInvoysDate,
+    useReservedPartiya,
+} from "../../utils/partiya";
 
 const toDateInputValue = (value) => {
     const text = String(value || "").split(" ")[0];
@@ -16,16 +28,31 @@ const toDateInputValue = (value) => {
     return /^\d{4}-\d{2}-\d{2}$/.test(text) ? text : "";
 };
 
+// "19.08.2026" → "20260819" (noto'g'ri format kelsa ham xato bermaydi)
+const toInvoysDate = (value) => {
+    const text = String(value ?? "").split(" ")[0];
+    if (!text) return "";
+
+    try {
+        const parsed = parse(text, "dd.MM.yyyy", new Date());
+        if (!Number.isNaN(parsed.getTime())) return format(parsed, "yyyyMMdd");
+    } catch {
+        // format mos kelmadi — pastdagi zaxira variant ishlaydi
+    }
+
+    return normalizeInvoysDate(text);
+};
+
 // Yaroqlilik muddati majburiy emas - kiritilmasa 1C ga "0" yuboriladi
 const toDisplayDate = (value) => value
     ? value.split("-").reverse().join(".")
     : "0";
 
 export default function ProductQoshish({ onClose, item, handlePartiya, kirim = false, boshQoldiq = false }) {
-    const FORM_KEY = boshQoldiq ? "bosh_qoldiq_form" : kirim ? "mahsulot_kirimi_form" : "formData";
-    const CART_KEY = boshQoldiq ? "bosh_qoldiq_cart" : kirim ? "mahsulot_kirimi_cart" : "buyurtma_cart";
+    const FORM_KEY = getFormKey({ kirim, boshQoldiq });
+    const CART_KEY = getCartKey({ kirim, boshQoldiq });
     const FormData = JSON.parse(localStorage.getItem(FORM_KEY) || "{}");
-    const [quantity, setQuantity] = useState(1);
+    const [quantity, setQuantity] = useState("1");
     const [loading, setLoading] = useState(false);
     const { narx: sotuvNarxi, isVal: sotuvIsVal } = getNarx(item, FormData);
     const kirimValyuta = "1"; // Kirimda valyuta tanlash yo'q — doim so'mda
@@ -38,47 +65,35 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
     const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
     useBackHandler(onClose);
 
-    const jami = formatNarx(currentNarx * quantity); // ← formatNarx import dan
+    const quantityNumber = parseQty(quantity);
+    const jami = formatNarx(currentNarx * quantityNumber); // ← formatNarx import dan
+    const { reserved, refreshReserved } = useReservedPartiya();
+
+    // Savatdagi shu partiyaga tegishli miqdor (modal ochilganda o'qiladi)
+    const cartItems = useMemo(() => readCart(CART_KEY).tovarlar, [CART_KEY]);
+
+    // Yuborilmagan savdolarda band qilingan miqdor
+    const reservedQty = useMemo(
+        () => (kirim ? 0 : getReservedQty(item, reserved)),
+        [item, reserved, kirim]
+    );
+
+    const cartQty = useMemo(
+        () => (kirim ? 0 : getCartQty(cartItems, item)),
+        [cartItems, item, kirim]
+    );
+
+    // Haqiqiy mavjud qoldiq: server qoldig'i − yuborilmagan savdolar − savat
     const remainingQoldiq = useMemo(() => {
-        const itemId = `${item?.date_invoys}_${item?.code}_${item.term}`;
-
-        let cart;
-        try {
-            cart = JSON.parse(localStorage.getItem(CART_KEY));
-        } catch {
-            cart = null;
-        }
-
-        const tovarlar = cart?.tovarlar || [];
-        const inCart = tovarlar.find(i => i.itemId === itemId);
-
         const qoldiq = toNumber(item?.qoldiq);
+        if (kirim) return qoldiq;
 
-        const already = toNumber(inCart?.soni);
+        const available = qoldiq - reservedQty - cartQty;
+        return available > 0 ? available : 0;
+    }, [item?.qoldiq, kirim, reservedQty, cartQty]);
 
-        return kirim ? qoldiq : qoldiq - already;
-    }, [CART_KEY, item?.date_invoys, item?.code, item?.term, item?.qoldiq, kirim]);
-
-    const handleQuantity = (type) => {
-        setQuantity((prev) => {
-            const current = parseFloat(prev || 0);
-
-            let newValue = current;
-
-            if (type === "plus") {
-                newValue = current + 1;
-            } else if (type === "minus") {
-                newValue = current - 1;
-            }
-
-            newValue = Math.max(0, newValue);
-            if (!kirim) newValue = Math.min(newValue, remainingQoldiq);
-
-            return newValue.toString();
-        });
-    };
     const handleBuyurtma = async () => {
-        if (quantity <= 0) return;
+        if (quantityNumber <= 0) return;
 
         if (kirim && canSeePrice && currentNarx <= 0) {
             Swal.fire({
@@ -89,11 +104,11 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
             return;
         }
 
-        if (!kirim && quantity > remainingQoldiq) {
+        if (!kirim && quantityNumber > remainingQoldiq) {
             Swal.fire({
                 icon: "warning",
                 title: "Yetarli mahsulot yo'q!",
-                text: `Qoldiq: ${remainingQoldiq} ${item?.ul_bir}`,
+                text: `Mavjud qoldiq: ${formatQty(remainingQoldiq)} ${item?.ul_bir}`,
                 confirmButtonColor: "#006CAC",
             });
             return;
@@ -102,12 +117,15 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
         setLoading(true);
 
         try {
-            const itemId = kirim ? String(item?.code) : `${item?.date_invoys}_${item?.code}`;
+            // Yuborilmagan savdolar shu orada o'zgargan bo'lishi mumkin — qayta o'qiymiz
+            if (!kirim) await refreshReserved();
+
+            const itemId = makeCartItemId(item, { kirim });
             const maxQoldiq = toNumber(item?.qoldiq);
 
-            let existing = JSON.parse(localStorage.getItem(CART_KEY));
+            let existing = readCart(CART_KEY);
 
-            if (!existing || typeof existing !== "object" || !existing.tovarlar) {
+            if (!existing.date) {
                 existing = sanitizeDebtFields({
                     date: date,
                     mijoz_code: FormData?.kontragent_id,
@@ -117,28 +135,41 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                     vid_val: FormData?.valyuta_turi,
                     narh_turi: FormData?.narh_turi,
                     user_code: user?.code,
-                    tovarlar: [],
+                    tovarlar: existing.tovarlar,
                 }, user);
             }
 
-            const alreadyIndex = existing.tovarlar.findIndex(
-                (i) => i.itemId === itemId
-            );
+            const alreadyIndex = findCartIndex(existing.tovarlar, item, { kirim });
+            const currentQty = alreadyIndex !== -1
+                ? toNumber(existing.tovarlar[alreadyIndex].soni)
+                : 0;
+            const newQty = currentQty + quantityNumber;
 
-            if (alreadyIndex !== -1) {
-                const currentQty = toNumber(existing.tovarlar[alreadyIndex].soni);
-                const newQty = currentQty + toNumber(quantity);
+            if (!kirim) {
+                // Partiya qoldig'i = 1C qoldig'i − yuborilmagan savdolarda band bo'lgani
+                const freshReserved = getReservedQty(item, getReservedMap());
+                const available = maxQoldiq - freshReserved;
 
-                if (!kirim && newQty > maxQoldiq) {
+                if (newQty > available) {
                     Swal.fire({
                         icon: "warning",
                         title: "Limit to'lgan!",
-                        text: `Allaqachon qo'shilgan: ${currentQty}. Qoldiq: ${maxQoldiq} ${item?.ul_bir}`,
+                        html: `Partiya qoldig'i: <b>${formatQty(maxQoldiq)}</b> ${item?.ul_bir || ""}`
+                            + (freshReserved > 0
+                                ? `<br>Yuborilmagan savdolarda: <b>${formatQty(freshReserved)}</b>`
+                                : "")
+                            + (currentQty > 0
+                                ? `<br>Savatda: <b>${formatQty(currentQty)}</b>`
+                                : "")
+                            + `<br>Qo'shish mumkin: <b>${formatQty(Math.max(0, available - currentQty))}</b>`,
                         confirmButtonColor: "#006CAC",
                     });
                     return;
                 }
+            }
 
+            if (alreadyIndex !== -1) {
+                existing.tovarlar[alreadyIndex].itemId = itemId;
                 existing.tovarlar[alreadyIndex].soni = newQty;
                 existing.tovarlar[alreadyIndex].narh = currentNarx;
                 existing.tovarlar[alreadyIndex].Summa = currentNarx * newQty;
@@ -146,22 +177,21 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                 existing.tovarlar[alreadyIndex].kirim_narh_val = isVal ? currentNarx : 0;
                 existing.tovarlar[alreadyIndex].kirim_summa_sum = isVal ? 0 : currentNarx * newQty;
                 existing.tovarlar[alreadyIndex].kirim_summa_val = isVal ? currentNarx * newQty : 0;
-                existing.tovarlar[alreadyIndex].valyuta_turi = kirimValyuta;
-                existing.tovarlar[alreadyIndex].term = toDisplayDate(yaroqlilik);
+                if (kirim) {
+                    existing.tovarlar[alreadyIndex].valyuta_turi = kirimValyuta;
+                    existing.tovarlar[alreadyIndex].term = toDisplayDate(yaroqlilik);
+                }
 
             } else {
                 existing.tovarlar.push({
                     itemId,
                     tovar_code: item?.code,
                     number_invoys: kirim ? "" : item?.number_invoys,
-                    date_invoys: kirim ? "" : format(
-                            parse(item?.date_invoys, "dd.MM.yyyy", new Date()),
-                            "yyyyMMdd"
-                        ),
+                    date_invoys: kirim ? "" : toInvoysDate(item?.date_invoys),
                     qoldiq: item?.qoldiq,
-                    soni: toNumber(quantity),
+                    soni: quantityNumber,
                     narh: currentNarx,
-                    Summa: currentNarx * toNumber(quantity),
+                    Summa: currentNarx * quantityNumber,
                     bayyer: item.bayyer,
                     group_tovar_code: item.group_tovar_code,
                     group_tovar_name: item.group_tovar_name,
@@ -180,15 +210,15 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                     term: kirim ? toDisplayDate(yaroqlilik) : item.term,
                     kirim_narh_sum: isVal ? 0 : currentNarx,
                     kirim_narh_val: isVal ? currentNarx : 0,
-                    kirim_summa_sum: isVal ? 0 : currentNarx * toNumber(quantity),
-                    kirim_summa_val: isVal ? currentNarx * toNumber(quantity) : 0,
+                    kirim_summa_sum: isVal ? 0 : currentNarx * quantityNumber,
+                    kirim_summa_val: isVal ? currentNarx * quantityNumber : 0,
                 });
             }
-            localStorage.setItem(CART_KEY, JSON.stringify(existing));
+            writeCart(CART_KEY, existing);
             Swal.fire({
                 icon: "success",
                 title: "Qo'shildi!",
-                text: `${item?.name} — ${quantity} ${item?.ul_bir}`,
+                text: `${item?.name} — ${formatQty(quantityNumber)} ${item?.ul_bir}`,
                 confirmButtonColor: "#006CAC",
                 timer: 500,
                 timerProgressBar: true,
@@ -239,6 +269,7 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                                                 }}
                                                 inputMode={kirim ? "decimal" : undefined}
                                                 placeholder={kirim ? "0" : undefined}
+                                                onFocus={kirim ? selectAllOnFocus : undefined}
                                                 className="kd-input"
                                             />
                                         </div>
@@ -264,9 +295,18 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <p style={{ fontSize: '18px' }} className="kd-qoldiq-title">Mahsulot qoldig'i:</p>
                                     <span className="kd-qoldiq-value" style={{ fontSize: '20px' }}>
-                                        {remainingQoldiq} {item?.ul_bir}
+                                        {formatQty(remainingQoldiq)} {item?.ul_bir}
                                     </span>
                                 </div>
+                                {(reservedQty > 0 || cartQty > 0) && (
+                                    <span className="kd-qoldiq-band">
+                                        Band qilingan:
+                                        {reservedQty > 0 && ` yuborilmagan savdolarda ${formatQty(reservedQty)}`}
+                                        {reservedQty > 0 && cartQty > 0 && ","}
+                                        {cartQty > 0 && ` savatda ${formatQty(cartQty)}`}
+                                        {` (jami qoldiq: ${formatQty(item?.qoldiq)} ${item?.ul_bir || ""})`}
+                                    </span>
+                                )}
                                 <span className="kd-qoldiq-date" style={{ fontSize: '14px' }}>
                                     Yaroqlilik Muddati: {item?.term}
                                 </span>
@@ -281,41 +321,14 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                                     Miqdori ({item?.ul_bir || "kg"}):
                                 </label>
                             )}
-                            <div className="kd-counter">
-                                <button className="kd-counter-btn" onClick={() => handleQuantity("minus")}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                        <circle cx="12" cy="12" r="10" stroke="#006CAC" strokeWidth="2" />
-                                        <path d="M8 12h8" stroke="#006CAC" strokeWidth="2" strokeLinecap="round" />
-                                    </svg>
-                                </button>
-                                <input
-                                    type="tel"
-                                    value={quantity}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-
-                                        // faqat son va nuqtadan keyin max 3 ta raqam
-                                        if (!/^\d*\.?\d{0,3}$/.test(value)) return;
-
-                                        if (value === "") {
-                                            setQuantity("");
-                                            return;
-                                        }
-
-                                        const val = Math.max(0, parseFloat(value));
-
-                                        setQuantity(!kirim && val > remainingQoldiq ? String(remainingQoldiq) : value);
-                                    }}
-                                    className="kd-counter-input"
-                                    inputMode="decimal"
-                                />
-                                <button className="kd-counter-btn" onClick={() => handleQuantity("plus")}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                        <circle cx="12" cy="12" r="10" stroke="#006CAC" strokeWidth="2" />
-                                        <path d="M12 8v8M8 12h8" stroke="#006CAC" strokeWidth="2" strokeLinecap="round" />
-                                    </svg>
-                                </button>
-                            </div>
+                            <QuantityInput
+                                value={quantity}
+                                onChange={setQuantity}
+                                max={kirim ? null : remainingQoldiq}
+                                min={0}
+                                disabled={loading}
+                                variant="kd"
+                            />
 
                             {canSeePrice && (
                                 <>
@@ -330,7 +343,7 @@ export default function ProductQoshish({ onClose, item, handlePartiya, kirim = f
                             <button
                                 className="kd-buyurtma-btn"
                                 onClick={handleBuyurtma}
-                                disabled={loading || quantity <= 0}
+                                disabled={loading || quantityNumber <= 0}
                             >
                                 {loading ? "Saqlanmoqda..." : kirim ? "QO'SHISH" : "BUYURTMA"}
                             </button>

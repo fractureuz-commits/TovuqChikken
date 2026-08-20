@@ -1,4 +1,4 @@
-export default function ModalHeader({qaytarish, kirim, boshQoldiq, activeTab, onSotib, onKoriznka, onSkaner, onMahsulotYaratish}) {
+export default function ModalHeader({qaytarish, kirim, boshQoldiq, activeTab, onSotib, onKoriznka, onSkaner, onMahsulotYaratish, cartCount = 0}) {
 
     return (
 
@@ -59,6 +59,16 @@ export default function ModalHeader({qaytarish, kirim, boshQoldiq, activeTab, on
                     <defs><clipPath id="clip0_2001_461"><rect width="60" height="60" fill="white"/></clipPath></defs>
 
                 </svg>
+
+                {cartCount > 0 && (
+
+                    <span className="header-cart-badge" aria-label={`Savatda ${cartCount} xil mahsulot`}>
+
+                        {cartCount > 99 ? "99+" : cartCount}
+
+                    </span>
+
+                )}
 
                 <p>SAVATCHA</p>
 

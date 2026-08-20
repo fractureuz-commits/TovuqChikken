@@ -8,6 +8,8 @@ import KirimProductQoshish from "../mahsulotKirimi/ProductQoshish";
 import TovarModal from "./Mahsulotlar";
 import Swal from "sweetalert2";
 import ModalHeader from "../../componrnts/BuyurtmaModal/ModalHeader";
+import { fuzzySearch } from "../../utils/fuzzySearch";
+import { getCartKey, useCartCount } from "../../utils/cart";
 import MahsulotYaratishModal from "../mahsulotKirimi/MahsulotYaratishModal";
 import { useBackHandler } from "../../utils/backButtonStack";
 
@@ -36,6 +38,7 @@ export default function KorzinkaModal({qaytarish, kirim = false, boshQoldiq = fa
     const [Productadd, setProductadd] = useState(false);
     const [ProductGroupLoading, setProductGroupLoading] = useState(true);
     const [ProductGroupError, setProductGroupError] = useState(null);
+    const cartCount = useCartCount(getCartKey({ qaytarish, kirim, boshQoldiq }));
     const CART_KEY = boshQoldiq ? "bosh_qoldiq_cart" : kirim ? "mahsulot_kirimi_cart" : "buyurtma_cart";
     const Qaytarish_KEY = "qaytarish";
     const FormData_KEY = boshQoldiq ? "bosh_qoldiq_form" : kirim ? "mahsulot_kirimi_form" : "formData";
@@ -79,17 +82,10 @@ export default function KorzinkaModal({qaytarish, kirim = false, boshQoldiq = fa
             .finally(() => setProductGroupLoading(false));
     }, []);
 
-    const filtered = useMemo(() => {
-        if (!search.trim()) return ProductGroup;
-        const tokens = search.toLowerCase().trim().split(/\s+/);
-        return ProductGroup.filter((doc) => {
-            const haystack = [doc.n, doc.c]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-            return tokens.every((token) => haystack.includes(token));
-        });
-    }, [search, ProductGroup]);
+    const filtered = useMemo(() => (
+        // Xatoga chidamli qidiruv: imlo xatosi bo'lsa ham topadi
+        fuzzySearch(ProductGroup, search, (doc) => [doc.n, doc.c].filter(Boolean).join(" "))
+    ), [search, ProductGroup]);
 
     const highlightText = useCallback((text, search) => {
         if (!search?.trim() || typeof text !== "string") return text;
@@ -116,6 +112,7 @@ export default function KorzinkaModal({qaytarish, kirim = false, boshQoldiq = fa
                         boshQoldiq={boshQoldiq}
                         onSotib={() => { }}
                         onKoriznka={() => KorzinkaModal?.()}
+                        cartCount={cartCount}
                         onSkaner={() => kirim ? setOpenMahsulotYaratish(true) : setShtrixModal(prev => !prev)}
                     />
                     <div className="modal" style={{ height: '100vh', width: '100%', borderRadius: "0px",  }}>

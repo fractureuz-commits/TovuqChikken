@@ -5,6 +5,11 @@ import ProductQoshish from "./ProductQoshish";
 import { getUser } from "../../leyout/login/auth";
 import { canViewPrice } from "../../utils/permissions";
 import { useBackHandler } from "../../utils/backButtonStack";
+import { getCartQty, getReservedQty, useReservedPartiya } from "../../utils/partiya";
+import { getCartKey, readCart } from "../../utils/cart";
+import { formatQty } from "../../utils/quantity";
+import { toNumber } from "../../utils/queueSummary";
+import Swal from "sweetalert2";
 
 export default function PartiyaSelect({ onClose, ProductData, allClose }) {
     const [Productadd, setProductadd] = useState(false);
@@ -12,9 +17,40 @@ export default function PartiyaSelect({ onClose, ProductData, allClose }) {
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
     const user = getUser()
     const canSeePrice = canViewPrice(user);
+    const { reserved } = useReservedPartiya();
+    const cartItems = useMemo(() => readCart(getCartKey({})).tovarlar, []);
     useBackHandler(onClose);
 
+    // Partiyaning haqiqiy qoldig'i: 1C qoldig'i − yuborilmagan savdolar − savat
+    const getQoldiqInfo = (item) => {
+        const serverQoldiq = toNumber(item?.qoldiq);
+        const reservedQty = getReservedQty(item, reserved);
+        const cartQty = getCartQty(cartItems, item);
+        const available = serverQoldiq - reservedQty - cartQty;
+
+        return {
+            serverQoldiq,
+            reservedQty,
+            cartQty,
+            available: available > 0 ? available : 0,
+        };
+    };
+
     const handleSubmit = (item) => {
+        const { available, reservedQty, cartQty } = getQoldiqInfo(item);
+
+        if (available <= 0) {
+            Swal.fire({
+                icon: "info",
+                title: "Bu partiya tugagan",
+                html: `Partiya qoldig'i: <b>${formatQty(item?.qoldiq)}</b> ${item?.ul_bir || ""}`
+                    + (reservedQty > 0 ? `<br>Yuborilmagan savdolarda: <b>${formatQty(reservedQty)}</b>` : "")
+                    + (cartQty > 0 ? `<br>Savatda: <b>${formatQty(cartQty)}</b>` : ""),
+                confirmButtonColor: "#006CAC",
+            });
+            return;
+        }
+
         setProductaddData(item);
         setProductadd(true);
     };
@@ -86,9 +122,14 @@ export default function PartiyaSelect({ onClose, ProductData, allClose }) {
                                 <p className="partya-empty">Partiya topilmadi</p>
                             ) : sortedProductData.map((item, index) => {
                                 const { narx, isVal } = getNarx(item, FormData);
+                                const qoldiqInfo = getQoldiqInfo(item);
 
                                 return (
-                                    <div className="partya-card" key={index} onClick={() => handleSubmit(item)}>
+                                    <div
+                                        className={`partya-card${qoldiqInfo.available <= 0 ? " partya-card--empty" : ""}`}
+                                        key={index}
+                                        onClick={() => handleSubmit(item)}
+                                    >
                                         <div className="partya-no">
                                             {/* <span className="no-label">No</span> */}
                                             <span className="no-value">{index + 1}</span>
@@ -122,8 +163,21 @@ export default function PartiyaSelect({ onClose, ProductData, allClose }) {
                                             )}
                                             <div className="partya-row">
                                                 <span className="partya-label">Qoldiq</span>
-                                                <span className="partya-value">{item.qoldiq} {item.ul_bir}</span>
+                                                <span className="partya-value">
+                                                    {formatQty(qoldiqInfo.available)} {item.ul_bir}
+                                                </span>
                                             </div>
+                                            {(qoldiqInfo.reservedQty > 0 || qoldiqInfo.cartQty > 0) && (
+                                                <div className="partya-row partya-band">
+                                                    <span className="partya-label">Band</span>
+                                                    <span className="partya-value">
+                                                        {qoldiqInfo.reservedQty > 0 && `savdolarda ${formatQty(qoldiqInfo.reservedQty)}`}
+                                                        {qoldiqInfo.reservedQty > 0 && qoldiqInfo.cartQty > 0 && ", "}
+                                                        {qoldiqInfo.cartQty > 0 && `savatda ${formatQty(qoldiqInfo.cartQty)}`}
+                                                        {` (1C: ${formatQty(qoldiqInfo.serverQoldiq)})`}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 );

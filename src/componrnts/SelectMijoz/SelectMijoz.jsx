@@ -1,4 +1,5 @@
 import "./MijozSelect.css";
+import { fuzzySearch } from "../../utils/fuzzySearch";
 import { useState, useEffect, useMemo } from "react";
 import { loadKontragent } from "../../utils/storage";
 import { apiPost } from "../../utils/api";
@@ -29,24 +30,17 @@ export default function MijozSelect({TD, title = "Mijozlar ro'yxati", onClose, s
             return kirim ? typ === "2" : typ === "1";
         });
     }, [kontragent, kirim]);
-    const filtered = useMemo(() => {
-        if (!search.trim()) return kontragentByTyp; // ✅ search yo'q → paginated visible
-        const tokens = search.toLowerCase().trim().split(/\s+/);
-        return kontragentByTyp.filter((doc) => {
-            const haystack = [
-                doc.name,
-                doc.tel_1,
-                doc.tel_2,
-                doc.hudud_name,
-                doc.dostav_name,
-                doc.code
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-            return tokens.every((token) => haystack.includes(token));
-        });
-    }, [search, kontragentByTyp]);
+    const filtered = useMemo(() => (
+        // Xatoga chidamli qidiruv: imlo xatosi bo'lsa ham topadi
+        fuzzySearch(kontragentByTyp, search, (doc) => [
+            doc.name,
+            doc.tel_1,
+            doc.tel_2,
+            doc.hudud_name,
+            doc.dostav_name,
+            doc.code,
+        ].filter(Boolean).join(" "))
+    ), [search, kontragentByTyp]);
     const highlightText = (text, search) => {
         if (!search?.trim() || typeof text !== "string") return text;
 

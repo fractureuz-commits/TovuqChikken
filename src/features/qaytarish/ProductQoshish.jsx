@@ -7,10 +7,14 @@ import { format } from "date-fns";
 import { getUser } from "../../leyout/login/auth";
 import { canViewPrice, sanitizeDebtFields } from "../../utils/permissions";
 import { useBackHandler } from "../../utils/backButtonStack";
+import QuantityInput from "../../componrnts/QuantityInput/QuantityInput";
+import { formatQty, parseQty } from "../../utils/quantity";
+import { readCart, writeCart } from "../../utils/cart";
+import { findCartIndex, makeCartItemId } from "../../utils/partiya";
 
 export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) {
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
-    const [quantity, setQuantity] = useState(1);
+    const [quantity, setQuantity] = useState("1");
     const [loading, setLoading] = useState(false);
     const user = getUser();
     const canSeePrice = canViewPrice(user);
@@ -19,39 +23,22 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
     const date = format(new Date(), "dd.MM.yyyy HH:mm:ss");
     useBackHandler(onClose);
 
-    const jami = formatNarx(currentNarx * quantity); // ← formatNarx import dan
+    const quantityNumber = parseQty(quantity);
+    const jami = formatNarx(currentNarx * quantityNumber); // ← formatNarx import dan
     const remainingQoldiq = useMemo(() => {
         return parseFloat(item?.soni || 0);
     }, [item?.soni]);
 
-    const handleQuantity = (type) => {
-        setQuantity((prev) => {
-            const current = parseFloat(prev || 0);
-
-            let newValue = current;
-
-            if (type === "plus") {
-                newValue = current + 1;
-            } else if (type === "minus") {
-                newValue = current - 1;
-            }
-
-            newValue = Math.max(0, newValue);
-            newValue = Math.min(newValue, remainingQoldiq);
-
-            return newValue.toString();
-        });
-    };
     const onlyDate = (value) => value?.split(" ")[0] || "";
 
     const handleBuyurtma = async () => {
-        if (quantity <= 0) return;
+        if (quantityNumber <= 0) return;
 
-        if (quantity > remainingQoldiq) {
+        if (quantityNumber > remainingQoldiq) {
             Swal.fire({
                 icon: "warning",
                 title: "Yetarli mahsulot yo'q!",
-                text: `Qoldiq: ${remainingQoldiq} ${item?.ul_bir}`,
+                text: `Qoldiq: ${formatQty(remainingQoldiq)} ${item?.ul_bir}`,
                 confirmButtonColor: "#006CAC",
             });
             return;
@@ -71,12 +58,12 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
         setLoading(true);
 
         try {
-            const itemId = `${item?.date_invoys}_${item?.code}`;
+            const itemId = makeCartItemId(item);
             const maxQoldiq = parseFloat(item?.qoldiq || 0);
 
-            let existing = JSON.parse(localStorage.getItem("qaytarish"));
+            let existing = readCart("qaytarish");
 
-            if (!existing || typeof existing !== "object" || !existing.tovarlar) {
+            if (!existing.date) {
                 existing = sanitizeDebtFields({
                     date: date,
                     mijoz_code: FormData?.kontragent_id,
@@ -85,17 +72,16 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
                     vid_val: FormData?.valyuta_turi,
                     narh_turi: FormData?.narh_turi,
                     user_code: user?.code,
-                    tovarlar: [],
+                    tovarlar: existing.tovarlar,
                 }, user);
             }
 
-            const alreadyIndex = existing.tovarlar.findIndex(
-                (i) => i.itemId === itemId
-            );
+            const alreadyIndex = findCartIndex(existing.tovarlar, item);
 
             if (alreadyIndex !== -1) {
+                existing.tovarlar[alreadyIndex].itemId = itemId;
                 const currentQty = toNumber(existing.tovarlar[alreadyIndex].soni);
-                const newQty = currentQty + toNumber(quantity);
+                const newQty = currentQty + quantityNumber;
 
                 if (newQty > maxQoldiq) {
                     Swal.fire({
@@ -124,7 +110,7 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
                 existing.tovarlar[alreadyIndex].date_invoys = onlyDate(item?.date_invoys);
 
             } else {
-                console.log(toNumber(item?.kirim_narh_sum) * toNumber(quantity));
+                console.log(toNumber(item?.kirim_narh_sum) * quantityNumber);
 
                 existing.tovarlar.push({
                     itemId,
@@ -132,9 +118,9 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
                     number_invoys: item?.number_invoys,
                     date_invoys: item?.date_invoys,
                     qoldiq: item?.qoldiq,
-                    soni: toNumber(quantity),
+                    soni: quantityNumber,
                     narh: toNumber(currentNarx),
-                    Summa: toNumber(currentNarx) * toNumber(quantity),
+                    Summa: toNumber(currentNarx) * quantityNumber,
                     bayyer: item?.bayyer,
                     group_tovar_code: item?.group_tovar_code,
                     group_tovar_name: item?.group_tovar_name,
@@ -153,17 +139,17 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
                     term: onlyDate(item?.term),
                     kirim_narh_sum: canSeePrice ? toNumber(item?.kirim_narh_sum) : 0,
                     kirim_narh_val: canSeePrice ? toNumber(item?.kirim_narh_val) : 0,
-                    kirim_summa_sum: canSeePrice ? toNumber(item?.kirim_narh_sum) * toNumber(quantity) : 0,
-                    kirim_summa_val: canSeePrice ? toNumber(item?.kirim_narh_val) * toNumber(quantity) : 0,
+                    kirim_summa_sum: canSeePrice ? toNumber(item?.kirim_narh_sum) * quantityNumber : 0,
+                    kirim_summa_val: canSeePrice ? toNumber(item?.kirim_narh_val) * quantityNumber : 0,
                 });
             }
 
-            localStorage.setItem("qaytarish", JSON.stringify(existing));
+            writeCart("qaytarish", existing);
 
             Swal.fire({
                 icon: "success",
                 title: "Qo'shildi!",
-                text: `${item?.name} — ${quantity} ${item?.ul_bir}`,
+                text: `${item?.name} — ${formatQty(quantityNumber)} ${item?.ul_bir}`,
                 confirmButtonColor: "#006CAC",
                 timer: 500,
                 timerProgressBar: true,
@@ -218,7 +204,7 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                                     <p style={{ fontSize: '18px' }} className="kd-qoldiq-title">Sotilgan mahsulot miqdori:</p>
                                     <span className="kd-qoldiq-value" style={{ fontSize: '20px' }}>
-                                        {remainingQoldiq} {item?.ul_bir}
+                                        {formatQty(remainingQoldiq)} {item?.ul_bir}
                                     </span>
                                 </div>
                                 <span className="kd-qoldiq-date" style={{ fontSize: '14px' }}>
@@ -230,41 +216,14 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
 
                             </div>
 
-                            <div className="kd-counter">
-                                <button className="kd-counter-btn" onClick={() => handleQuantity("minus")}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                        <circle cx="12" cy="12" r="10" stroke="#006CAC" strokeWidth="2" />
-                                        <path d="M8 12h8" stroke="#006CAC" strokeWidth="2" strokeLinecap="round" />
-                                    </svg>
-                                </button>
-                                <input
-                                    type="tel"
-                                    value={quantity}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-
-                                        // faqat son va nuqtadan keyin max 3 ta raqam
-                                        if (!/^\d*\.?\d{0,3}$/.test(value)) return;
-
-                                        if (value === "") {
-                                            setQuantity("");
-                                            return;
-                                        }
-
-                                        const val = Math.max(0, parseFloat(value));
-
-                                        setQuantity(val > remainingQoldiq ? String(remainingQoldiq) : value);
-                                    }}
-                                    className="kd-counter-input"
-                                    inputMode="decimal"
-                                />
-                                <button className="kd-counter-btn" onClick={() => handleQuantity("plus")}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                                        <circle cx="12" cy="12" r="10" stroke="#006CAC" strokeWidth="2" />
-                                        <path d="M12 8v8M8 12h8" stroke="#006CAC" strokeWidth="2" strokeLinecap="round" />
-                                    </svg>
-                                </button>
-                            </div>
+                            <QuantityInput
+                                value={quantity}
+                                onChange={setQuantity}
+                                max={remainingQoldiq}
+                                min={0}
+                                disabled={loading}
+                                variant="kd"
+                            />
 
                             {canSeePrice && (
                                 <div className="kd-jami">
@@ -278,7 +237,7 @@ export default function QaytaribOlish({ onExit, onClose, item, handlePartiya }) 
                             <button
                                 className="kd-buyurtma-btn"
                                 onClick={handleBuyurtma}
-                                disabled={loading || quantity <= 0}
+                                disabled={loading || quantityNumber <= 0}
                             >
                                 {loading ? "Yuborilmoqda..." : "Mahsulot qaytarib olish"}
                             </button>

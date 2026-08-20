@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { loadTovar } from "../../utils/storage";
 import { useBackHandler } from "../../utils/backButtonStack";
+import { fuzzySearch } from "../../utils/fuzzySearch";
 
 export default function TovarSelect({
     onClose,
@@ -38,27 +39,15 @@ export default function TovarSelect({
             );
         }
 
-        // 2) Search bo‘lmasa filtrlangan datani qaytar
-        if (!search.trim()) return data;
-
-        // 3) Search bo‘lsa qidiruv ishlaydi
-        const tokens = search.toLowerCase().trim().split(/\s+/);
-
-        return data.filter((doc) => {
-            const haystack = [
-                doc.name,
-                doc.code,
-                doc.group_tovar_code,
-                doc.group_tovar_name,
-                doc.ul_bir,
-                doc.bayyer,
-            ]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-
-            return tokens.every((token) => haystack.includes(token));
-        });
+        // 2) Xatoga chidamli qidiruv (imlo xatosi, kirill/lotin farqi muhim emas)
+        return fuzzySearch(data, search, (doc) => [
+            doc.name,
+            doc.code,
+            doc.group_tovar_code,
+            doc.group_tovar_name,
+            doc.ul_bir,
+            doc.bayyer,
+        ].filter(Boolean).join(" "));
     }, [search, Tovar, FormData?.GroupTovar_code]);
 
     const highlightText = (text, search) => {

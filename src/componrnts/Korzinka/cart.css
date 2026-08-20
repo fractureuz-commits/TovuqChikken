@@ -19,6 +19,43 @@
     flex-direction: column;
 }
 
+/* ═══ SAVATDAGI MAHSULOTLAR SONI ═══ */
+.cart-count {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    flex-wrap: wrap;
+}
+
+.cart-count-badge {
+    min-width: 26px;
+    height: 26px;
+    padding: 0 8px;
+    border-radius: 13px;
+    background: #006CAC;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cart-count-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+}
+
+.cart-count-filtered {
+    font-size: 12px;
+    color: #006CAC;
+    background: #eaf3fa;
+    border-radius: 8px;
+    padding: 2px 8px;
+}
+
 .cart-total {
     display: flex;
     justify-content: space-between;
@@ -86,6 +123,11 @@
     color: rgba(255,255,255,0.75);
 }
 
+.cart-item-limit {
+    color: #ffd9a8;
+    font-weight: 600;
+}
+
 .cart-item-narx {
     font-size: 13px;
     color: rgba(255,255,255,0.9);
@@ -94,12 +136,13 @@
 
 .cart-item-right {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center ;
+    justify-content: flex-end;
     padding: 8px 10px;
-    gap: 6px;
-    min-width: 80px;
+    gap: 8px;
+    min-width: 0;
+    flex-shrink: 0;
 }
 
 .cart-item-date {
@@ -163,8 +206,9 @@
     }
 
     .cart-item-right {
-        min-width: 58px;
-        padding: 8px;
+        min-width: 0;
+        padding: 8px 6px;
+        gap: 6px;
     }
 
     .cart-yopish-btn {

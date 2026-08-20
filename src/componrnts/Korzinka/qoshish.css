@@ -171,6 +171,18 @@
     color: #888;
 }
 
+/* Yuborilmagan savdolar / savat tomonidan band qilingan miqdor */
+.kd-qoldiq-band {
+    font-size: 12px;
+    font-weight: 600;
+    color: #c2410c;
+    background: #fff7ed;
+    border-radius: 8px;
+    padding: 4px 8px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
 .kd-refresh {
     background: transparent;
     border: none;
@@ -184,7 +196,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 16px;
+    gap: 14px;
+    width: 100%;
 }
 
 .kd-counter-btn {

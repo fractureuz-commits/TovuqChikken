@@ -16,6 +16,9 @@ import { getUser } from "../../leyout/login/auth";
 import QaytarishSelect from "../qaytarish/PartiyaTanlash";
 import { canViewPrice } from "../../utils/permissions";
 import { useBackHandler } from "../../utils/backButtonStack";
+import { fuzzySearch } from "../../utils/fuzzySearch";
+import { getCartKey, useCartCount } from "../../utils/cart";
+import { refreshReservedMap } from "../../utils/partiya";
 
 export function Tovar({ item, search, highlightText, onClick }) {
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
@@ -70,6 +73,7 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
     const [ProductGroupError, setProductGroupError] = useState(null);
     const FormData = JSON.parse(localStorage.getItem("formData") || "{}");
     const user = getUser();
+    const cartCount = useCartCount(getCartKey({ qaytarish, kirim, boshQoldiq }));
     useBackHandler(onClose);
 
     useEffect(() => {
@@ -86,16 +90,10 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
             list = list.filter(doc => doc.group_tovar_code === groupCode);
         }
 
-        // ✅ 2 — Search filter
-        if (!search.trim()) return list;
-        const tokens = search.toLowerCase().trim().split(/\s+/);
-        return list.filter((doc) => {
-            const haystack = [doc.name, doc.code]
-                .filter(Boolean)
-                .join(" ")
-                .toLowerCase();
-            return tokens.every((token) => haystack.includes(token));
-        });
+        // ✅ 2 — Xatoga chidamli qidiruv (imlo xatosi bo'lsa ham topadi)
+        return fuzzySearch(list, search, (doc) => (
+            [doc.name, doc.code, doc.group_tovar_name].filter(Boolean).join(" ")
+        ));
     }, [search, ProductGroup, groupCode]);
 
     const highlightText = useCallback((text, search) => {
@@ -123,6 +121,9 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
         }
 
         try {
+            // Partiya qoldig'i yuborilmagan savdolarga qarab hisoblanadi
+            await refreshReservedMap();
+
             const body = {
                 code_product: selectedItem.code,
             };
@@ -217,6 +218,7 @@ export default function TovarModal({ onClose, groupCode, KorzinkaModal, qaytaris
                         kirim={kirim}
                         boshQoldiq={boshQoldiq}
                         onKoriznka={() => KorzinkaModal?.()}
+                        cartCount={cartCount}
                         onSkaner={() => kirim ? setOpenMahsulotYaratish(true) : setShtrixModal(prev => !prev)}
                     />
                     <div className="modal" style={{ height: '100vh', width: '100%', borderRadius: "0px", }}>
