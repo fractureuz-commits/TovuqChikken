@@ -65,8 +65,10 @@ function main() {
     run("npx vite build");
     run("npx cap sync android");
 
-    const gradlew = process.platform === "win32" ? "gradlew.bat" : "./gradlew";
-    run(`${gradlew} assembleRelease`, { cwd: path.join(rootDir, "android") });
+    // To'liq yo'l — Git Bash/cmd/PowerShell, hamma joyda ishlaydi
+    const androidDir = path.join(rootDir, "android");
+    const gradlew = path.join(androidDir, process.platform === "win32" ? "gradlew.bat" : "gradlew");
+    run(`"${gradlew}" assembleRelease`, { cwd: androidDir });
 
     const apkDir = path.join(rootDir, "android", "app", "build", "outputs", "apk", "release");
     const apkFiles = existsSync(apkDir) ? readdirSync(apkDir).filter((f) => f.endsWith(".apk")) : [];
